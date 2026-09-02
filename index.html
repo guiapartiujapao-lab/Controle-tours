@@ -201,7 +201,7 @@ body.role-vendedor .tab-admin{display:none!important}
         <div class="form-group"><label>Data do Tour</label><input type="date" id="f-dataTour"></div>
         <div class="form-group"><label>Pessoas</label><input type="number" id="f-pessoas" min="1" max="50" placeholder="0"></div>
         <div class="form-group"><label>Valor Total (USD)</label><input type="number" id="f-valorUsd" step="0.01" placeholder="0.00"></div>
-        <div class="form-group fin-only"><label>Cambio do dia</label><input type="number" id="f-cambio" step="0.01" placeholder="5.20"></div>
+        <div class="form-group"><label>Cambio do dia</label><input type="number" id="f-cambio" step="0.01" placeholder="5.20"></div>
         <div class="form-group"><label>Valor BRL</label><input type="number" id="f-valorBrl" step="0.01" placeholder="0.00"></div>
         <div class="form-group"><label>Forma Pagamento</label><select id="f-pagamento"><option value="">Selecione</option></select></div>
         <div class="form-group"><label>Sinal</label><input type="number" id="f-sinal" step="0.01" placeholder="0.00"></div>
@@ -224,6 +224,7 @@ body.role-vendedor .tab-admin{display:none!important}
     <div class="filter-row">
       <select id="filterMes"><option value="">Todos os meses</option></select>
       <select id="filterStatus"><option value="">Todos status</option><option value="CONFIRMADO">Confirmado</option><option value="PENDENTE">Pendente</option><option value="CANCELADO">Cancelado</option></select>
+      <select id="filterGuia"><option value="">Todos guias</option></select>
     </div>
     <div class="table-wrap"><table id="tblAll"><thead><tr>
       <th>Data Tour</th><th>Cliente</th><th>Destino</th><th>Dur.</th><th>Guia</th><th>Pess.</th><th class="fin-only">BRL</th><th>Status</th><th></th>
@@ -635,9 +636,11 @@ function getConfirmed() { return allTours.filter(t => t.status === 'CONFIRMADO')
 function renderTourTable() {
   const mesF = document.getElementById('filterMes').value;
   const statusF = document.getElementById('filterStatus').value;
+  const guiaF = document.getElementById('filterGuia').value;
   let tours = [...allTours].sort((a,b) => (b.dataTour||'').localeCompare(a.dataTour||''));
   if (mesF) tours = tours.filter(t => monthKey(t.dataTour) === mesF);
   if (statusF) tours = tours.filter(t => t.status === statusF);
+  if (guiaF) tours = tours.filter(t => t.guia === guiaF);
   const tbody = document.querySelector('#tblAll tbody');
   tbody.innerHTML = '';
   document.getElementById('emptyAll').style.display = tours.length ? 'none' : 'block';
@@ -660,6 +663,7 @@ function renderTourTable() {
 }
 document.getElementById('filterMes').addEventListener('change', renderTourTable);
 document.getElementById('filterStatus').addEventListener('change', renderTourTable);
+document.getElementById('filterGuia').addEventListener('change', renderTourTable);
 
 function groupByMonth(tours) {
   const groups = {};
@@ -775,6 +779,12 @@ function updateMonthFilters() {
     if (cur && sorted.includes(cur)) sel.value = cur;
     else if (!isFilter && sorted.length) sel.value = sorted[0];
   });
+  const guiaSel = document.getElementById('filterGuia');
+  const curGuia = guiaSel.value;
+  const guiasUsados = [...new Set(allTours.map(t => t.guia).filter(Boolean))].sort();
+  guiaSel.innerHTML = '<option value="">Todos guias</option>';
+  guiasUsados.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; guiaSel.appendChild(o); });
+  if (curGuia) guiaSel.value = curGuia;
 }
 
 // RELATORIO (resumo calculado, sem IA)
