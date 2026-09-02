@@ -232,7 +232,7 @@ body.role-guia .manage-folga{display:none!important}
       <select id="filterGuia"><option value="">Todos guias</option></select>
     </div>
     <div class="table-wrap"><table id="tblAll"><thead><tr>
-      <th>Data Tour</th><th>Cliente</th><th>Destino</th><th>Dur.</th><th>Guia</th><th>Pess.</th><th class="fin-only">BRL</th><th>Status</th><th></th>
+      <th>Data Tour</th><th>Cliente</th><th>Destino</th><th>Dur.</th><th>Guia</th><th>Pess.</th><th class="fin-only">BRL</th><th>Sinal</th><th>Status</th><th></th>
     </tr></thead><tbody></tbody></table></div>
     <div class="empty" id="emptyAll">Nenhum tour cadastrado ainda.</div>
   </div>
@@ -691,7 +691,8 @@ function renderTourTable() {
     const semDesp = t.status !== 'CANCELADO' && t.guia !== 'A DEFINIR' && (!t.despesaGuia || t.despesaGuia === 0);
     const guiaCell = isADefinir ? `<span style="color:var(--orange);font-weight:600">${t.guia}</span><span class="alert-chip alert-guia">!</span>` : (t.guia||'-');
     const despAlert = semDesp ? '<span class="alert-chip alert-desp" title="Sem despesa">$ ?</span>' : '';
-    tr.innerHTML = `<td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente||'-'}</td><td style="text-align:left">${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${guiaCell}</td><td>${t.pessoas||0}</td><td class="fin-only">${fmtBrl(t.valorBrl)}${despAlert}</td><td><span class="tag ${sc}">${t.status}</span></td><td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" data-edit="${t.id}">editar</span> <span style="cursor:pointer;color:var(--red);font-size:0.78rem;margin-left:6px" data-del="${t.id}">x</span></td>`;
+    const sinalTag = t.sinalPago === 'SIM' ? '<span class="tag tag-green">PAGO</span>' : '<span class="tag tag-gold">PENDENTE</span>';
+    tr.innerHTML = `<td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente||'-'}</td><td style="text-align:left">${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${guiaCell}</td><td>${t.pessoas||0}</td><td class="fin-only">${fmtBrl(t.valorBrl)}${despAlert}</td><td>${sinalTag}</td><td><span class="tag ${sc}">${t.status}</span></td><td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" data-edit="${t.id}">editar</span> <span style="cursor:pointer;color:var(--red);font-size:0.78rem;margin-left:6px" data-del="${t.id}">x</span></td>`;
     tbody.appendChild(tr);
   });
   tbody.querySelectorAll('[data-edit]').forEach(el => el.addEventListener('click', () => {
