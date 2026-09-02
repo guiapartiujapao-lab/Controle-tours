@@ -283,6 +283,9 @@ body.role-guia .manage-folga-table{display:none!important}
   <div class="panel" id="p-fechamento">
     <h2 class="section-title">Fechamento Geral</h2>
     <p class="section-sub">Resultado consolidado: socios + guias externos</p>
+    <div class="filter-row" style="margin-bottom:1rem">
+      <select id="fechStatus"><option value="CONFIRMADO">Confirmados</option><option value="">Todos os tours</option></select>
+    </div>
     <div class="stats" id="statsFech"></div>
     <div id="monthsFech"></div>
   </div>
@@ -301,6 +304,7 @@ body.role-guia .manage-folga-table{display:none!important}
     <p class="section-sub">Selecione o mes para ver o resumo financeiro.</p>
     <div class="filter-row">
       <select id="relMes"></select>
+      <select id="relStatus"><option value="CONFIRMADO">Confirmados</option><option value="">Todos os tours</option></select>
       <button class="btn btn-primary" id="btnRelatorio">Gerar Relatorio</button>
     </div>
     <div class="report-box" id="reportContent">Selecione um mes e clique em "Gerar Relatorio".</div>
@@ -727,6 +731,7 @@ function renderTourTable() {
 document.getElementById('filterMes').addEventListener('change', renderTourTable);
 document.getElementById('filterStatus').addEventListener('change', renderTourTable);
 document.getElementById('filterGuia').addEventListener('change', renderTourTable);
+document.getElementById('fechStatus').addEventListener('change', renderFechamento);
 
 function groupByMonth(tours) {
   const groups = {};
@@ -783,7 +788,8 @@ function renderGuias() {
 }
 
 function renderFechamento() {
-  const conf = getConfirmed();
+  const statusF = document.getElementById('fechStatus').value;
+  const conf = statusF ? allTours.filter(t => t.status === statusF) : [...allTours];
   const totalBrl = conf.reduce((s,t) => s + (t.valorBrl||0), 0);
   const totalDesp = conf.reduce((s,t) => s + (t.despesaGuia||0), 0);
   const totalLiq = conf.reduce((s,t) => s + (t.liquido||0), 0);
@@ -854,8 +860,10 @@ function updateMonthFilters() {
 document.getElementById('btnRelatorio').addEventListener('click', () => {
   const mes = document.getElementById('relMes').value;
   if (!mes) { toast('Selecione um mes.', false); return; }
-  const conf = getConfirmed().filter(t => monthKey(t.dataTour) === mes);
-  if (!conf.length) { document.getElementById('reportContent').textContent = 'Nenhum tour confirmado neste mes.'; return; }
+  const relSt = document.getElementById('relStatus').value;
+  const base = relSt ? allTours.filter(t => t.status === relSt) : [...allTours];
+  const conf = base.filter(t => monthKey(t.dataTour) === mes);
+  if (!conf.length) { document.getElementById('reportContent').textContent = 'Nenhum tour encontrado neste mes.'; return; }
   const socios = conf.filter(t => SOCIOS.includes(t.guia));
   const externos = conf.filter(t => !SOCIOS.includes(t.guia) && t.guia !== 'A DEFINIR');
   const totalBrl = conf.reduce((s,t) => s + (t.valorBrl||0), 0);
@@ -875,7 +883,7 @@ document.getElementById('btnRelatorio').addEventListener('click', () => {
 
   let report = `RELATORIO MENSAL - ${monthLabel(mes).toUpperCase()}\n${'='.repeat(45)}\n\n`;
   report += `RESUMO GERAL\n`;
-  report += `  Tours confirmados: ${conf.length}\n`;
+  report += `  Tours${relSt ? ' confirmados' : ''}: ${conf.length}\n`;
   report += `  Clientes unicos: ${clientes}\n`;
   report += `  Pessoas atendidas: ${totalPess}\n`;
   report += `  Media pessoas/tour: ${(totalPess/conf.length).toFixed(1)}\n\n`;
