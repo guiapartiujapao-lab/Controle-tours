@@ -511,6 +511,11 @@ document.getElementById('btnSalvar').addEventListener('click', async () => {
     toast('Preencha cliente, destino, guia e data do tour.', false); return;
   }
   if (data.guia !== 'A DEFINIR') {
+    const folga = allFolgas.find(f => f.guia === data.guia && f.data === data.dataTour);
+    if (folga) {
+      toast(`${data.guia} esta de folga em ${fmtDate(data.dataTour)}${folga.motivo ? ' (' + folga.motivo + ')' : ''}. Escolha outro guia ou outra data.`, false);
+      return;
+    }
     const conflito = allTours.find(t => t.id !== editingId && t.guia === data.guia && t.dataTour === data.dataTour && t.status !== 'CANCELADO');
     if (conflito) {
       if (!confirm(`CONFLITO: ${data.guia} ja tem tour em ${data.dataTour} (${conflito.destino} - ${conflito.cliente}).\n\nDeseja salvar mesmo assim?`)) return;
