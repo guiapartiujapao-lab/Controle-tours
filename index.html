@@ -632,7 +632,7 @@ document.getElementById('calGuiaFilter').addEventListener('change', renderCalend
 
 function renderCalendario() {
   const guiaFilter = loggedGuiaNome || document.getElementById('calGuiaFilter').value;
-  if (loggedGuiaNome) document.getElementById('calGuiaFilter').closest('.filter-row').style.display = 'none';
+  if (loggedGuiaNome) document.getElementById('calGuiaFilter').style.display = 'none';
   document.getElementById('calMonth').textContent = MESES_NOME[calMon+1] + ' ' + calYear;
   const firstDay = new Date(calYear, calMon, 1);
   const lastDay = new Date(calYear, calMon + 1, 0);
