@@ -146,6 +146,8 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 .login-err{color:var(--red);font-size:0.8rem;margin-top:0.5rem;min-height:1.2em}
 #appWrap{display:none}
 #appWrap.visible{display:block}
+body.role-vendedor .fin-only{display:none!important}
+body.role-vendedor .tab-admin{display:none!important}
 </style>
 </head>
 <body>
@@ -169,11 +171,11 @@ th:not(:first-child),td:not(:first-child){text-align:right}
     <div class="tabs" id="tabs">
       <div class="tab active" data-tab="cadastro">Cadastro</div>
       <div class="tab" data-tab="calendario">Calendario</div>
-      <div class="tab" data-tab="socios">Mayra + Totti</div>
-      <div class="tab" data-tab="guias">Guias Externos</div>
-      <div class="tab" data-tab="fechamento">Fechamento</div>
-      <div class="tab" data-tab="dashboard">Dashboard</div>
-      <div class="tab" data-tab="relatorio">Relatorio</div>
+      <div class="tab tab-admin" data-tab="socios">Mayra + Totti</div>
+      <div class="tab tab-admin" data-tab="guias">Guias Externos</div>
+      <div class="tab tab-admin" data-tab="fechamento">Fechamento</div>
+      <div class="tab tab-admin" data-tab="dashboard">Dashboard</div>
+      <div class="tab tab-admin" data-tab="relatorio">Relatorio</div>
     </div>
   </div>
 </div>
@@ -193,18 +195,18 @@ th:not(:first-child),td:not(:first-child){text-align:right}
         <div class="form-group"><label>Guia</label><select id="f-guia"><option value="">Selecione</option></select></div>
         <div class="form-group"><label>Data do Tour</label><input type="date" id="f-dataTour"></div>
         <div class="form-group"><label>Pessoas</label><input type="number" id="f-pessoas" min="1" max="50" placeholder="0"></div>
-        <div class="form-group"><label>Valor Total (USD)</label><input type="number" id="f-valorUsd" step="0.01" placeholder="0.00"></div>
-        <div class="form-group"><label>Cambio do dia</label><input type="number" id="f-cambio" step="0.01" placeholder="5.20"></div>
-        <div class="form-group"><label>Valor BRL</label><input type="number" id="f-valorBrl" step="0.01" placeholder="0.00"></div>
-        <div class="form-group"><label>Forma Pagamento</label><select id="f-pagamento"><option value="">Selecione</option></select></div>
-        <div class="form-group"><label>Sinal</label><input type="number" id="f-sinal" step="0.01" placeholder="0.00"></div>
-        <div class="form-group"><label>Sinal Pago?</label><select id="f-sinalPago"><option value="NAO">NAO</option><option value="SIM">SIM</option></select></div>
-        <div class="form-group"><label>Restante</label><input type="number" id="f-restante" step="0.01" placeholder="0.00"></div>
-        <div class="form-group"><label>Restante Pago?</label><select id="f-restantePago"><option value="NAO">NAO</option><option value="SIM">SIM</option></select></div>
-        <div class="form-group"><label>Despesa Guia (BRL)</label><input type="number" id="f-despesa" step="0.01" placeholder="0.00"></div>
-        <div class="form-group"><label>Liquido</label><input type="text" id="f-liquido" readonly></div>
-        <div class="form-group"><label>Diego</label><input type="text" id="f-diego" readonly></div>
-        <div class="form-group"><label>Mayra+Totti</label><input type="text" id="f-mt" readonly></div>
+        <div class="form-group fin-only"><label>Valor Total (USD)</label><input type="number" id="f-valorUsd" step="0.01" placeholder="0.00"></div>
+        <div class="form-group fin-only"><label>Cambio do dia</label><input type="number" id="f-cambio" step="0.01" placeholder="5.20"></div>
+        <div class="form-group fin-only"><label>Valor BRL</label><input type="number" id="f-valorBrl" step="0.01" placeholder="0.00"></div>
+        <div class="form-group fin-only"><label>Forma Pagamento</label><select id="f-pagamento"><option value="">Selecione</option></select></div>
+        <div class="form-group fin-only"><label>Sinal</label><input type="number" id="f-sinal" step="0.01" placeholder="0.00"></div>
+        <div class="form-group fin-only"><label>Sinal Pago?</label><select id="f-sinalPago"><option value="NAO">NAO</option><option value="SIM">SIM</option></select></div>
+        <div class="form-group fin-only"><label>Restante</label><input type="number" id="f-restante" step="0.01" placeholder="0.00"></div>
+        <div class="form-group fin-only"><label>Restante Pago?</label><select id="f-restantePago"><option value="NAO">NAO</option><option value="SIM">SIM</option></select></div>
+        <div class="form-group fin-only"><label>Despesa Guia (BRL)</label><input type="number" id="f-despesa" step="0.01" placeholder="0.00"></div>
+        <div class="form-group fin-only"><label>Liquido</label><input type="text" id="f-liquido" readonly></div>
+        <div class="form-group fin-only"><label>Diego</label><input type="text" id="f-diego" readonly></div>
+        <div class="form-group fin-only"><label>Mayra+Totti</label><input type="text" id="f-mt" readonly></div>
         <div class="form-group"><label>Status</label><select id="f-status"><option value="CONFIRMADO">CONFIRMADO</option><option value="PENDENTE">PENDENTE</option><option value="CANCELADO">CANCELADO</option></select></div>
         <div class="form-group"><label>Observacoes</label><input type="text" id="f-obs" placeholder="Opcional"></div>
       </div>
@@ -219,7 +221,7 @@ th:not(:first-child),td:not(:first-child){text-align:right}
       <select id="filterStatus"><option value="">Todos status</option><option value="CONFIRMADO">Confirmado</option><option value="PENDENTE">Pendente</option><option value="CANCELADO">Cancelado</option></select>
     </div>
     <div class="table-wrap"><table id="tblAll"><thead><tr>
-      <th>Data Tour</th><th>Cliente</th><th>Destino</th><th>Dur.</th><th>Guia</th><th>Pess.</th><th>BRL</th><th>Status</th><th></th>
+      <th>Data Tour</th><th>Cliente</th><th>Destino</th><th>Dur.</th><th>Guia</th><th>Pess.</th><th class="fin-only">BRL</th><th>Status</th><th></th>
     </tr></thead><tbody></tbody></table></div>
     <div class="empty" id="emptyAll">Nenhum tour cadastrado ainda.</div>
   </div>
@@ -610,7 +612,7 @@ function renderTourTable() {
     const semDesp = t.status !== 'CANCELADO' && t.guia !== 'A DEFINIR' && (!t.despesaGuia || t.despesaGuia === 0);
     const guiaCell = isADefinir ? `<span style="color:var(--orange);font-weight:600">${t.guia}</span><span class="alert-chip alert-guia">!</span>` : (t.guia||'-');
     const despAlert = semDesp ? '<span class="alert-chip alert-desp" title="Sem despesa">$ ?</span>' : '';
-    tr.innerHTML = `<td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente||'-'}</td><td style="text-align:left">${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${guiaCell}</td><td>${t.pessoas||0}</td><td>${fmtBrl(t.valorBrl)}${despAlert}</td><td><span class="tag ${sc}">${t.status}</span></td><td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" data-edit="${t.id}">editar</span> <span style="cursor:pointer;color:var(--red);font-size:0.78rem;margin-left:6px" data-del="${t.id}">x</span></td>`;
+    tr.innerHTML = `<td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente||'-'}</td><td style="text-align:left">${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${guiaCell}</td><td>${t.pessoas||0}</td><td class="fin-only">${fmtBrl(t.valorBrl)}${despAlert}</td><td><span class="tag ${sc}">${t.status}</span></td><td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" data-edit="${t.id}">editar</span> <span style="cursor:pointer;color:var(--red);font-size:0.78rem;margin-left:6px" data-del="${t.id}">x</span></td>`;
     tbody.appendChild(tr);
   });
   tbody.querySelectorAll('[data-edit]').forEach(el => el.addEventListener('click', () => {
@@ -818,9 +820,9 @@ db.collection('folgas').onSnapshot(snap => {
 
 <script>
 const USERS = {
-  'eididiego': '54b7ea3bed0e13b1613fe139d6ca4e300d5a0f0356d142e233356bbfb544b5cb',
-  'thiago': '4717901830e30c0d4fd1bb389ae1fe54a8b3c20b5c058e201ad1f113ee682317',
-  'tami': '69a917f134b81fe9b494900fdb37ff8334e6e7f8f1b0e02a83c7cd08f8a094be'
+  'eididiego': { hash: '54b7ea3bed0e13b1613fe139d6ca4e300d5a0f0356d142e233356bbfb544b5cb', role: 'admin' },
+  'thiago': { hash: '4717901830e30c0d4fd1bb389ae1fe54a8b3c20b5c058e201ad1f113ee682317', role: 'vendedor' },
+  'tami': { hash: '69a917f134b81fe9b494900fdb37ff8334e6e7f8f1b0e02a83c7cd08f8a094be', role: 'admin' }
 };
 
 async function sha256(str) {
@@ -828,9 +830,11 @@ async function sha256(str) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
-function showApp() {
+function showApp(user) {
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appWrap').classList.add('visible');
+  const role = USERS[user] ? USERS[user].role : 'vendedor';
+  if (role === 'vendedor') document.body.classList.add('role-vendedor');
 }
 
 async function doLogin() {
@@ -839,9 +843,9 @@ async function doLogin() {
   const errEl = document.getElementById('loginErr');
   if (!user || !pass) { errEl.textContent = 'Preencha usuario e senha.'; return; }
   const hash = await sha256(pass);
-  if (USERS[user] && USERS[user] === hash) {
+  if (USERS[user] && USERS[user].hash === hash) {
     sessionStorage.setItem('pj_user', user);
-    showApp();
+    showApp(user);
     errEl.textContent = '';
   } else {
     errEl.textContent = 'Usuario ou senha incorretos.';
@@ -852,7 +856,8 @@ document.getElementById('loginPass').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();
 });
 
-if (sessionStorage.getItem('pj_user')) { showApp(); }
+const savedUser = sessionStorage.getItem('pj_user');
+if (savedUser) { showApp(savedUser); }
 </script>
 </body>
 </html>
