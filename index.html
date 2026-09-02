@@ -198,7 +198,7 @@ body.role-guia .manage-folga{display:none!important}
       <div class="form-grid" id="tourForm">
         <div class="form-group"><label>Data da Venda</label><input type="date" id="f-dataVenda"></div>
         <div class="form-group"><label>Cliente</label><input type="text" id="f-cliente" placeholder="Nome completo"></div>
-        <div class="form-group"><label>Telefone</label><input type="text" id="f-telefone" placeholder="+55 11 99999-9999"></div>
+
         <div class="form-group"><label>Destino</label><select id="f-destino"><option value="">Selecione</option></select></div>
         <div class="form-group"><label>Duracao</label><select id="f-duracao"><option value="">Selecione</option><option value="3h">3 horas</option><option value="4h">4 horas</option><option value="5h">5 horas</option><option value="6h">6 horas</option><option value="7h">7 horas</option><option value="8h">8 horas</option><option value="10h">10 horas</option><option value="DIA">Dia inteiro</option></select></div>
         <div class="form-group"><label>Extensao</label><select id="f-extensao"><option value="NAO">NAO</option><option value="SIM">SIM</option></select></div>
@@ -448,9 +448,12 @@ function recalcForm() {
 }
 ['f-valorUsd','f-cambio','f-despesa','f-guia'].forEach(id => document.getElementById(id).addEventListener('input', recalcForm));
 document.getElementById('f-guia').addEventListener('change', recalcForm);
+document.getElementById('f-restantePago').addEventListener('change', () => {
+  document.getElementById('f-status').value = document.getElementById('f-restantePago').value === 'SIM' ? 'CONFIRMADO' : 'PENDENTE';
+});
 
 function clearForm() {
-  ['f-dataVenda','f-cliente','f-telefone','f-pessoas','f-valorUsd','f-cambio','f-despesa','f-obs'].forEach(id => document.getElementById(id).value = '');
+  ['f-dataVenda','f-cliente','f-pessoas','f-valorUsd','f-cambio','f-despesa','f-obs'].forEach(id => document.getElementById(id).value = '');
   ['f-destino','f-guia','f-pagamento','f-duracao'].forEach(id => document.getElementById(id).value = '');
   ['f-extensao','f-sinalPago','f-restantePago'].forEach(id => document.getElementById(id).value = 'NAO');
   document.getElementById('f-status').value = 'CONFIRMADO';
@@ -472,7 +475,7 @@ function getFormData() {
   return {
     dataVenda: document.getElementById('f-dataVenda').value,
     cliente: document.getElementById('f-cliente').value.toUpperCase().trim(),
-    telefone: document.getElementById('f-telefone').value.trim(),
+    telefone: '',
     destino: document.getElementById('f-destino').value,
     duracao: document.getElementById('f-duracao').value,
     extensao: document.getElementById('f-extensao').value,
@@ -497,7 +500,7 @@ function getFormData() {
 function fillForm(t) {
   document.getElementById('f-dataVenda').value = t.dataVenda || '';
   document.getElementById('f-cliente').value = t.cliente || '';
-  document.getElementById('f-telefone').value = t.telefone || '';
+
   document.getElementById('f-destino').value = t.destino || '';
   document.getElementById('f-duracao').value = t.duracao || '';
   document.getElementById('f-extensao').value = t.extensao || 'NAO';
@@ -658,7 +661,7 @@ function showTourDetail(t) {
   const dur = t.duracao || '-';
   const ext = t.extensao === 'SIM' ? 'Sim' : 'Nao';
   const pess = t.pessoas || 0;
-  let body = `<b>Cliente:</b> ${t.cliente||'-'}<br><b>Telefone:</b> ${t.telefone||'-'}<br><b>Destino:</b> ${t.destino||'-'}<br><b>Duracao:</b> ${dur}<br><b>Extensao:</b> ${ext}<br><b>Pessoas:</b> ${pess}<br><b>Data:</b> ${fmtDate(t.dataTour)}<br><b>Guia:</b> ${t.guia||'-'}<br><b>Status:</b> ${t.status||'-'}`;
+  let body = `<b>Cliente:</b> ${t.cliente||'-'}<br><b>Destino:</b> ${t.destino||'-'}<br><b>Duracao:</b> ${dur}<br><b>Extensao:</b> ${ext}<br><b>Pessoas:</b> ${pess}<br><b>Data:</b> ${fmtDate(t.dataTour)}<br><b>Guia:</b> ${t.guia||'-'}<br><b>Status:</b> ${t.status||'-'}`;
   if (!loggedGuiaNome) body += `<br><b>Valor USD:</b> ${fmtUsd(t.valorUsd)}<br><b>Valor BRL:</b> ${fmtBrl(t.valorBrl)}<br><b>Pagamento:</b> ${t.formaPagamento||'-'}`;
   if (t.obs) body += `<br><b>Obs:</b> ${t.obs}`;
   document.getElementById('detailContent').innerHTML = body;
