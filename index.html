@@ -298,7 +298,8 @@ th:not(:first-child),td:not(:first-child){text-align:right}
     <h3>Adicionar Folga</h3>
     <div style="display:flex;flex-direction:column;gap:12px">
       <div class="form-group"><label>Guia</label><select id="fg-guia"></select></div>
-      <div class="form-group"><label>Data</label><input type="date" id="fg-data"></div>
+      <div class="form-group"><label>Data Inicio</label><input type="date" id="fg-data"></div>
+      <div class="form-group"><label>Data Fim (opcional)</label><input type="date" id="fg-dataFim"></div>
       <div class="form-group"><label>Motivo</label><input type="text" id="fg-motivo" placeholder="Ex: Viagem pessoal"></div>
       <div class="form-row" style="margin-top:0.5rem">
         <button class="btn btn-primary" id="btnSalvarFolga">Salvar</button>
@@ -491,19 +492,30 @@ async function deleteTour(id) {
 // FOLGAS
 document.getElementById('btnFolga').addEventListener('click', () => {
   document.getElementById('fg-data').value = '';
+  document.getElementById('fg-dataFim').value = '';
   document.getElementById('fg-motivo').value = '';
   document.getElementById('modalFolga').classList.add('open');
 });
 document.getElementById('btnCancelFolga').addEventListener('click', () => document.getElementById('modalFolga').classList.remove('open'));
 document.getElementById('btnSalvarFolga').addEventListener('click', async () => {
   const guia = document.getElementById('fg-guia').value;
-  const data = document.getElementById('fg-data').value;
+  const dataInicio = document.getElementById('fg-data').value;
+  const dataFim = document.getElementById('fg-dataFim').value;
   const motivo = document.getElementById('fg-motivo').value.trim();
-  if (!guia || !data) { toast('Preencha guia e data.', false); return; }
+  if (!guia || !dataInicio) { toast('Preencha guia e data inicio.', false); return; }
   try {
-    await db.collection('folgas').add({ guia, data, motivo, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    const dates = [];
+    const start = new Date(dataInicio + 'T12:00:00');
+    const end = dataFim ? new Date(dataFim + 'T12:00:00') : start;
+    if (end < start) { toast('Data fim deve ser depois da data inicio.', false); return; }
+    for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+      dates.push(dt.toISOString().slice(0, 10));
+    }
+    for (const d of dates) {
+      await db.collection('folgas').add({ guia, data: d, motivo, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    }
     document.getElementById('modalFolga').classList.remove('open');
-    toast('Folga adicionada!');
+    toast(`${dates.length} folga(s) adicionada(s)!`);
   } catch(e) { toast('Erro: ' + e.message, false); }
 });
 
@@ -567,7 +579,7 @@ function renderCalendario() {
     if (dayTours[d]) dayTours[d].forEach(t => {
       const cls = t.guia === 'A DEFINIR' ? 'cal-definir' : SOCIOS.includes(t.guia) ? 'cal-tour-socio' : 'cal-tour';
       const dur = t.duracao ? ' '+t.duracao : '';
-      html += `<div class="cal-chip ${cls}" title="${t.guia}: ${t.destino}${dur} - ${t.cliente} (${t.pessoas}p)">${t.guia}${dur}</div>`;
+      html += `<div class="cal-chip ${cls}" title="${t.guia}: ${t.destino}${dur} - ${t.cliente} (${t.pessoas}p)">${t.guia} ${t.destino}${dur}</div>`;
     });
     html += '</div>';
   }
