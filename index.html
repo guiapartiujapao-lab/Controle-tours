@@ -176,6 +176,8 @@ body.role-vendedor .tab-admin{display:none!important}
       <div class="tab tab-admin" data-tab="fechamento">Fechamento</div>
       <div class="tab tab-admin" data-tab="dashboard">Dashboard</div>
       <div class="tab tab-admin" data-tab="relatorio">Relatorio</div>
+      <div class="tab tab-admin" data-tab="metricas">Metricas</div>
+      <div class="tab tab-admin" data-tab="backup">Backup</div>
     </div>
   </div>
 </div>
@@ -293,6 +295,31 @@ body.role-vendedor .tab-admin{display:none!important}
     </div>
     <div class="report-box" id="reportContent">Selecione um mes e clique em "Gerar Relatorio".</div>
   </div>
+
+  <div class="panel" id="p-metricas">
+    <h2 class="section-title">Metricas de Performance</h2>
+    <p class="section-sub">Indicadores consolidados de todos os tours confirmados.</p>
+    <div class="filter-row">
+      <select id="metricaMes"><option value="">Todos os meses</option></select>
+    </div>
+    <div class="stats" id="statsMetricas"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem" id="metricasGrid">
+      <div class="card"><h3 style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;color:var(--ink)">Ranking de Clientes (tours)</h3><div id="metClienteRank"></div></div>
+      <div class="card"><h3 style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;color:var(--ink)">Ticket Medio por Destino (USD)</h3><div id="metTicketDest"></div></div>
+      <div class="card"><h3 style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;color:var(--ink)">Forma de Pagamento</h3><div id="metPagamento"></div></div>
+      <div class="card"><h3 style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;color:var(--ink)">Tours por Mes</h3><div id="metMensal"></div></div>
+    </div>
+  </div>
+
+  <div class="panel" id="p-backup">
+    <h2 class="section-title">Backup dos Dados</h2>
+    <p class="section-sub">Exporte todos os dados do sistema. Recomendado fazer semanalmente.</p>
+    <div class="card" style="text-align:center;padding:2rem">
+      <p style="font-size:0.9rem;color:var(--ink-soft);margin-bottom:1.5rem">O backup inclui todos os tours e folgas cadastrados no Firebase.</p>
+      <button class="btn btn-primary" id="btnBackup" style="font-size:1rem;padding:0.75rem 2rem">Exportar Backup (JSON)</button>
+      <p id="backupInfo" style="font-size:0.78rem;color:var(--ink-muted);margin-top:1rem"></p>
+    </div>
+  </div>
 </div>
 
 <div class="modal-bg" id="modalFolga">
@@ -352,6 +379,7 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
   t.classList.add('active');
   document.getElementById('p-' + t.dataset.tab).classList.add('active');
   if (t.dataset.tab === 'calendario') renderCalendario();
+  if (t.dataset.tab === 'metricas') renderMetricas();
 }));
 
 function toast(msg, ok=true) {
@@ -478,6 +506,12 @@ document.getElementById('btnSalvar').addEventListener('click', async () => {
   if (!data.cliente || !data.destino || !data.guia || !data.dataTour) {
     toast('Preencha cliente, destino, guia e data do tour.', false); return;
   }
+  if (data.guia !== 'A DEFINIR') {
+    const conflito = allTours.find(t => t.id !== editingId && t.guia === data.guia && t.dataTour === data.dataTour && t.status !== 'CANCELADO');
+    if (conflito) {
+      if (!confirm(`CONFLITO: ${data.guia} ja tem tour em ${data.dataTour} (${conflito.destino} - ${conflito.cliente}).\n\nDeseja salvar mesmo assim?`)) return;
+    }
+  }
   try {
     if (editingId) { await db.collection('tours').doc(editingId).set(data); toast('Tour atualizado!'); }
     else { await db.collection('tours').add(data); toast('Tour salvo!'); }
@@ -592,7 +626,7 @@ function renderCalendario() {
 }
 
 // RENDER
-function renderAll() { renderTourTable(); renderSocios(); renderGuias(); renderFechamento(); renderDashboard(); renderCalendario(); renderFolgaTable(); updateMonthFilters(); }
+function renderAll() { renderTourTable(); renderSocios(); renderGuias(); renderFechamento(); renderDashboard(); renderCalendario(); renderFolgaTable(); updateMonthFilters(); renderMetricas(); }
 function getConfirmed() { return allTours.filter(t => t.status === 'CONFIRMADO'); }
 
 function renderTourTable() {
@@ -730,9 +764,9 @@ function updateMonthFilters() {
   const months = new Set();
   allTours.forEach(t => { const k = monthKey(t.dataTour); if (k) months.add(k); });
   const sorted = [...months].sort().reverse();
-  [document.getElementById('filterMes'), document.getElementById('relMes')].forEach(sel => {
+  [document.getElementById('filterMes'), document.getElementById('relMes'), document.getElementById('metricaMes')].forEach(sel => {
     const cur = sel.value;
-    const isFilter = sel.id === 'filterMes';
+    const isFilter = sel.id === 'filterMes' || sel.id === 'metricaMes';
     sel.innerHTML = isFilter ? '<option value="">Todos os meses</option>' : '';
     sorted.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = monthLabel(m); sel.appendChild(o); });
     if (cur && sorted.includes(cur)) sel.value = cur;
@@ -797,6 +831,82 @@ document.getElementById('btnRelatorio').addEventListener('click', () => {
     if (semDesp > 0) report += `  ${semDesp} tour(s) sem despesa preenchida\n`;
   }
   document.getElementById('reportContent').textContent = report;
+});
+
+// METRICAS
+function renderMetricas() {
+  const mesF = document.getElementById('metricaMes').value;
+  let conf = getConfirmed();
+  if (mesF) conf = conf.filter(t => monthKey(t.dataTour) === mesF);
+  if (!conf.length) {
+    document.getElementById('statsMetricas').innerHTML = '<div class="empty">Nenhum tour confirmado no periodo.</div>';
+    ['metClienteRank','metTicketDest','metPagamento','metMensal'].forEach(id => document.getElementById(id).innerHTML = '');
+    return;
+  }
+  const totalBrl = conf.reduce((s,t) => s + (t.valorBrl||0), 0);
+  const totalUsd = conf.reduce((s,t) => s + (t.valorUsd||0), 0);
+  const totalPess = conf.reduce((s,t) => s + (t.pessoas||0), 0);
+  const clienteSet = new Set(conf.map(t => t.cliente));
+  const ticketMedio = conf.length ? totalUsd / conf.length : 0;
+  const ticketMedioBrl = conf.length ? totalBrl / conf.length : 0;
+  const comExt = conf.filter(t => t.extensao === 'SIM').length;
+  const taxaExt = conf.length ? (comExt / conf.length * 100) : 0;
+  const mediaPess = conf.length ? totalPess / conf.length : 0;
+  const recorrentes = conf.length > 0 ? Object.entries(conf.reduce((a,t) => { a[t.cliente] = (a[t.cliente]||0)+1; return a; }, {})).filter(([,c]) => c > 1).length : 0;
+  renderStats('statsMetricas', [
+    ['Tours', conf.length, ''],
+    ['Clientes Unicos', clienteSet.size, ''],
+    ['Clientes Recorrentes', recorrentes, 'blue'],
+    ['Ticket Medio USD', fmtUsd(ticketMedio), ''],
+    ['Ticket Medio BRL', fmtBrl(ticketMedioBrl), 'green'],
+    ['Media Pessoas/Tour', mediaPess.toFixed(1), ''],
+    ['Conversao Extensao', taxaExt.toFixed(1) + '%', taxaExt > 20 ? 'green' : 'accent'],
+    ['Total Pessoas', totalPess, 'blue']
+  ]);
+  const clienteCount = {};
+  conf.forEach(t => { clienteCount[t.cliente] = (clienteCount[t.cliente]||0) + 1; });
+  const topClientes = Object.entries(clienteCount).sort((a,b) => b[1] - a[1]).slice(0, 10);
+  const maxCli = Math.max(...topClientes.map(x => x[1]), 1);
+  document.getElementById('metClienteRank').innerHTML = topClientes.map(([c, n]) =>
+    `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8rem"><span style="min-width:120px;text-align:right;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c}</span><div style="flex:1;height:20px;background:var(--surface-alt);border-radius:3px;overflow:hidden"><div style="height:100%;width:${n/maxCli*100}%;background:var(--accent);border-radius:3px"></div></div><span style="width:30px;font-weight:600">${n}</span></div>`
+  ).join('');
+  const destData = {};
+  conf.forEach(t => { if (!destData[t.destino]) destData[t.destino] = { total: 0, count: 0 }; destData[t.destino].total += (t.valorUsd||0); destData[t.destino].count++; });
+  const ticketDest = Object.entries(destData).map(([d, v]) => [d, v.count ? v.total / v.count : 0]).sort((a,b) => b[1] - a[1]);
+  const maxTicket = Math.max(...ticketDest.map(x => x[1]), 1);
+  document.getElementById('metTicketDest').innerHTML = ticketDest.map(([d, avg]) =>
+    `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8rem"><span style="width:80px;text-align:right;color:var(--ink-soft)">${d}</span><div style="flex:1;height:20px;background:var(--surface-alt);border-radius:3px;overflow:hidden"><div style="height:100%;width:${avg/maxTicket*100}%;background:var(--blue);border-radius:3px"></div></div><span style="width:50px;font-weight:600">${fmtUsd(avg)}</span></div>`
+  ).join('');
+  const pagCount = {};
+  conf.forEach(t => { const p = t.formaPagamento || 'N/A'; pagCount[p] = (pagCount[p]||0) + 1; });
+  const topPag = Object.entries(pagCount).sort((a,b) => b[1] - a[1]);
+  const maxPag = Math.max(...topPag.map(x => x[1]), 1);
+  document.getElementById('metPagamento').innerHTML = topPag.map(([p, n]) =>
+    `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8rem"><span style="min-width:100px;text-align:right;color:var(--ink-soft);font-size:0.72rem">${p}</span><div style="flex:1;height:20px;background:var(--surface-alt);border-radius:3px;overflow:hidden"><div style="height:100%;width:${n/maxPag*100}%;background:var(--green);border-radius:3px"></div></div><span style="width:40px;font-weight:600">${n} (${(n/conf.length*100).toFixed(0)}%)</span></div>`
+  ).join('');
+  const mesCount = {};
+  conf.forEach(t => { const k = monthKey(t.dataTour); if (k) mesCount[k] = (mesCount[k]||0) + 1; });
+  const meses = Object.entries(mesCount).sort((a,b) => a[0].localeCompare(b[0]));
+  const maxMes = Math.max(...meses.map(x => x[1]), 1);
+  document.getElementById('metMensal').innerHTML = meses.map(([m, n]) =>
+    `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8rem"><span style="width:100px;text-align:right;color:var(--ink-soft)">${monthLabel(m)}</span><div style="flex:1;height:20px;background:var(--surface-alt);border-radius:3px;overflow:hidden"><div style="height:100%;width:${n/maxMes*100}%;background:var(--purple);border-radius:3px"></div></div><span style="width:30px;font-weight:600">${n}</span></div>`
+  ).join('');
+}
+document.getElementById('metricaMes').addEventListener('change', renderMetricas);
+
+// BACKUP
+document.getElementById('btnBackup').addEventListener('click', () => {
+  const data = { tours: allTours, folgas: allFolgas, exportDate: new Date().toISOString(), totalTours: allTours.length, totalFolgas: allFolgas.length };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dateStr = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `backup-partiu-japao-${dateStr}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  document.getElementById('backupInfo').textContent = `Ultimo backup: ${new Date().toLocaleString('pt-BR')} - ${allTours.length} tours, ${allFolgas.length} folgas`;
+  toast('Backup exportado!');
 });
 
 // FIREBASE REAL-TIME LISTENERS
