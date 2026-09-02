@@ -152,7 +152,7 @@ body.role-guia .fin-only{display:none!important}
 body.role-guia .tab-admin{display:none!important}
 body.role-guia .tab-cadastro{display:none!important}
 body.role-guia #p-cadastro{display:none!important}
-body.role-guia .manage-folga{display:none!important}
+body.role-guia .manage-folga-table{display:none!important}
 .btn-logout{background:none;border:1px solid var(--rule);color:var(--ink-muted);padding:0.3rem 0.8rem;border-radius:6px;font-size:0.78rem;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .15s}
 .btn-logout:hover{border-color:var(--accent);color:var(--accent)}
 </style>
@@ -186,6 +186,7 @@ body.role-guia .manage-folga{display:none!important}
       <div class="tab tab-admin" data-tab="metricas">Metricas</div>
       <div class="tab tab-admin" data-tab="backup">Backup</div>
     </div>
+    <button class="btn-logout" id="btnSenha" title="Redefinir Senha" style="margin-right:4px">Senha</button>
     <button class="btn-logout" id="btnLogout" title="Sair">Sair</button>
   </div>
 </div>
@@ -242,7 +243,7 @@ body.role-guia .manage-folga{display:none!important}
     <p class="section-sub">Visualize a disponibilidade dos guias e gerencie folgas.</p>
     <div class="filter-row">
       <select id="calGuiaFilter"><option value="">Todos os guias</option></select>
-      <button class="btn btn-secondary btn-sm manage-folga" id="btnFolga">+ Adicionar Folga</button>
+      <button class="btn btn-secondary btn-sm" id="btnFolga">+ Adicionar Folga</button>
     </div>
     <div class="cal-nav">
       <button id="calPrev">&larr;</button>
@@ -256,7 +257,7 @@ body.role-guia .manage-folga{display:none!important}
       <span><i style="background:var(--orange-soft);border:1px solid var(--orange)"></i> A Definir</span>
       <span><i style="background:var(--red-soft);border:1px solid var(--red)"></i> Folga</span>
     </div>
-    <div class="manage-folga" style="margin-top:1.5rem">
+    <div class="manage-folga-table" style="margin-top:1.5rem">
       <h3 style="font-size:0.95rem;font-weight:600;margin-bottom:0.75rem">Folgas Cadastradas</h3>
       <div class="table-wrap"><table id="tblFolgas"><thead><tr>
         <th>Data</th><th>Guia</th><th style="text-align:left">Motivo</th><th></th>
@@ -353,6 +354,21 @@ body.role-guia .manage-folga{display:none!important}
     <div id="detailContent" style="font-size:0.9rem;line-height:1.7"></div>
     <div style="margin-top:1rem;text-align:right">
       <button class="btn btn-secondary" id="btnCloseDetail">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalSenha">
+  <div class="modal">
+    <h3>Redefinir Senha</h3>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="form-group"><label>Senha Atual</label><input type="password" id="pw-atual"></div>
+      <div class="form-group"><label>Nova Senha</label><input type="password" id="pw-nova"></div>
+      <div class="form-group"><label>Confirmar Nova Senha</label><input type="password" id="pw-confirma"></div>
+      <div class="form-row" style="margin-top:0.5rem">
+        <button class="btn btn-primary" id="btnSalvarSenha">Salvar</button>
+        <button class="btn btn-secondary" id="btnCancelSenha">Cancelar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -557,6 +573,13 @@ document.getElementById('btnFolga').addEventListener('click', () => {
   document.getElementById('fg-data').value = '';
   document.getElementById('fg-dataFim').value = '';
   document.getElementById('fg-motivo').value = '';
+  const fgSel2 = document.getElementById('fg-guia');
+  if (loggedGuiaNome) {
+    fgSel2.value = loggedGuiaNome;
+    fgSel2.disabled = true;
+  } else {
+    fgSel2.disabled = false;
+  }
   document.getElementById('modalFolga').classList.add('open');
 });
 document.getElementById('btnCancelFolga').addEventListener('click', () => document.getElementById('modalFolga').classList.remove('open'));
@@ -986,15 +1009,15 @@ const USERS = {
   'eididiego': { hash: '54b7ea3bed0e13b1613fe139d6ca4e300d5a0f0356d142e233356bbfb544b5cb', role: 'admin' },
   'thiago': { hash: '4717901830e30c0d4fd1bb389ae1fe54a8b3c20b5c058e201ad1f113ee682317', role: 'vendedor' },
   'tami': { hash: '69a917f134b81fe9b494900fdb37ff8334e6e7f8f1b0e02a83c7cd08f8a094be', role: 'admin' },
-  'mayra': { hash: '1b44762487d468d7d8774f0eb2019fd597b8d92762ae8c092b949e7e9343faa1', role: 'guia', guiaNome: 'MAYRA' },
-  'totti': { hash: '01a460651ea60a2d9bf9ca9873bd89489339fe92dbfab37a68ae36640ae940b0', role: 'guia', guiaNome: 'TOTTI' },
-  'gabrielle': { hash: 'a3495fbc0cd870d3610d4f4dc472f76a72e7ed82a5d36ed532559c6f851cbafa', role: 'guia', guiaNome: 'GABRIELLE' },
-  'jonas': { hash: 'ed4ddcf36b70ca40f333a872b424c85d1a818a7da022c39b29ebf74b1a8c1a35', role: 'guia', guiaNome: 'JONAS' },
-  'larissa': { hash: '7c5110dd19545109840166059d7710cf52464ebe52443d25ce70fd6081b55bcc', role: 'guia', guiaNome: 'LARISSA' },
-  'clinte': { hash: 'e6b89c142c6bd5276eec6713f56a91064817e25631970549a2e7a554b602db88', role: 'guia', guiaNome: 'CLINTE' },
-  'lorran': { hash: 'f0050eff81179341406ec900519765d8088c541b106d2260089331a9348070c8', role: 'guia', guiaNome: 'LORRAN' },
-  'leonardo': { hash: 'ba4782816c9639bd0d3c2d3d579e338fe9cf2c471d8ae9adc9baafe55f08ce63', role: 'guia', guiaNome: 'LEONARDO' },
-  'ketlin': { hash: '5b19a2ec50d53ac7066318b8ae5904cc9994dcf5d6bacfe7193eac3b035f5bce', role: 'guia', guiaNome: 'KETLIN' }
+  'mayra': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'MAYRA' },
+  'totti': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'TOTTI' },
+  'gabrielle': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'GABRIELLE' },
+  'jonas': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'JONAS' },
+  'larissa': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'LARISSA' },
+  'clinte': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'CLINTE' },
+  'lorran': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'LORRAN' },
+  'leonardo': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'LEONARDO' },
+  'ketlin': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'KETLIN' }
 };
 
 async function sha256(str) {
@@ -1025,8 +1048,14 @@ async function doLogin() {
   const pass = document.getElementById('loginPass').value;
   const errEl = document.getElementById('loginErr');
   if (!user || !pass) { errEl.textContent = 'Preencha usuario e senha.'; return; }
+  if (!USERS[user]) { errEl.textContent = 'Usuario ou senha incorretos.'; return; }
   const hash = await sha256(pass);
-  if (USERS[user] && USERS[user].hash === hash) {
+  let storedHash = USERS[user].hash;
+  try {
+    const doc = await db.collection('passwords').doc(user).get();
+    if (doc.exists && doc.data().hash) storedHash = doc.data().hash;
+  } catch(e) {}
+  if (hash === storedHash) {
     sessionStorage.setItem('pj_user', user);
     showApp(user);
     errEl.textContent = '';
@@ -1042,6 +1071,38 @@ document.getElementById('loginPass').addEventListener('keydown', e => {
 document.getElementById('btnLogout').addEventListener('click', () => {
   sessionStorage.removeItem('pj_user');
   location.reload();
+});
+
+document.getElementById('btnSenha').addEventListener('click', () => {
+  document.getElementById('pw-atual').value = '';
+  document.getElementById('pw-nova').value = '';
+  document.getElementById('pw-confirma').value = '';
+  document.getElementById('modalSenha').classList.add('open');
+});
+document.getElementById('btnCancelSenha').addEventListener('click', () => document.getElementById('modalSenha').classList.remove('open'));
+document.getElementById('btnSalvarSenha').addEventListener('click', async () => {
+  const atual = document.getElementById('pw-atual').value;
+  const nova = document.getElementById('pw-nova').value;
+  const confirma = document.getElementById('pw-confirma').value;
+  if (!atual || !nova || !confirma) { toast('Preencha todos os campos.', false); return; }
+  if (nova.length < 4) { toast('A nova senha deve ter pelo menos 4 caracteres.', false); return; }
+  if (nova !== confirma) { toast('Nova senha e confirmacao nao coincidem.', false); return; }
+  const user = sessionStorage.getItem('pj_user');
+  const hashAtual = await sha256(atual);
+  let storedHash = USERS[user].hash;
+  try {
+    const doc = await db.collection('passwords').doc(user).get();
+    if (doc.exists && doc.data().hash) storedHash = doc.data().hash;
+  } catch(e) {}
+  if (hashAtual !== storedHash) { toast('Senha atual incorreta.', false); return; }
+  const hashNova = await sha256(nova);
+  try {
+    await db.collection('passwords').doc(user).set({ hash: hashNova });
+    document.getElementById('modalSenha').classList.remove('open');
+    toast('Senha alterada com sucesso!');
+  } catch(e) {
+    toast('Erro ao salvar senha. Tente novamente.', false);
+  }
 });
 
 const savedUser = sessionStorage.getItem('pj_user');
