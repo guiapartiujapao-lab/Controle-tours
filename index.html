@@ -134,9 +134,34 @@ th:not(:first-child),td:not(:first-child){text-align:right}
   .cal-day{min-height:60px}
   .cal-chip{font-size:0.55rem}
 }
+#loginScreen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center}
+#loginScreen.hidden{display:none}
+.login-card{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:2.5rem 2rem;width:340px;max-width:90vw;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.08)}
+.login-card .logo-login{font-family:'Noto Sans JP',sans-serif;font-weight:700;font-size:1.4rem;color:var(--accent);margin-bottom:0.3rem}
+.login-card .sub{font-size:0.82rem;color:var(--ink-muted);margin-bottom:1.5rem}
+.login-card input{width:100%;padding:0.6rem 0.8rem;border:1px solid var(--rule);border-radius:6px;font-size:0.9rem;font-family:inherit;background:var(--surface);color:var(--ink);margin-bottom:0.75rem;transition:border-color .15s}
+.login-card input:focus{outline:none;border-color:var(--accent)}
+.login-card button{width:100%;padding:0.65rem;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;margin-top:0.5rem}
+.login-card button:hover{background:var(--accent-hover)}
+.login-err{color:var(--red);font-size:0.8rem;margin-top:0.5rem;min-height:1.2em}
+#appWrap{display:none}
+#appWrap.visible{display:block}
 </style>
 </head>
 <body>
+
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="logo-login">Partiu Japao</div>
+    <div class="sub">Controle de Tours</div>
+    <input type="text" id="loginUser" placeholder="Usuario" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="Senha" autocomplete="current-password">
+    <button onclick="doLogin()">Entrar</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<div id="appWrap">
 <div id="connStatus" class="status-bar">Conectado ao Firebase</div>
 <div class="topbar">
   <div class="topbar-inner">
@@ -776,6 +801,46 @@ db.collection('folgas').onSnapshot(snap => {
   allFolgas = snap.docs.map(d => ({id: d.id, ...d.data()}));
   renderCalendario(); renderFolgaTable();
 }, err => { console.error('Firestore folgas error', err); });
+</script>
+</div><!-- /appWrap -->
+
+<script>
+const USERS = {
+  'eididiego': '54b7ea3bed0e13b1613fe139d6ca4e300d5a0f0356d142e233356bbfb544b5cb',
+  'thiago': '4717901830e30c0d4fd1bb389ae1fe54a8b3c20b5c058e201ad1f113ee682317',
+  'tami': '69a917f134b81fe9b494900fdb37ff8334e6e7f8f1b0e02a83c7cd08f8a094be'
+};
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function showApp() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('appWrap').classList.add('visible');
+}
+
+async function doLogin() {
+  const user = document.getElementById('loginUser').value.trim().toLowerCase();
+  const pass = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginErr');
+  if (!user || !pass) { errEl.textContent = 'Preencha usuario e senha.'; return; }
+  const hash = await sha256(pass);
+  if (USERS[user] && USERS[user] === hash) {
+    sessionStorage.setItem('pj_user', user);
+    showApp();
+    errEl.textContent = '';
+  } else {
+    errEl.textContent = 'Usuario ou senha incorretos.';
+  }
+}
+
+document.getElementById('loginPass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+if (sessionStorage.getItem('pj_user')) { showApp(); }
 </script>
 </body>
 </html>
