@@ -148,6 +148,8 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 #appWrap.visible{display:block}
 body.role-vendedor .fin-only{display:none!important}
 body.role-vendedor .tab-admin{display:none!important}
+.btn-logout{background:none;border:1px solid var(--rule);color:var(--ink-muted);padding:0.3rem 0.8rem;border-radius:6px;font-size:0.78rem;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .15s}
+.btn-logout:hover{border-color:var(--accent);color:var(--accent)}
 </style>
 </head>
 <body>
@@ -179,6 +181,7 @@ body.role-vendedor .tab-admin{display:none!important}
       <div class="tab tab-admin" data-tab="metricas">Metricas</div>
       <div class="tab tab-admin" data-tab="backup">Backup</div>
     </div>
+    <button class="btn-logout" id="btnLogout" title="Sair">Sair</button>
   </div>
 </div>
 
@@ -964,6 +967,11 @@ async function doLogin() {
 
 document.getElementById('loginPass').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();
+});
+
+document.getElementById('btnLogout').addEventListener('click', () => {
+  sessionStorage.removeItem('pj_user');
+  location.reload();
 });
 
 const savedUser = sessionStorage.getItem('pj_user');
