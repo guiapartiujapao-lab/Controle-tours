@@ -148,6 +148,11 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 #appWrap.visible{display:block}
 body.role-vendedor .fin-only{display:none!important}
 body.role-vendedor .tab-admin{display:none!important}
+body.role-guia .fin-only{display:none!important}
+body.role-guia .tab-admin{display:none!important}
+body.role-guia .tab-cadastro{display:none!important}
+body.role-guia #p-cadastro{display:none!important}
+body.role-guia .manage-folga{display:none!important}
 .btn-logout{background:none;border:1px solid var(--rule);color:var(--ink-muted);padding:0.3rem 0.8rem;border-radius:6px;font-size:0.78rem;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .15s}
 .btn-logout:hover{border-color:var(--accent);color:var(--accent)}
 </style>
@@ -171,7 +176,7 @@ body.role-vendedor .tab-admin{display:none!important}
   <div class="topbar-inner">
     <div class="logo jp">Partiu Japao</div>
     <div class="tabs" id="tabs">
-      <div class="tab active" data-tab="cadastro">Cadastro</div>
+      <div class="tab tab-cadastro active" data-tab="cadastro">Cadastro</div>
       <div class="tab" data-tab="calendario">Calendario</div>
       <div class="tab tab-admin" data-tab="socios">Mayra + Totti</div>
       <div class="tab tab-admin" data-tab="guias">Guias Externos</div>
@@ -237,7 +242,7 @@ body.role-vendedor .tab-admin{display:none!important}
     <p class="section-sub">Visualize a disponibilidade dos guias e gerencie folgas.</p>
     <div class="filter-row">
       <select id="calGuiaFilter"><option value="">Todos os guias</option></select>
-      <button class="btn btn-secondary btn-sm" id="btnFolga">+ Adicionar Folga</button>
+      <button class="btn btn-secondary btn-sm manage-folga" id="btnFolga">+ Adicionar Folga</button>
     </div>
     <div class="cal-nav">
       <button id="calPrev">&larr;</button>
@@ -251,7 +256,7 @@ body.role-vendedor .tab-admin{display:none!important}
       <span><i style="background:var(--orange-soft);border:1px solid var(--orange)"></i> A Definir</span>
       <span><i style="background:var(--red-soft);border:1px solid var(--red)"></i> Folga</span>
     </div>
-    <div style="margin-top:1.5rem">
+    <div class="manage-folga" style="margin-top:1.5rem">
       <h3 style="font-size:0.95rem;font-weight:600;margin-bottom:0.75rem">Folgas Cadastradas</h3>
       <div class="table-wrap"><table id="tblFolgas"><thead><tr>
         <th>Data</th><th>Guia</th><th style="text-align:left">Motivo</th><th></th>
@@ -338,6 +343,16 @@ body.role-vendedor .tab-admin{display:none!important}
         <button class="btn btn-primary" id="btnSalvarFolga">Salvar</button>
         <button class="btn btn-secondary" id="btnCancelFolga">Cancelar</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalDetail">
+  <div class="modal">
+    <h3>Detalhes do Tour</h3>
+    <div id="detailContent" style="font-size:0.9rem;line-height:1.7"></div>
+    <div style="margin-top:1rem;text-align:right">
+      <button class="btn btn-secondary" id="btnCloseDetail">Fechar</button>
     </div>
   </div>
 </div>
@@ -542,6 +557,7 @@ document.getElementById('btnFolga').addEventListener('click', () => {
   document.getElementById('modalFolga').classList.add('open');
 });
 document.getElementById('btnCancelFolga').addEventListener('click', () => document.getElementById('modalFolga').classList.remove('open'));
+document.getElementById('btnCloseDetail').addEventListener('click', () => document.getElementById('modalDetail').classList.remove('open'));
 document.getElementById('btnSalvarFolga').addEventListener('click', async () => {
   const guia = document.getElementById('fg-guia').value;
   const dataInicio = document.getElementById('fg-data').value;
@@ -589,7 +605,8 @@ document.getElementById('calNext').addEventListener('click', () => { calMon++; i
 document.getElementById('calGuiaFilter').addEventListener('change', renderCalendario);
 
 function renderCalendario() {
-  const guiaFilter = document.getElementById('calGuiaFilter').value;
+  const guiaFilter = loggedGuiaNome || document.getElementById('calGuiaFilter').value;
+  if (loggedGuiaNome) document.getElementById('calGuiaFilter').closest('.filter-row').style.display = 'none';
   document.getElementById('calMonth').textContent = MESES_NOME[calMon+1] + ' ' + calYear;
   const firstDay = new Date(calYear, calMon, 1);
   const lastDay = new Date(calYear, calMon + 1, 0);
@@ -624,7 +641,7 @@ function renderCalendario() {
     if (dayTours[d]) dayTours[d].forEach(t => {
       const cls = t.guia === 'A DEFINIR' ? 'cal-definir' : SOCIOS.includes(t.guia) ? 'cal-tour-socio' : 'cal-tour';
       const dur = t.duracao ? ' '+t.duracao : '';
-      html += `<div class="cal-chip ${cls}" title="${t.guia}: ${t.destino}${dur} - ${t.cliente} (${t.pessoas}p)">${t.guia} ${t.destino}${dur}</div>`;
+      html += `<div class="cal-chip ${cls}" style="cursor:pointer" data-tourid="${t.id}" title="${t.guia}: ${t.destino}${dur} - ${t.cliente} (${t.pessoas}p)">${t.guia} ${t.destino}${dur}</div>`;
     });
     html += '</div>';
   }
@@ -632,6 +649,20 @@ function renderCalendario() {
   const remainder = totalCells % 7;
   if (remainder > 0) for (let i = 0; i < 7 - remainder; i++) html += '<div class="cal-day other"></div>';
   document.getElementById('calGrid').innerHTML = html;
+  document.querySelectorAll('[data-tourid]').forEach(el => el.addEventListener('click', () => {
+    const t = allTours.find(x => x.id === el.dataset.tourid);
+    if (t) showTourDetail(t);
+  }));
+}
+function showTourDetail(t) {
+  const dur = t.duracao || '-';
+  const ext = t.extensao === 'SIM' ? 'Sim' : 'Nao';
+  const pess = t.pessoas || 0;
+  let body = `<b>Cliente:</b> ${t.cliente||'-'}<br><b>Telefone:</b> ${t.telefone||'-'}<br><b>Destino:</b> ${t.destino||'-'}<br><b>Duracao:</b> ${dur}<br><b>Extensao:</b> ${ext}<br><b>Pessoas:</b> ${pess}<br><b>Data:</b> ${fmtDate(t.dataTour)}<br><b>Guia:</b> ${t.guia||'-'}<br><b>Status:</b> ${t.status||'-'}`;
+  if (!loggedGuiaNome) body += `<br><b>Valor USD:</b> ${fmtUsd(t.valorUsd)}<br><b>Valor BRL:</b> ${fmtBrl(t.valorBrl)}<br><b>Pagamento:</b> ${t.formaPagamento||'-'}`;
+  if (t.obs) body += `<br><b>Obs:</b> ${t.obs}`;
+  document.getElementById('detailContent').innerHTML = body;
+  document.getElementById('modalDetail').classList.add('open');
 }
 
 // RENDER
@@ -950,7 +981,16 @@ db.collection('folgas').onSnapshot(snap => {
 const USERS = {
   'eididiego': { hash: '54b7ea3bed0e13b1613fe139d6ca4e300d5a0f0356d142e233356bbfb544b5cb', role: 'admin' },
   'thiago': { hash: '4717901830e30c0d4fd1bb389ae1fe54a8b3c20b5c058e201ad1f113ee682317', role: 'vendedor' },
-  'tami': { hash: '69a917f134b81fe9b494900fdb37ff8334e6e7f8f1b0e02a83c7cd08f8a094be', role: 'admin' }
+  'tami': { hash: '69a917f134b81fe9b494900fdb37ff8334e6e7f8f1b0e02a83c7cd08f8a094be', role: 'admin' },
+  'mayra': { hash: '1b44762487d468d7d8774f0eb2019fd597b8d92762ae8c092b949e7e9343faa1', role: 'guia', guiaNome: 'MAYRA' },
+  'totti': { hash: '01a460651ea60a2d9bf9ca9873bd89489339fe92dbfab37a68ae36640ae940b0', role: 'guia', guiaNome: 'TOTTI' },
+  'gabrielle': { hash: 'a3495fbc0cd870d3610d4f4dc472f76a72e7ed82a5d36ed532559c6f851cbafa', role: 'guia', guiaNome: 'GABRIELLE' },
+  'jonas': { hash: 'ed4ddcf36b70ca40f333a872b424c85d1a818a7da022c39b29ebf74b1a8c1a35', role: 'guia', guiaNome: 'JONAS' },
+  'larissa': { hash: '7c5110dd19545109840166059d7710cf52464ebe52443d25ce70fd6081b55bcc', role: 'guia', guiaNome: 'LARISSA' },
+  'clinte': { hash: 'e6b89c142c6bd5276eec6713f56a91064817e25631970549a2e7a554b602db88', role: 'guia', guiaNome: 'CLINTE' },
+  'lohan': { hash: 'f0050eff81179341406ec900519765d8088c541b106d2260089331a9348070c8', role: 'guia', guiaNome: 'LOHAN' },
+  'leonardo': { hash: 'ba4782816c9639bd0d3c2d3d579e338fe9cf2c471d8ae9adc9baafe55f08ce63', role: 'guia', guiaNome: 'LEONARDO' },
+  'ketlin': { hash: '5b19a2ec50d53ac7066318b8ae5904cc9994dcf5d6bacfe7193eac3b035f5bce', role: 'guia', guiaNome: 'KETLIN' }
 };
 
 async function sha256(str) {
@@ -958,11 +998,22 @@ async function sha256(str) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
+let loggedGuiaNome = null;
 function showApp(user) {
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appWrap').classList.add('visible');
-  const role = USERS[user] ? USERS[user].role : 'vendedor';
+  const u = USERS[user];
+  const role = u ? u.role : 'vendedor';
   if (role === 'vendedor') document.body.classList.add('role-vendedor');
+  if (role === 'guia') {
+    document.body.classList.add('role-guia');
+    loggedGuiaNome = u.guiaNome;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-tab="calendario"]').classList.add('active');
+    document.getElementById('p-calendario').classList.add('active');
+    renderCalendario();
+  }
 }
 
 async function doLogin() {
