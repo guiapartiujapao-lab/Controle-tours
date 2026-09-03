@@ -203,8 +203,9 @@ body.role-guia .manage-folga-table{display:none!important}
         <div class="form-group"><label>Cliente</label><input type="text" id="f-cliente" placeholder="Nome completo"></div>
 
         <div class="form-group"><label>Destino</label><select id="f-destino"><option value="">Selecione</option></select></div>
-        <div class="form-group"><label>Duracao</label><select id="f-duracao"><option value="">Selecione</option><option value="3h">3 horas</option><option value="4h">4 horas</option><option value="5h">5 horas</option><option value="6h">6 horas</option><option value="7h">7 horas</option><option value="8h">8 horas</option><option value="10h">10 horas</option><option value="DIA">Dia inteiro</option></select></div>
+        <div class="form-group"><label>Duracao</label><select id="f-duracao"><option value="">Selecione</option><option value="3h">3 horas</option><option value="4h">4 horas</option><option value="5h">5 horas</option><option value="6h">6 horas</option><option value="7h">7 horas</option><option value="8h">8 horas</option><option value="10h">10 horas</option><option value="11h">11 horas</option><option value="DIA">Dia inteiro</option></select></div>
         <div class="form-group"><label>Extensao</label><select id="f-extensao"><option value="NAO">NAO</option><option value="SIM">SIM</option></select></div>
+        <div class="form-group" id="grpValorExtensao" style="display:none"><label>Valor Extensao (USD)</label><input type="number" id="f-valorExtensao" step="0.01" placeholder="0.00"></div>
         <div class="form-group"><label>Guia</label><select id="f-guia"><option value="">Selecione</option></select></div>
         <div class="form-group"><label>Data do Tour</label><input type="date" id="f-dataTour"></div>
         <div class="form-group"><label>Pessoas</label><input type="number" id="f-pessoas" min="1" max="50" placeholder="0"></div>
@@ -472,11 +473,20 @@ document.getElementById('f-valorBrl').addEventListener('input', () => { brlManua
 document.getElementById('f-sinal').addEventListener('input', () => { sinalManual = true; });
 document.getElementById('f-restante').addEventListener('input', () => { restanteManual = true; });
 
+document.getElementById('f-extensao').addEventListener('change', () => {
+  const show = document.getElementById('f-extensao').value === 'SIM';
+  document.getElementById('grpValorExtensao').style.display = show ? '' : 'none';
+  if (!show) { document.getElementById('f-valorExtensao').value = ''; }
+  recalcForm();
+});
+document.getElementById('f-valorExtensao').addEventListener('input', recalcForm);
+
 function getBrl() {
   if (brlManual) return parseFloat(document.getElementById('f-valorBrl').value) || 0;
   const usd = parseFloat(document.getElementById('f-valorUsd').value) || 0;
+  const ext = parseFloat(document.getElementById('f-valorExtensao').value) || 0;
   const cambio = parseFloat(document.getElementById('f-cambio').value) || 0;
-  return usd * cambio;
+  return (usd + ext) * cambio;
 }
 function recalcDependents() {
   const brl = getBrl();
@@ -494,8 +504,9 @@ function recalcDependents() {
 }
 function recalcForm() {
   const usd = parseFloat(document.getElementById('f-valorUsd').value) || 0;
+  const ext = parseFloat(document.getElementById('f-valorExtensao').value) || 0;
   const cambio = parseFloat(document.getElementById('f-cambio').value) || 0;
-  const brl = usd * cambio;
+  const brl = (usd + ext) * cambio;
   if (!brlManual) document.getElementById('f-valorBrl').value = brl ? brl.toFixed(2) : '';
   recalcDependents();
 }
@@ -509,6 +520,8 @@ function clearForm() {
   ['f-dataVenda','f-cliente','f-pessoas','f-valorUsd','f-cambio','f-despesa','f-obs'].forEach(id => document.getElementById(id).value = '');
   ['f-destino','f-guia','f-pagamento','f-duracao'].forEach(id => document.getElementById(id).value = '');
   ['f-extensao','f-sinalPago','f-restantePago'].forEach(id => document.getElementById(id).value = 'NAO');
+  document.getElementById('f-valorExtensao').value = '';
+  document.getElementById('grpValorExtensao').style.display = 'none';
   document.getElementById('f-status').value = 'CONFIRMADO';
   ['f-valorBrl','f-sinal','f-restante','f-liquido','f-diego','f-mt'].forEach(id => document.getElementById(id).value = '');
   brlManual = false; sinalManual = false; restanteManual = false;
@@ -519,8 +532,9 @@ document.getElementById('btnLimpar').addEventListener('click', clearForm);
 
 function getFormData() {
   const usd = parseFloat(document.getElementById('f-valorUsd').value) || 0;
+  const ext = parseFloat(document.getElementById('f-valorExtensao').value) || 0;
   const cambio = parseFloat(document.getElementById('f-cambio').value) || 0;
-  const brl = parseFloat(document.getElementById('f-valorBrl').value) || (usd * cambio);
+  const brl = parseFloat(document.getElementById('f-valorBrl').value) || ((usd + ext) * cambio);
   const desp = parseFloat(document.getElementById('f-despesa').value) || 0;
   const guia = document.getElementById('f-guia').value;
   const liq = brl - desp;
@@ -532,6 +546,7 @@ function getFormData() {
     destino: document.getElementById('f-destino').value,
     duracao: document.getElementById('f-duracao').value,
     extensao: document.getElementById('f-extensao').value,
+    valorExtensao: parseFloat(document.getElementById('f-valorExtensao').value) || 0,
     guia, dataTour: document.getElementById('f-dataTour').value,
     pessoas: parseInt(document.getElementById('f-pessoas').value) || 0,
     valorUsd: usd, cambio, valorBrl: brl,
@@ -557,6 +572,8 @@ function fillForm(t) {
   document.getElementById('f-destino').value = t.destino || '';
   document.getElementById('f-duracao').value = t.duracao || '';
   document.getElementById('f-extensao').value = t.extensao || 'NAO';
+  document.getElementById('grpValorExtensao').style.display = (t.extensao === 'SIM') ? '' : 'none';
+  document.getElementById('f-valorExtensao').value = t.valorExtensao || '';
   document.getElementById('f-guia').value = t.guia || '';
   document.getElementById('f-dataTour').value = t.dataTour || '';
   document.getElementById('f-pessoas').value = t.pessoas || '';
