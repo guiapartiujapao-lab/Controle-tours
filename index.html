@@ -894,7 +894,14 @@ function updateMonthFilters() {
     const cur = sel.value;
     const isFilter = sel.id === 'filterMes' || sel.id === 'metricaMes';
     sel.innerHTML = isFilter ? '<option value="">Todos os meses</option>' : '';
-    sorted.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = monthLabel(m); sel.appendChild(o); });
+    const byYear = {};
+    sorted.forEach(m => { const y = m.split('-')[0]; if (!byYear[y]) byYear[y] = []; byYear[y].push(m); });
+    Object.keys(byYear).sort().reverse().forEach(y => {
+      const grp = document.createElement('optgroup');
+      grp.label = y;
+      byYear[y].forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = monthLabel(m); grp.appendChild(o); });
+      sel.appendChild(grp);
+    });
     if (cur && sorted.includes(cur)) sel.value = cur;
     else if (!isFilter && sorted.length) sel.value = sorted[0];
   });
