@@ -184,6 +184,7 @@ body.role-guia .manage-folga-table{display:none!important}
       <div class="tab tab-admin" data-tab="dashboard">Dashboard</div>
       <div class="tab tab-admin" data-tab="relatorio">Relatorio</div>
       <div class="tab tab-admin" data-tab="metricas">Metricas</div>
+      <div class="tab tab-admin" data-tab="controle">Controle</div>
       <div class="tab tab-admin" data-tab="backup">Backup</div>
     </div>
     <button class="btn-logout" id="btnSenha" title="Redefinir Senha" style="margin-right:4px">Senha</button>
@@ -322,6 +323,22 @@ body.role-guia .manage-folga-table{display:none!important}
       <div class="card"><h3 style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;color:var(--ink)">Ticket Medio por Destino (USD)</h3><div id="metTicketDest"></div></div>
       <div class="card"><h3 style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;color:var(--ink)">Forma de Pagamento</h3><div id="metPagamento"></div></div>
       <div class="card"><h3 style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;color:var(--ink)">Tours por Mes</h3><div id="metMensal"></div></div>
+    </div>
+  </div>
+
+  <div class="panel" id="p-controle">
+    <h2 class="section-title">Controle de Vendas</h2>
+    <p class="section-sub">Acompanhe os tours cadastrados por dia, destino e extensoes.</p>
+    <div class="stats" id="statsControle"></div>
+    <div class="cal-nav">
+      <button id="ctrlPrev">&larr;</button>
+      <strong id="ctrlMonthLabel"></strong>
+      <button id="ctrlNext">&rarr;</button>
+    </div>
+    <div class="cal-grid" id="ctrlCalGrid"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem">
+      <div class="card"><h3 style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;color:var(--ink)">Vendas por Destino</h3><div id="ctrlDestChart"></div></div>
+      <div class="card"><h3 style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;color:var(--ink)">Extensoes</h3><div id="ctrlExtChart"></div></div>
     </div>
   </div>
 
@@ -696,7 +713,7 @@ function showTourDetail(t) {
 }
 
 // RENDER
-function renderAll() { renderTourTable(); renderSocios(); renderGuias(); renderFechamento(); renderDashboard(); renderCalendario(); renderFolgaTable(); updateMonthFilters(); renderMetricas(); }
+function renderAll() { renderTourTable(); renderSocios(); renderGuias(); renderFechamento(); renderDashboard(); renderCalendario(); renderFolgaTable(); updateMonthFilters(); renderMetricas(); renderControle(); }
 function getConfirmed() { return allTours.filter(t => t.status === 'CONFIRMADO'); }
 
 function renderTourTable() {
@@ -977,6 +994,77 @@ function renderMetricas() {
   ).join('');
 }
 document.getElementById('metricaMes').addEventListener('change', renderMetricas);
+
+// CONTROLE DE VENDAS
+let ctrlMon = new Date().getMonth(), ctrlYear = new Date().getFullYear();
+document.getElementById('ctrlPrev').addEventListener('click', () => { ctrlMon--; if(ctrlMon<0){ctrlMon=11;ctrlYear--;} renderControle(); });
+document.getElementById('ctrlNext').addEventListener('click', () => { ctrlMon++; if(ctrlMon>11){ctrlMon=0;ctrlYear++;} renderControle(); });
+
+function renderControle() {
+  const pad = n => String(n).padStart(2,'0');
+  const ym = ctrlYear + '-' + pad(ctrlMon+1);
+  document.getElementById('ctrlMonthLabel').textContent = MESES_NOME[ctrlMon+1] + ' ' + ctrlYear;
+
+  const mesTours = allTours.filter(t => t.dataTour && t.dataTour.startsWith(ym));
+  const mesConf = mesTours.filter(t => t.status === 'CONFIRMADO');
+  const mesPend = mesTours.filter(t => t.status === 'PENDENTE');
+  const mesExt = mesTours.filter(t => t.extensao === 'SIM');
+  const mesPess = mesTours.reduce((s,t) => s + (t.pessoas||0), 0);
+  renderStats('statsControle', [
+    ['Tours no Mes', mesTours.length, ''],
+    ['Confirmados', mesConf.length, 'green'],
+    ['Pendentes', mesPend.length, 'accent'],
+    ['Extensoes', mesExt.length, 'blue'],
+    ['Pessoas', mesPess, '']
+  ]);
+
+  const firstDay = new Date(ctrlYear, ctrlMon, 1);
+  const lastDay = new Date(ctrlYear, ctrlMon + 1, 0);
+  const startDow = firstDay.getDay();
+  const daysInMonth = lastDay.getDate();
+  const today = new Date(); const todayStr = today.toISOString().slice(0,10);
+
+  const dayCount = {};
+  mesTours.forEach(t => {
+    const d = parseInt(t.dataTour.split('-')[2]);
+    dayCount[d] = (dayCount[d]||0) + 1;
+  });
+
+  let html = '';
+  ['DOM','SEG','TER','QUA','QUI','SEX','SAB'].forEach(d => html += `<div class="cal-head">${d}</div>`);
+  for (let i = 0; i < startDow; i++) html += '<div class="cal-day other"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = ym + '-' + pad(d);
+    const isToday = dateStr === todayStr;
+    const cnt = dayCount[d] || 0;
+    html += `<div class="cal-day${isToday?' today':''}"><div class="cal-num">${d}</div>`;
+    if (cnt > 0) {
+      const bg = cnt >= 4 ? 'var(--accent)' : cnt >= 2 ? 'var(--blue)' : 'var(--green)';
+      html += `<div style="margin-top:4px;text-align:center"><span style="display:inline-block;background:${bg};color:#fff;border-radius:10px;padding:2px 8px;font-size:0.72rem;font-weight:600">${cnt} tour${cnt>1?'s':''}</span></div>`;
+    }
+    html += '</div>';
+  }
+  const totalCells = startDow + daysInMonth;
+  const remainder = totalCells % 7;
+  if (remainder) for (let i = 0; i < 7 - remainder; i++) html += '<div class="cal-day other"></div>';
+  document.getElementById('ctrlCalGrid').innerHTML = html;
+
+  const destCount = {};
+  mesTours.forEach(t => { destCount[t.destino] = (destCount[t.destino]||0) + 1; });
+  const maxDest = Math.max(...Object.values(destCount), 1);
+  document.getElementById('ctrlDestChart').innerHTML = Object.entries(destCount).sort((a,b)=>b[1]-a[1]).map(([d,c]) =>
+    `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8rem"><span style="width:100px;text-align:right;color:var(--ink-soft)">${d}</span><div style="flex:1;height:20px;background:var(--surface-alt);border-radius:3px;overflow:hidden"><div style="height:100%;width:${c/maxDest*100}%;background:var(--accent);border-radius:3px"></div></div><span style="width:30px;font-weight:600">${c}</span></div>`
+  ).join('') || '<p style="color:var(--ink-muted);font-size:0.8rem">Nenhum tour neste mes.</p>';
+
+  const extSim = mesExt.length;
+  const extNao = mesTours.length - extSim;
+  const extTotal = mesTours.length || 1;
+  document.getElementById('ctrlExtChart').innerHTML = mesTours.length ? `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8rem"><span style="width:100px;text-align:right;color:var(--ink-soft)">Com extensao</span><div style="flex:1;height:20px;background:var(--surface-alt);border-radius:3px;overflow:hidden"><div style="height:100%;width:${extSim/extTotal*100}%;background:var(--green);border-radius:3px"></div></div><span style="width:30px;font-weight:600">${extSim}</span></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8rem"><span style="width:100px;text-align:right;color:var(--ink-soft)">Sem extensao</span><div style="flex:1;height:20px;background:var(--surface-alt);border-radius:3px;overflow:hidden"><div style="height:100%;width:${extNao/extTotal*100}%;background:var(--blue);border-radius:3px"></div></div><span style="width:30px;font-weight:600">${extNao}</span></div>
+    <p style="font-size:0.78rem;color:var(--ink-muted);margin-top:8px">Taxa de extensao: ${(extSim/extTotal*100).toFixed(1)}%</p>
+  ` : '<p style="color:var(--ink-muted);font-size:0.8rem">Nenhum tour neste mes.</p>';
+}
 
 // BACKUP
 document.getElementById('btnBackup').addEventListener('click', () => {
