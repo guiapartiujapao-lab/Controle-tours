@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root {
   --bg: #FAFAF8; --surface: #FFFFFF; --surface-alt: #F2F0ED;
@@ -343,12 +344,27 @@ body.role-guia .manage-folga-table{display:none!important}
   </div>
 
   <div class="panel" id="p-backup">
-    <h2 class="section-title">Backup dos Dados</h2>
-    <p class="section-sub">Exporte todos os dados do sistema. Recomendado fazer semanalmente.</p>
+    <h2 class="section-title">Backup e Importacao</h2>
+    <p class="section-sub">Exporte dados ou importe tours de planilha Excel.</p>
     <div class="card" style="text-align:center;padding:2rem">
       <p style="font-size:0.9rem;color:var(--ink-soft);margin-bottom:1.5rem">O backup inclui todos os tours e folgas cadastrados no Firebase.</p>
       <button class="btn btn-primary" id="btnBackup" style="font-size:1rem;padding:0.75rem 2rem">Exportar Backup (JSON)</button>
       <p id="backupInfo" style="font-size:0.78rem;color:var(--ink-muted);margin-top:1rem"></p>
+    </div>
+    <div class="card" style="text-align:center;padding:2rem;margin-top:1rem">
+      <h3 style="font-size:0.95rem;font-weight:600;margin-bottom:0.5rem">Importar Tours de Planilha</h3>
+      <p style="font-size:0.85rem;color:var(--ink-soft);margin-bottom:1rem">Selecione o arquivo .xlsx com os tours preenchidos. Use a planilha modelo "Importar-Tours-Partiu-Japao.xlsx".</p>
+      <input type="file" id="fileImport" accept=".xlsx,.xls" style="display:none">
+      <button class="btn btn-primary" id="btnImport" style="font-size:1rem;padding:0.75rem 2rem" onclick="document.getElementById('fileImport').click()">Selecionar Planilha (.xlsx)</button>
+      <div id="importPreview" style="margin-top:1rem;text-align:left;display:none">
+        <p id="importInfo" style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem"></p>
+        <div class="table-wrap" style="max-height:300px;overflow-y:auto"><table id="tblImport"><thead><tr><th>Cliente</th><th>Destino</th><th>Guia</th><th>Data Tour</th><th>Pessoas</th><th>USD</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+        <div style="margin-top:1rem;display:flex;gap:8px;justify-content:center">
+          <button class="btn btn-primary" id="btnConfirmImport">Importar Todos</button>
+          <button class="btn btn-secondary" id="btnCancelImport">Cancelar</button>
+        </div>
+      </div>
+      <p id="importResult" style="font-size:0.78rem;color:var(--ink-muted);margin-top:1rem"></p>
     </div>
   </div>
 </div>
@@ -1079,6 +1095,111 @@ document.getElementById('btnBackup').addEventListener('click', () => {
   URL.revokeObjectURL(url);
   document.getElementById('backupInfo').textContent = `Ultimo backup: ${new Date().toLocaleString('pt-BR')} - ${allTours.length} tours, ${allFolgas.length} folgas`;
   toast('Backup exportado!');
+});
+
+// IMPORTAR PLANILHA
+let importRows = [];
+document.getElementById('fileImport').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const wb = XLSX.read(ev.target.result, { type: 'array', cellDates: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      if (raw.length < 2) { toast('Planilha vazia.', false); return; }
+      const hdr = raw[0].map(h => (h||'').toString().trim().toUpperCase());
+      importRows = [];
+      for (let i = 1; i < raw.length; i++) {
+        const r = raw[i];
+        if (!r || r.every(c => c === null || c === undefined || c === '')) continue;
+        const fmtDate = (v) => {
+          if (!v) return '';
+          if (v instanceof Date) return v.toISOString().slice(0,10);
+          const s = v.toString().trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+          if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) { const p=s.split('/'); return p[2]+'-'+p[1]+'-'+p[0]; }
+          return s;
+        };
+        const usd = parseFloat(r[8]) || 0;
+        const cambio = parseFloat(r[9]) || 0;
+        const brl = parseFloat(r[10]) || (usd * cambio);
+        const guia = (r[5]||'').toString().toUpperCase().trim();
+        const isSocio = SOCIOS.includes(guia);
+        const desp = parseFloat(r[16]) || 0;
+        const liq = brl - desp;
+        const sinal = parseFloat(r[12]) || (brl * 0.2);
+        const restante = parseFloat(r[14]) || (brl * 0.8);
+        const restPago = (r[15]||'NAO').toString().toUpperCase().trim();
+        let status = (r[17]||'').toString().toUpperCase().trim();
+        if (!status) status = restPago === 'SIM' ? 'CONFIRMADO' : 'PENDENTE';
+        importRows.push({
+          dataVenda: fmtDate(r[0]),
+          cliente: (r[1]||'').toString().toUpperCase().trim(),
+          destino: (r[2]||'').toString().toUpperCase().trim(),
+          duracao: (r[3]||'').toString().trim(),
+          extensao: (r[4]||'NAO').toString().toUpperCase().trim(),
+          guia,
+          dataTour: fmtDate(r[6]),
+          pessoas: parseInt(r[7]) || 0,
+          valorUsd: usd, cambio, valorBrl: brl,
+          formaPagamento: (r[11]||'').toString().toUpperCase().trim(),
+          sinal20: sinal,
+          sinalPago: (r[13]||'NAO').toString().toUpperCase().trim(),
+          restante80: restante,
+          restantePago: restPago,
+          despesaGuia: desp, liquido: liq,
+          parteDiego: isSocio ? liq * 0.2 : liq * 0.5,
+          parteMT: isSocio ? liq * 0.8 : liq * 0.5,
+          tipoGuia: isSocio ? 'SOCIO' : 'EXTERNO',
+          status,
+          obs: (r[18]||'').toString().trim(),
+          telefone: '',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      if (!importRows.length) { toast('Nenhuma linha valida encontrada.', false); return; }
+      document.getElementById('importInfo').textContent = `${importRows.length} tours encontrados na planilha:`;
+      const tbody = document.querySelector('#tblImport tbody');
+      tbody.innerHTML = '';
+      importRows.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td style="text-align:left">${t.cliente}</td><td>${t.destino}</td><td>${t.guia}</td><td>${fmtDate(t.dataTour)}</td><td>${t.pessoas}</td><td>${fmtUsd(t.valorUsd)}</td><td>${t.status}</td>`;
+        tbody.appendChild(tr);
+      });
+      document.getElementById('importPreview').style.display = 'block';
+    } catch(err) {
+      toast('Erro ao ler planilha: ' + err.message, false);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  e.target.value = '';
+});
+
+document.getElementById('btnCancelImport').addEventListener('click', () => {
+  importRows = [];
+  document.getElementById('importPreview').style.display = 'none';
+});
+
+document.getElementById('btnConfirmImport').addEventListener('click', async () => {
+  if (!importRows.length) return;
+  const btn = document.getElementById('btnConfirmImport');
+  btn.disabled = true;
+  btn.textContent = 'Importando...';
+  let ok = 0, fail = 0;
+  for (const t of importRows) {
+    try {
+      await db.collection('tours').add(t);
+      ok++;
+    } catch(e) { fail++; }
+  }
+  btn.disabled = false;
+  btn.textContent = 'Importar Todos';
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('importResult').textContent = `Importacao concluida: ${ok} tours importados${fail ? ', ' + fail + ' erros' : ''}. ${new Date().toLocaleString('pt-BR')}`;
+  toast(`${ok} tours importados com sucesso!`);
+  importRows = [];
 });
 
 // migrar LOHAN -> LORRAN
