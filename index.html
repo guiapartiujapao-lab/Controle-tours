@@ -330,17 +330,16 @@ body.role-guia .manage-folga-table{display:none!important}
 
   <div class="panel" id="p-controle">
     <h2 class="section-title">Controle de Vendas</h2>
-    <p class="section-sub">Acompanhe os tours cadastrados por dia, destino e extensoes.</p>
+    <p class="section-sub">Vendas realizadas por mes (data da venda), independente da data do tour.</p>
     <div class="stats" id="statsControle"></div>
-    <div class="cal-nav">
-      <button id="ctrlPrev">&larr;</button>
-      <strong id="ctrlMonthLabel"></strong>
-      <button id="ctrlNext">&rarr;</button>
+    <div style="display:flex;align-items:center;gap:12px;margin:1rem 0">
+      <label style="font-size:0.85rem;font-weight:600;color:var(--ink)">Mes da Venda:</label>
+      <select id="ctrlMesVenda" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;background:var(--surface);color:var(--ink)"></select>
     </div>
-    <div class="cal-grid" id="ctrlCalGrid"></div>
+    <div class="table-wrap"><table id="tblVendas"><thead><tr><th>Data Venda</th><th>Cliente</th><th>Destino</th><th>Dur.</th><th>Data Tour</th><th>Pessoas</th><th>USD</th><th>BRL</th><th>Status</th></tr></thead><tbody></tbody></table></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem">
       <div class="card"><h3 style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;color:var(--ink)">Vendas por Destino</h3><div id="ctrlDestChart"></div></div>
-      <div class="card"><h3 style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;color:var(--ink)">Extensoes</h3><div id="ctrlExtChart"></div></div>
+      <div class="card"><h3 style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;color:var(--ink)">Tours Atuais vs Futuros</h3><div id="ctrlFuturoChart"></div></div>
     </div>
   </div>
 
@@ -1036,74 +1035,64 @@ function renderMetricas() {
 document.getElementById('metricaMes').addEventListener('change', renderMetricas);
 
 // CONTROLE DE VENDAS
-let ctrlMon = new Date().getMonth(), ctrlYear = new Date().getFullYear();
-document.getElementById('ctrlPrev').addEventListener('click', () => { ctrlMon--; if(ctrlMon<0){ctrlMon=11;ctrlYear--;} renderControle(); });
-document.getElementById('ctrlNext').addEventListener('click', () => { ctrlMon++; if(ctrlMon>11){ctrlMon=0;ctrlYear++;} renderControle(); });
+document.getElementById('ctrlMesVenda').addEventListener('change', renderControle);
 
 function renderControle() {
-  const pad = n => String(n).padStart(2,'0');
-  const ym = ctrlYear + '-' + pad(ctrlMon+1);
-  document.getElementById('ctrlMonthLabel').textContent = MESES_NOME[ctrlMon+1] + ' ' + ctrlYear;
+  const sel = document.getElementById('ctrlMesVenda');
+  const vendaMonths = new Set();
+  allTours.forEach(t => { const k = monthKey(t.dataVenda); if (k) vendaMonths.add(k); });
+  const sortedM = [...vendaMonths].sort().reverse();
+  const cur = sel.value;
+  sel.innerHTML = '';
+  const byYear = {};
+  sortedM.forEach(m => { const y = m.split('-')[0]; if (!byYear[y]) byYear[y] = []; byYear[y].push(m); });
+  Object.keys(byYear).sort().reverse().forEach(y => {
+    const grp = document.createElement('optgroup');
+    grp.label = y;
+    byYear[y].forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = monthLabel(m); grp.appendChild(o); });
+    sel.appendChild(grp);
+  });
+  if (cur && sortedM.includes(cur)) sel.value = cur;
+  else if (sortedM.length) sel.value = sortedM[0];
+  const ym = sel.value;
+  if (!ym) { document.getElementById('statsControle').innerHTML = ''; document.getElementById('tblVendas').querySelector('tbody').innerHTML = ''; return; }
 
-  const mesTours = allTours.filter(t => t.dataTour && t.dataTour.startsWith(ym));
-  const mesConf = mesTours.filter(t => t.status === 'CONFIRMADO');
-  const mesPend = mesTours.filter(t => t.status === 'PENDENTE');
-  const mesExt = mesTours.filter(t => t.extensao === 'SIM');
-  const mesPess = mesTours.reduce((s,t) => s + (t.pessoas||0), 0);
+  const vendas = allTours.filter(t => t.dataVenda && t.dataVenda.startsWith(ym));
+  vendas.sort((a,b) => (a.dataVenda||'').localeCompare(b.dataVenda||''));
+  const totalUsd = vendas.reduce((s,t) => s + (t.valorUsd||0), 0);
+  const totalBrl = vendas.reduce((s,t) => s + (t.valorBrl||0), 0);
+  const totalPess = vendas.reduce((s,t) => s + (t.pessoas||0), 0);
+  const toursMesAtual = vendas.filter(t => monthKey(t.dataTour) === ym).length;
+  const toursFuturos = vendas.filter(t => monthKey(t.dataTour) !== ym).length;
   renderStats('statsControle', [
-    ['Tours no Mes', mesTours.length, ''],
-    ['Confirmados', mesConf.length, 'green'],
-    ['Pendentes', mesPend.length, 'accent'],
-    ['Extensoes', mesExt.length, 'blue'],
-    ['Pessoas', mesPess, '']
+    ['Vendas no Mes', vendas.length, ''],
+    ['Pessoas', totalPess, ''],
+    ['Total USD', '$' + totalUsd.toLocaleString('pt-BR',{minimumFractionDigits:2}), 'blue'],
+    ['Total BRL', fmtBrl(totalBrl), 'green'],
+    ['Tours Futuros', toursFuturos, 'accent']
   ]);
 
-  const firstDay = new Date(ctrlYear, ctrlMon, 1);
-  const lastDay = new Date(ctrlYear, ctrlMon + 1, 0);
-  const startDow = firstDay.getDay();
-  const daysInMonth = lastDay.getDate();
-  const today = new Date(); const todayStr = today.toISOString().slice(0,10);
-
-  const dayCount = {};
-  mesTours.forEach(t => {
-    const d = parseInt(t.dataTour.split('-')[2]);
-    dayCount[d] = (dayCount[d]||0) + 1;
-  });
-
-  let html = '';
-  ['DOM','SEG','TER','QUA','QUI','SEX','SAB'].forEach(d => html += `<div class="cal-head">${d}</div>`);
-  for (let i = 0; i < startDow; i++) html += '<div class="cal-day other"></div>';
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = ym + '-' + pad(d);
-    const isToday = dateStr === todayStr;
-    const cnt = dayCount[d] || 0;
-    html += `<div class="cal-day${isToday?' today':''}"><div class="cal-num">${d}</div>`;
-    if (cnt > 0) {
-      const bg = cnt >= 4 ? 'var(--accent)' : cnt >= 2 ? 'var(--blue)' : 'var(--green)';
-      html += `<div style="margin-top:4px;text-align:center"><span style="display:inline-block;background:${bg};color:#fff;border-radius:10px;padding:2px 8px;font-size:0.72rem;font-weight:600">${cnt} tour${cnt>1?'s':''}</span></div>`;
-    }
-    html += '</div>';
-  }
-  const totalCells = startDow + daysInMonth;
-  const remainder = totalCells % 7;
-  if (remainder) for (let i = 0; i < 7 - remainder; i++) html += '<div class="cal-day other"></div>';
-  document.getElementById('ctrlCalGrid').innerHTML = html;
+  const fmtUsd = v => '$ ' + (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const tbody = document.getElementById('tblVendas').querySelector('tbody');
+  tbody.innerHTML = vendas.map(t => {
+    const isFuturo = monthKey(t.dataTour) !== ym;
+    const badge = isFuturo ? ' <span style="font-size:0.68rem;background:var(--accent);color:#fff;padding:1px 6px;border-radius:8px">futuro</span>' : '';
+    const stCls = t.status === 'CONFIRMADO' ? 'color:var(--green)' : t.status === 'CANCELADO' ? 'color:var(--red)' : 'color:var(--accent)';
+    return `<tr><td>${fmtDate(t.dataVenda)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.destino}</td><td>${t.duracao||'-'}</td><td>${fmtDate(t.dataTour)}${badge}</td><td>${t.pessoas||0}</td><td>${fmtUsd(t.valorUsd)}</td><td>${fmtBrl(t.valorBrl)}</td><td style="${stCls};font-weight:600;font-size:0.78rem">${t.status}</td></tr>`;
+  }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--ink-muted)">Nenhuma venda neste mes.</td></tr>';
 
   const destCount = {};
-  mesTours.forEach(t => { destCount[t.destino] = (destCount[t.destino]||0) + 1; });
+  vendas.forEach(t => { destCount[t.destino] = (destCount[t.destino]||0) + 1; });
   const maxDest = Math.max(...Object.values(destCount), 1);
   document.getElementById('ctrlDestChart').innerHTML = Object.entries(destCount).sort((a,b)=>b[1]-a[1]).map(([d,c]) =>
     `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8rem"><span style="width:100px;text-align:right;color:var(--ink-soft)">${d}</span><div style="flex:1;height:20px;background:var(--surface-alt);border-radius:3px;overflow:hidden"><div style="height:100%;width:${c/maxDest*100}%;background:var(--accent);border-radius:3px"></div></div><span style="width:30px;font-weight:600">${c}</span></div>`
-  ).join('') || '<p style="color:var(--ink-muted);font-size:0.8rem">Nenhum tour neste mes.</p>';
+  ).join('') || '<p style="color:var(--ink-muted);font-size:0.8rem">Nenhuma venda neste mes.</p>';
 
-  const extSim = mesExt.length;
-  const extNao = mesTours.length - extSim;
-  const extTotal = mesTours.length || 1;
-  document.getElementById('ctrlExtChart').innerHTML = mesTours.length ? `
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8rem"><span style="width:100px;text-align:right;color:var(--ink-soft)">Com extensao</span><div style="flex:1;height:20px;background:var(--surface-alt);border-radius:3px;overflow:hidden"><div style="height:100%;width:${extSim/extTotal*100}%;background:var(--green);border-radius:3px"></div></div><span style="width:30px;font-weight:600">${extSim}</span></div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8rem"><span style="width:100px;text-align:right;color:var(--ink-soft)">Sem extensao</span><div style="flex:1;height:20px;background:var(--surface-alt);border-radius:3px;overflow:hidden"><div style="height:100%;width:${extNao/extTotal*100}%;background:var(--blue);border-radius:3px"></div></div><span style="width:30px;font-weight:600">${extNao}</span></div>
-    <p style="font-size:0.78rem;color:var(--ink-muted);margin-top:8px">Taxa de extensao: ${(extSim/extTotal*100).toFixed(1)}%</p>
-  ` : '<p style="color:var(--ink-muted);font-size:0.8rem">Nenhum tour neste mes.</p>';
+  const maxFut = Math.max(toursMesAtual, toursFuturos, 1);
+  document.getElementById('ctrlFuturoChart').innerHTML = vendas.length ? `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8rem"><span style="width:100px;text-align:right;color:var(--ink-soft)">Mes atual</span><div style="flex:1;height:20px;background:var(--surface-alt);border-radius:3px;overflow:hidden"><div style="height:100%;width:${toursMesAtual/maxFut*100}%;background:var(--green);border-radius:3px"></div></div><span style="width:30px;font-weight:600">${toursMesAtual}</span></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8rem"><span style="width:100px;text-align:right;color:var(--ink-soft)">Futuros</span><div style="flex:1;height:20px;background:var(--surface-alt);border-radius:3px;overflow:hidden"><div style="height:100%;width:${toursFuturos/maxFut*100}%;background:var(--blue);border-radius:3px"></div></div><span style="width:30px;font-weight:600">${toursFuturos}</span></div>
+  ` : '<p style="color:var(--ink-muted);font-size:0.8rem">Nenhuma venda neste mes.</p>';
 }
 
 // BACKUP
