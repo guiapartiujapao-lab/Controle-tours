@@ -1186,19 +1186,30 @@ document.getElementById('btnConfirmImport').addEventListener('click', async () =
   if (!importRows.length) return;
   const btn = document.getElementById('btnConfirmImport');
   btn.disabled = true;
-  btn.textContent = 'Importando...';
-  let ok = 0, fail = 0;
+  btn.textContent = 'Verificando duplicatas...';
+  const existSnap = await db.collection('tours').get();
+  const existSet = new Set();
+  existSnap.forEach(d => {
+    const t = d.data();
+    existSet.add((t.cliente||'').toUpperCase() + '|' + (t.dataTour||''));
+  });
+  let ok = 0, fail = 0, skip = 0;
   for (const t of importRows) {
+    const key = (t.cliente||'').toUpperCase() + '|' + (t.dataTour||'');
+    if (existSet.has(key)) { skip++; continue; }
+    btn.textContent = `Importando... ${ok + skip}/${importRows.length}`;
     try {
       await db.collection('tours').add(t);
+      existSet.add(key);
       ok++;
     } catch(e) { fail++; }
   }
   btn.disabled = false;
   btn.textContent = 'Importar Todos';
   document.getElementById('importPreview').style.display = 'none';
-  document.getElementById('importResult').textContent = `Importacao concluida: ${ok} tours importados${fail ? ', ' + fail + ' erros' : ''}. ${new Date().toLocaleString('pt-BR')}`;
-  toast(`${ok} tours importados com sucesso!`);
+  const msg = `Importacao concluida: ${ok} importados${skip ? ', ' + skip + ' duplicatas ignoradas' : ''}${fail ? ', ' + fail + ' erros' : ''}. ${new Date().toLocaleString('pt-BR')}`;
+  document.getElementById('importResult').textContent = msg;
+  toast(`${ok} tours importados${skip ? ', ' + skip + ' duplicatas ignoradas' : ''}!`);
   importRows = [];
 });
 
