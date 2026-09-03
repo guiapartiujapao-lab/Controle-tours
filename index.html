@@ -993,6 +993,12 @@ document.getElementById('btnBackup').addEventListener('click', () => {
   toast('Backup exportado!');
 });
 
+// migrar LOHAN -> LORRAN
+db.collection('tours').where('guia','==','LOHAN').get().then(snap => {
+  snap.forEach(d => d.ref.update({ guia: 'LORRAN' }));
+  if (snap.size) console.log(`Migrados ${snap.size} tours de LOHAN para LORRAN`);
+});
+
 // FIREBASE REAL-TIME LISTENERS
 db.collection('tours').onSnapshot(snap => {
   allTours = snap.docs.map(d => ({id: d.id, ...d.data()}));
