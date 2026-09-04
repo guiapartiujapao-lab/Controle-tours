@@ -610,10 +610,24 @@ document.getElementById('btnSalvar').addEventListener('click', async () => {
   }
   try {
     if (editingId) { await db.collection('tours').doc(editingId).set(data); toast('Tour atualizado!'); }
-    else { await db.collection('tours').add(data); toast('Tour salvo!'); }
+    else {
+      await db.collection('tours').add(data);
+      enviarPlanilha(data);
+      toast('Tour salvo!');
+    }
     clearForm();
   } catch (e) { toast('Erro ao salvar: ' + e.message, false); }
 });
+
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbw_d9w38Ql8tEADcCItLV3dPNJCLAffSAQA0SEuaixqOXMxxBvO8hlbRKMuKR0FFxdR/exec';
+function enviarPlanilha(data) {
+  const payload = encodeURIComponent(JSON.stringify({
+    dataVenda: data.dataVenda, cliente: data.cliente, destino: data.destino,
+    duracao: data.duracao, guia: data.guia, pessoas: data.pessoas,
+    valorUsd: data.valorUsd, valorBrl: data.valorBrl, dataTour: data.dataTour, status: data.status
+  }));
+  fetch(SHEET_URL + '?data=' + payload, { mode: 'no-cors' }).catch(() => {});
+}
 
 async function deleteTour(id) {
   if (!confirm('Deletar este tour?')) return;
