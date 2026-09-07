@@ -285,12 +285,47 @@ body.role-guia .manage-folga-table{display:none!important}
 
   <div class="panel" id="p-fechamento">
     <h2 class="section-title">Fechamento Geral</h2>
-    <p class="section-sub">Resultado consolidado: socios + guias externos</p>
+    <p class="section-sub">Resultado consolidado com controle de fechamento mensal</p>
     <div class="filter-row" style="margin-bottom:1rem">
       <select id="fechStatus"><option value="CONFIRMADO">Confirmados</option><option value="">Todos os tours</option></select>
     </div>
     <div class="stats" id="statsFech"></div>
-    <div id="monthsFech"></div>
+    <h3 style="margin:1.5rem 0 0.5rem;font-size:1rem;color:var(--ink)">Socios (Mayra + Totti)</h3>
+    <div id="fechSocios"></div>
+    <h3 style="margin:1.5rem 0 0.5rem;font-size:1rem;color:var(--ink)">Guias Externos</h3>
+    <div id="fechGuias"></div>
+    <h3 style="margin:1.5rem 0 0.5rem;font-size:1rem;color:var(--ink)">Transfer</h3>
+    <div class="card" style="margin-bottom:1rem;padding:1rem">
+      <div class="form-row">
+        <div class="form-group"><label>Data</label><input type="date" id="tf-data"></div>
+        <div class="form-group"><label>Cliente</label><input type="text" id="tf-cliente" placeholder="Nome"></div>
+        <div class="form-group"><label>Trajeto</label><input type="text" id="tf-trajeto" placeholder="Ex: Narita → Hotel"></div>
+        <div class="form-group"><label>Valor Fornecedor</label><input type="number" id="tf-fornecedor" step="0.01" placeholder="0.00"></div>
+        <div class="form-group"><label>Valor Cobrado</label><input type="number" id="tf-cobrado" step="0.01" placeholder="0.00"></div>
+        <div class="form-group"><label>Lucro</label><input type="text" id="tf-lucro" readonly style="background:var(--surface-alt)"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-primary" id="btnSalvarTransfer">Salvar Transfer</button>
+        <button class="btn btn-secondary" id="btnLimparTransfer">Limpar</button>
+      </div>
+    </div>
+    <div id="fechTransfer"></div>
+    <h3 style="margin:1.5rem 0 0.5rem;font-size:1rem;color:var(--ink)">Personal Shopper</h3>
+    <div class="card" style="margin-bottom:1rem;padding:1rem">
+      <div class="form-row">
+        <div class="form-group"><label>Data</label><input type="date" id="ps-data"></div>
+        <div class="form-group"><label>Cliente</label><input type="text" id="ps-cliente" placeholder="Nome"></div>
+        <div class="form-group"><label>Descricao</label><input type="text" id="ps-descricao" placeholder="Ex: Compras em Ginza"></div>
+        <div class="form-group"><label>Custo</label><input type="number" id="ps-custo" step="0.01" placeholder="0.00"></div>
+        <div class="form-group"><label>Valor Cobrado</label><input type="number" id="ps-cobrado" step="0.01" placeholder="0.00"></div>
+        <div class="form-group"><label>Lucro</label><input type="text" id="ps-lucro" readonly style="background:var(--surface-alt)"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-primary" id="btnSalvarPShopper">Salvar Personal Shopper</button>
+        <button class="btn btn-secondary" id="btnLimparPShopper">Limpar</button>
+      </div>
+    </div>
+    <div id="fechPShopper"></div>
   </div>
 
   <div class="panel" id="p-dashboard">
@@ -430,7 +465,7 @@ const SOCIOS = ['MAYRA','TOTTI'];
 const PAGS = ['PIX','CARTAO DE CREDITO','DOLAR CASH','WISE','NOMAD','PAYPAL'];
 const MESES_NOME = {1:'Janeiro',2:'Fevereiro',3:'Marco',4:'Abril',5:'Maio',6:'Junho',7:'Julho',8:'Agosto',9:'Setembro',10:'Outubro',11:'Novembro',12:'Dezembro'};
 
-let allTours = [], allFolgas = [], editingId = null;
+let allTours = [], allFolgas = [], allTransfers = [], allPShoppers = [], allFechamentos = {}, editingId = null, editingTransferId = null, editingPShopperId = null;
 let calYear, calMon;
 { const now = new Date(); calYear = now.getFullYear(); calMon = now.getMonth(); }
 
@@ -850,6 +885,20 @@ function renderGuias() {
   }).join('') || '<div class="empty">Nenhum tour com guias externos ainda.</div>';
 }
 
+function fechadoBtn(tipo, mk) {
+  const key = mk + '-' + tipo;
+  const fechado = allFechamentos[key];
+  const cls = fechado ? 'background:var(--green);color:#fff' : 'background:var(--surface-alt);color:var(--ink-soft)';
+  const label = fechado ? 'FECHADO' : 'NAO FECHADO';
+  return `<button style="font-size:0.72rem;padding:3px 10px;border:none;border-radius:10px;cursor:pointer;font-weight:600;${cls}" onclick="toggleFechado('${key}')">${label}</button>`;
+}
+async function toggleFechado(key) {
+  const novo = !allFechamentos[key];
+  allFechamentos[key] = novo;
+  await db.collection('fechamentos').doc(key).set({ fechado: novo });
+  renderFechamento();
+}
+
 function renderFechamento() {
   const statusF = document.getElementById('fechStatus').value;
   const conf = statusF ? allTours.filter(t => t.status === statusF) : [...allTours];
@@ -858,23 +907,73 @@ function renderFechamento() {
   const totalLiq = conf.reduce((s,t) => s + (t.liquido||0), 0);
   const totalDiego = conf.reduce((s,t) => s + (t.parteDiego||0), 0);
   const totalMT = conf.reduce((s,t) => s + (t.parteMT||0), 0);
-  renderStats('statsFech', [['Tours Total', conf.length, ''],['Faturamento', fmtBrl(totalBrl), ''],['Despesas', fmtBrl(totalDesp), 'accent'],['Liquido', fmtBrl(totalLiq), 'green'],['Diego Total', fmtBrl(totalDiego), 'blue'],['Mayra+Totti Total', fmtBrl(totalMT), 'accent']]);
-  const months = groupByMonth(conf);
-  document.getElementById('monthsFech').innerHTML = months.map(([mk, mt]) => {
-    const mSocios = mt.filter(t => SOCIOS.includes(t.guia));
-    const mExt = mt.filter(t => !SOCIOS.includes(t.guia) && t.guia !== 'A DEFINIR');
-    const mBrl = mt.reduce((s,t) => s + (t.valorBrl||0), 0);
-    const mDesp = mt.reduce((s,t) => s + (t.despesaGuia||0), 0);
-    const mLiq = mt.reduce((s,t) => s + (t.liquido||0), 0);
+  const totalTransferLucro = allTransfers.reduce((s,t) => s + ((t.cobrado||0)-(t.fornecedor||0)), 0);
+  const totalPSLucro = allPShoppers.reduce((s,t) => s + ((t.cobrado||0)-(t.custo||0)), 0);
+  renderStats('statsFech', [['Tours', conf.length, ''],['Faturamento', fmtBrl(totalBrl), ''],['Liquido Tours', fmtBrl(totalLiq), 'green'],['Transfer', fmtBrl(totalTransferLucro), 'blue'],['P. Shopper', fmtBrl(totalPSLucro), 'blue'],['Diego', fmtBrl(totalDiego), 'blue'],['M+T', fmtBrl(totalMT), 'accent']]);
+
+  // Socios por mes
+  const socTours = statusF ? conf.filter(t => SOCIOS.includes(t.guia)) : allTours.filter(t => SOCIOS.includes(t.guia));
+  const socMonths = groupByMonth(socTours);
+  document.getElementById('fechSocios').innerHTML = socMonths.map(([mk, mt]) => {
     const mD = mt.reduce((s,t) => s + (t.parteDiego||0), 0);
     const mMT = mt.reduce((s,t) => s + (t.parteMT||0), 0);
-    return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)}</span><span class="total">Diego: ${fmtBrl(mD)} | MT: ${fmtBrl(mMT)}</span></div>
-    <div class="table-wrap"><table><thead><tr><th style="text-align:left">Tipo</th><th>Tours</th><th>Faturamento</th><th>Despesas</th><th>Liquido</th><th>Diego</th><th>Mayra+Totti</th></tr></thead><tbody>
-    <tr><td style="text-align:left">Socios (80/20)</td><td>${mSocios.length}</td><td>${fmtBrl(mSocios.reduce((s,t)=>s+(t.valorBrl||0),0))}</td><td>-</td><td>${fmtBrl(mSocios.reduce((s,t)=>s+(t.liquido||0),0))}</td><td>${fmtBrl(mSocios.reduce((s,t)=>s+(t.parteDiego||0),0))}</td><td>${fmtBrl(mSocios.reduce((s,t)=>s+(t.parteMT||0),0))}</td></tr>
-    <tr><td style="text-align:left">Guias Ext. (50/50)</td><td>${mExt.length}</td><td>${fmtBrl(mExt.reduce((s,t)=>s+(t.valorBrl||0),0))}</td><td>${fmtBrl(mExt.reduce((s,t)=>s+(t.despesaGuia||0),0))}</td><td>${fmtBrl(mExt.reduce((s,t)=>s+(t.liquido||0),0))}</td><td>${fmtBrl(mExt.reduce((s,t)=>s+(t.parteDiego||0),0))}</td><td>${fmtBrl(mExt.reduce((s,t)=>s+(t.parteMT||0),0))}</td></tr>
-    <tr style="font-weight:600"><td style="text-align:left">TOTAL</td><td>${mt.length}</td><td>${fmtBrl(mBrl)}</td><td>${fmtBrl(mDesp)}</td><td>${fmtBrl(mLiq)}</td><td style="color:var(--blue)">${fmtBrl(mD)}</td><td style="color:var(--accent)">${fmtBrl(mMT)}</td></tr>
-    </tbody></table></div></div>`;
-  }).join('') || '<div class="empty">Nenhum dado de fechamento.</div>';
+    const mLiq = mt.reduce((s,t) => s + (t.liquido||0), 0);
+    return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)} (${mt.length} tours) ${fechadoBtn('socios', mk)}</span><span class="total">Liq: ${fmtBrl(mLiq)} | Diego: ${fmtBrl(mD)} | MT: ${fmtBrl(mMT)}</span></div>
+    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Destino</th><th>Guia</th><th>Pess.</th><th>BRL</th><th>Liq.</th><th>Diego</th><th>M+T</th></tr></thead><tbody>${
+      mt.sort((a,b)=>(a.dataTour||'').localeCompare(b.dataTour||'')).map(t =>
+        `<tr><td>${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.destino}</td><td>${t.guia}</td><td>${t.pessoas}</td><td>${fmtBrl(t.valorBrl)}</td><td>${fmtBrl(t.liquido)}</td><td>${fmtBrl(t.parteDiego)}</td><td>${fmtBrl(t.parteMT)}</td></tr>`
+      ).join('')
+    }</tbody></table></div></div>`;
+  }).join('') || '<div class="empty">Nenhum tour de socios.</div>';
+
+  // Guias externos por mes
+  const extTours = statusF ? conf.filter(t => !SOCIOS.includes(t.guia) && t.guia !== 'A DEFINIR') : allTours.filter(t => !SOCIOS.includes(t.guia) && t.guia !== 'A DEFINIR');
+  const extMonths = groupByMonth(extTours);
+  document.getElementById('fechGuias').innerHTML = extMonths.map(([mk, mt]) => {
+    const mD = mt.reduce((s,t) => s + (t.parteDiego||0), 0);
+    const mMT = mt.reduce((s,t) => s + (t.parteMT||0), 0);
+    const mLiq = mt.reduce((s,t) => s + (t.liquido||0), 0);
+    const mDesp = mt.reduce((s,t) => s + (t.despesaGuia||0), 0);
+    return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)} (${mt.length} tours) ${fechadoBtn('guias', mk)}</span><span class="total">Liq: ${fmtBrl(mLiq)} | Diego: ${fmtBrl(mD)} | MT: ${fmtBrl(mMT)}</span></div>
+    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Destino</th><th>Guia</th><th>Pess.</th><th>BRL</th><th>Desp.</th><th>Liq.</th><th>Diego</th><th>M+T</th></tr></thead><tbody>${
+      mt.sort((a,b)=>(a.dataTour||'').localeCompare(b.dataTour||'')).map(t => {
+        const da = (!t.despesaGuia || t.despesaGuia === 0) ? '<span class="alert-chip alert-desp" title="Sem despesa">$ ?</span>' : '';
+        return `<tr><td>${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.destino}</td><td>${t.guia}</td><td>${t.pessoas}</td><td>${fmtBrl(t.valorBrl)}</td><td>${fmtBrl(t.despesaGuia)}${da}</td><td>${fmtBrl(t.liquido)}</td><td>${fmtBrl(t.parteDiego)}</td><td>${fmtBrl(t.parteMT)}</td></tr>`;
+      }).join('')
+    }</tbody></table></div></div>`;
+  }).join('') || '<div class="empty">Nenhum tour de guias externos.</div>';
+
+  // Transfer por mes
+  const tfMonths = {};
+  allTransfers.forEach(t => { const k = monthKey(t.data); if (k) { if (!tfMonths[k]) tfMonths[k] = []; tfMonths[k].push(t); } });
+  const tfSorted = Object.entries(tfMonths).sort((a,b) => b[0].localeCompare(a[0]));
+  document.getElementById('fechTransfer').innerHTML = tfSorted.map(([mk, mt]) => {
+    const mLucro = mt.reduce((s,t) => s + ((t.cobrado||0)-(t.fornecedor||0)), 0);
+    const mCobrado = mt.reduce((s,t) => s + (t.cobrado||0), 0);
+    return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)} (${mt.length}) ${fechadoBtn('transfer', mk)}</span><span class="total">Cobrado: ${fmtBrl(mCobrado)} | Lucro: ${fmtBrl(mLucro)}</span></div>
+    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Trajeto</th><th>Fornecedor</th><th>Cobrado</th><th>Lucro</th><th></th></tr></thead><tbody>${
+      mt.sort((a,b)=>(a.data||'').localeCompare(b.data||'')).map(t => {
+        const lucro = (t.cobrado||0) - (t.fornecedor||0);
+        return `<tr><td>${fmtDate(t.data)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.trajeto||'-'}</td><td>${fmtBrl(t.fornecedor)}</td><td>${fmtBrl(t.cobrado)}</td><td style="color:var(--green);font-weight:600">${fmtBrl(lucro)}</td><td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" onclick="editTransfer('${t.id}')">editar</span> <span style="cursor:pointer;color:var(--red);font-size:0.78rem" onclick="deleteTransfer('${t.id}')">x</span></td></tr>`;
+      }).join('')
+    }</tbody></table></div></div>`;
+  }).join('') || '<div class="empty">Nenhum transfer cadastrado.</div>';
+
+  // Personal Shopper por mes
+  const psMonths = {};
+  allPShoppers.forEach(t => { const k = monthKey(t.data); if (k) { if (!psMonths[k]) psMonths[k] = []; psMonths[k].push(t); } });
+  const psSorted = Object.entries(psMonths).sort((a,b) => b[0].localeCompare(a[0]));
+  document.getElementById('fechPShopper').innerHTML = psSorted.map(([mk, mt]) => {
+    const mLucro = mt.reduce((s,t) => s + ((t.cobrado||0)-(t.custo||0)), 0);
+    const mCobrado = mt.reduce((s,t) => s + (t.cobrado||0), 0);
+    return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)} (${mt.length}) ${fechadoBtn('pshopper', mk)}</span><span class="total">Cobrado: ${fmtBrl(mCobrado)} | Lucro: ${fmtBrl(mLucro)}</span></div>
+    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Descricao</th><th>Custo</th><th>Cobrado</th><th>Lucro</th><th></th></tr></thead><tbody>${
+      mt.sort((a,b)=>(a.data||'').localeCompare(b.data||'')).map(t => {
+        const lucro = (t.cobrado||0) - (t.custo||0);
+        return `<tr><td>${fmtDate(t.data)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.descricao||'-'}</td><td>${fmtBrl(t.custo)}</td><td>${fmtBrl(t.cobrado)}</td><td style="color:var(--green);font-weight:600">${fmtBrl(lucro)}</td><td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" onclick="editPShopper('${t.id}')">editar</span> <span style="cursor:pointer;color:var(--red);font-size:0.78rem" onclick="deletePShopper('${t.id}')">x</span></td></tr>`;
+      }).join('')
+    }</tbody></table></div></div>`;
+  }).join('') || '<div class="empty">Nenhum personal shopper cadastrado.</div>';
 }
 
 function renderDashboard() {
@@ -1262,6 +1361,128 @@ db.collection('folgas').onSnapshot(snap => {
   allFolgas = snap.docs.map(d => ({id: d.id, ...d.data()}));
   renderCalendario(); renderFolgaTable();
 }, err => { console.error('Firestore folgas error', err); });
+
+db.collection('transfers').onSnapshot(snap => {
+  allTransfers = snap.docs.map(d => ({id: d.id, ...d.data()}));
+  renderFechamento();
+}, err => { console.error('Firestore transfers error', err); });
+
+db.collection('personalShoppers').onSnapshot(snap => {
+  allPShoppers = snap.docs.map(d => ({id: d.id, ...d.data()}));
+  renderFechamento();
+}, err => { console.error('Firestore pshoppers error', err); });
+
+db.collection('fechamentos').onSnapshot(snap => {
+  allFechamentos = {};
+  snap.docs.forEach(d => { allFechamentos[d.id] = d.data().fechado; });
+  renderFechamento();
+}, err => { console.error('Firestore fechamentos error', err); });
+
+// Transfer - lucro automatico
+['tf-fornecedor','tf-cobrado'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    const f = parseFloat(document.getElementById('tf-fornecedor').value) || 0;
+    const c = parseFloat(document.getElementById('tf-cobrado').value) || 0;
+    document.getElementById('tf-lucro').value = fmtBrl(c - f);
+  });
+});
+
+function clearTransferForm() {
+  ['tf-data','tf-cliente','tf-trajeto','tf-fornecedor','tf-cobrado','tf-lucro'].forEach(id => document.getElementById(id).value = '');
+  editingTransferId = null;
+  document.getElementById('btnSalvarTransfer').textContent = 'Salvar Transfer';
+}
+document.getElementById('btnLimparTransfer').addEventListener('click', clearTransferForm);
+
+document.getElementById('btnSalvarTransfer').addEventListener('click', async () => {
+  const data = {
+    data: document.getElementById('tf-data').value,
+    cliente: document.getElementById('tf-cliente').value.toUpperCase().trim(),
+    trajeto: document.getElementById('tf-trajeto').value.trim(),
+    fornecedor: parseFloat(document.getElementById('tf-fornecedor').value) || 0,
+    cobrado: parseFloat(document.getElementById('tf-cobrado').value) || 0,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  if (!data.data || !data.cliente) { toast('Preencha data e cliente.', false); return; }
+  try {
+    if (editingTransferId) { await db.collection('transfers').doc(editingTransferId).set(data); toast('Transfer atualizado!'); }
+    else { await db.collection('transfers').add(data); toast('Transfer salvo!'); }
+    clearTransferForm();
+  } catch (e) { toast('Erro: ' + e.message, false); }
+});
+
+function editTransfer(id) {
+  const t = allTransfers.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('tf-data').value = t.data || '';
+  document.getElementById('tf-cliente').value = t.cliente || '';
+  document.getElementById('tf-trajeto').value = t.trajeto || '';
+  document.getElementById('tf-fornecedor').value = t.fornecedor || '';
+  document.getElementById('tf-cobrado').value = t.cobrado || '';
+  document.getElementById('tf-lucro').value = fmtBrl((t.cobrado||0) - (t.fornecedor||0));
+  editingTransferId = id;
+  document.getElementById('btnSalvarTransfer').textContent = 'Atualizar Transfer';
+  document.getElementById('tf-data').scrollIntoView({behavior:'smooth'});
+}
+
+async function deleteTransfer(id) {
+  if (!confirm('Deletar este transfer?')) return;
+  try { await db.collection('transfers').doc(id).delete(); toast('Transfer removido.'); }
+  catch (e) { toast('Erro: ' + e.message, false); }
+}
+
+// Personal Shopper - lucro automatico
+['ps-custo','ps-cobrado'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    const c = parseFloat(document.getElementById('ps-custo').value) || 0;
+    const v = parseFloat(document.getElementById('ps-cobrado').value) || 0;
+    document.getElementById('ps-lucro').value = fmtBrl(v - c);
+  });
+});
+
+function clearPShopperForm() {
+  ['ps-data','ps-cliente','ps-descricao','ps-custo','ps-cobrado','ps-lucro'].forEach(id => document.getElementById(id).value = '');
+  editingPShopperId = null;
+  document.getElementById('btnSalvarPShopper').textContent = 'Salvar Personal Shopper';
+}
+document.getElementById('btnLimparPShopper').addEventListener('click', clearPShopperForm);
+
+document.getElementById('btnSalvarPShopper').addEventListener('click', async () => {
+  const data = {
+    data: document.getElementById('ps-data').value,
+    cliente: document.getElementById('ps-cliente').value.toUpperCase().trim(),
+    descricao: document.getElementById('ps-descricao').value.trim(),
+    custo: parseFloat(document.getElementById('ps-custo').value) || 0,
+    cobrado: parseFloat(document.getElementById('ps-cobrado').value) || 0,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  if (!data.data || !data.cliente) { toast('Preencha data e cliente.', false); return; }
+  try {
+    if (editingPShopperId) { await db.collection('personalShoppers').doc(editingPShopperId).set(data); toast('Personal Shopper atualizado!'); }
+    else { await db.collection('personalShoppers').add(data); toast('Personal Shopper salvo!'); }
+    clearPShopperForm();
+  } catch (e) { toast('Erro: ' + e.message, false); }
+});
+
+function editPShopper(id) {
+  const t = allPShoppers.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('ps-data').value = t.data || '';
+  document.getElementById('ps-cliente').value = t.cliente || '';
+  document.getElementById('ps-descricao').value = t.descricao || '';
+  document.getElementById('ps-custo').value = t.custo || '';
+  document.getElementById('ps-cobrado').value = t.cobrado || '';
+  document.getElementById('ps-lucro').value = fmtBrl((t.cobrado||0) - (t.custo||0));
+  editingPShopperId = id;
+  document.getElementById('btnSalvarPShopper').textContent = 'Atualizar Personal Shopper';
+  document.getElementById('ps-data').scrollIntoView({behavior:'smooth'});
+}
+
+async function deletePShopper(id) {
+  if (!confirm('Deletar este personal shopper?')) return;
+  try { await db.collection('personalShoppers').doc(id).delete(); toast('Personal Shopper removido.'); }
+  catch (e) { toast('Erro: ' + e.message, false); }
+}
 </script>
 </div><!-- /appWrap -->
 
