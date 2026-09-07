@@ -285,16 +285,10 @@ body.role-guia .manage-folga-table{display:none!important}
 
   <div class="panel" id="p-fechamento">
     <h2 class="section-title">Fechamento Geral</h2>
-    <p class="section-sub">Resultado consolidado com controle de fechamento mensal</p>
-    <div class="filter-row" style="margin-bottom:1rem">
-      <select id="fechStatus"><option value="CONFIRMADO">Confirmados</option><option value="">Todos os tours</option></select>
-    </div>
+    <p class="section-sub">Controle mensal de fechamento por categoria</p>
     <div class="stats" id="statsFech"></div>
-    <h3 style="margin:1.5rem 0 0.5rem;font-size:1rem;color:var(--ink)">Socios (Mayra + Totti)</h3>
-    <div id="fechSocios"></div>
-    <h3 style="margin:1.5rem 0 0.5rem;font-size:1rem;color:var(--ink)">Guias Externos</h3>
-    <div id="fechGuias"></div>
-    <h3 style="margin:1.5rem 0 0.5rem;font-size:1rem;color:var(--ink)">Transfer</h3>
+    <div id="fechChecklist"></div>
+    <h3 style="margin:2rem 0 0.5rem;font-size:1rem;color:var(--ink)">Cadastro de Transfer</h3>
     <div class="card" style="margin-bottom:1rem;padding:1rem">
       <div class="form-row">
         <div class="form-group"><label>Data</label><input type="date" id="tf-data"></div>
@@ -310,7 +304,7 @@ body.role-guia .manage-folga-table{display:none!important}
       </div>
     </div>
     <div id="fechTransfer"></div>
-    <h3 style="margin:1.5rem 0 0.5rem;font-size:1rem;color:var(--ink)">Personal Shopper</h3>
+    <h3 style="margin:2rem 0 0.5rem;font-size:1rem;color:var(--ink)">Cadastro de Personal Shopper</h3>
     <div class="card" style="margin-bottom:1rem;padding:1rem">
       <div class="form-row">
         <div class="form-group"><label>Data</label><input type="date" id="ps-data"></div>
@@ -829,7 +823,7 @@ function renderTourTable() {
 document.getElementById('filterMes').addEventListener('change', renderTourTable);
 document.getElementById('filterStatus').addEventListener('change', renderTourTable);
 document.getElementById('filterGuia').addEventListener('change', renderTourTable);
-document.getElementById('fechStatus').addEventListener('change', renderFechamento);
+
 
 function groupByMonth(tours) {
   const groups = {};
@@ -885,13 +879,6 @@ function renderGuias() {
   }).join('') || '<div class="empty">Nenhum tour com guias externos ainda.</div>';
 }
 
-function fechadoBtn(tipo, mk) {
-  const key = mk + '-' + tipo;
-  const fechado = allFechamentos[key];
-  const cls = fechado ? 'background:var(--green);color:#fff' : 'background:var(--surface-alt);color:var(--ink-soft)';
-  const label = fechado ? 'FECHADO' : 'NAO FECHADO';
-  return `<button style="font-size:0.72rem;padding:3px 10px;border:none;border-radius:10px;cursor:pointer;font-weight:600;${cls}" onclick="toggleFechado('${key}')">${label}</button>`;
-}
 async function toggleFechado(key) {
   const novo = !allFechamentos[key];
   allFechamentos[key] = novo;
@@ -900,10 +887,8 @@ async function toggleFechado(key) {
 }
 
 function renderFechamento() {
-  const statusF = document.getElementById('fechStatus').value;
-  const conf = statusF ? allTours.filter(t => t.status === statusF) : [...allTours];
+  const conf = [...allTours];
   const totalBrl = conf.reduce((s,t) => s + (t.valorBrl||0), 0);
-  const totalDesp = conf.reduce((s,t) => s + (t.despesaGuia||0), 0);
   const totalLiq = conf.reduce((s,t) => s + (t.liquido||0), 0);
   const totalDiego = conf.reduce((s,t) => s + (t.parteDiego||0), 0);
   const totalMT = conf.reduce((s,t) => s + (t.parteMT||0), 0);
@@ -911,37 +896,46 @@ function renderFechamento() {
   const totalPSLucro = allPShoppers.reduce((s,t) => s + ((t.cobrado||0)-(t.custo||0)), 0);
   renderStats('statsFech', [['Tours', conf.length, ''],['Faturamento', fmtBrl(totalBrl), ''],['Liquido Tours', fmtBrl(totalLiq), 'green'],['Transfer', fmtBrl(totalTransferLucro), 'blue'],['P. Shopper', fmtBrl(totalPSLucro), 'blue'],['Diego', fmtBrl(totalDiego), 'blue'],['M+T', fmtBrl(totalMT), 'accent']]);
 
-  // Socios por mes
-  const socTours = statusF ? conf.filter(t => SOCIOS.includes(t.guia)) : allTours.filter(t => SOCIOS.includes(t.guia));
-  const socMonths = groupByMonth(socTours);
-  document.getElementById('fechSocios').innerHTML = socMonths.map(([mk, mt]) => {
-    const mD = mt.reduce((s,t) => s + (t.parteDiego||0), 0);
-    const mMT = mt.reduce((s,t) => s + (t.parteMT||0), 0);
-    const mLiq = mt.reduce((s,t) => s + (t.liquido||0), 0);
-    return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)} (${mt.length} tours) ${fechadoBtn('socios', mk)}</span><span class="total">Liq: ${fmtBrl(mLiq)} | Diego: ${fmtBrl(mD)} | MT: ${fmtBrl(mMT)}</span></div>
-    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Destino</th><th>Guia</th><th>Pess.</th><th>BRL</th><th>Liq.</th><th>Diego</th><th>M+T</th></tr></thead><tbody>${
-      mt.sort((a,b)=>(a.dataTour||'').localeCompare(b.dataTour||'')).map(t =>
-        `<tr><td>${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.destino}</td><td>${t.guia}</td><td>${t.pessoas}</td><td>${fmtBrl(t.valorBrl)}</td><td>${fmtBrl(t.liquido)}</td><td>${fmtBrl(t.parteDiego)}</td><td>${fmtBrl(t.parteMT)}</td></tr>`
-      ).join('')
-    }</tbody></table></div></div>`;
-  }).join('') || '<div class="empty">Nenhum tour de socios.</div>';
+  // Checklist mensal simples
+  const allMonths = new Set();
+  allTours.forEach(t => { const k = monthKey(t.dataTour); if (k) allMonths.add(k); });
+  allTransfers.forEach(t => { const k = monthKey(t.data); if (k) allMonths.add(k); });
+  allPShoppers.forEach(t => { const k = monthKey(t.data); if (k) allMonths.add(k); });
+  const sortedMonths = [...allMonths].sort().reverse();
 
-  // Guias externos por mes
-  const extTours = statusF ? conf.filter(t => !SOCIOS.includes(t.guia) && t.guia !== 'A DEFINIR') : allTours.filter(t => !SOCIOS.includes(t.guia) && t.guia !== 'A DEFINIR');
-  const extMonths = groupByMonth(extTours);
-  document.getElementById('fechGuias').innerHTML = extMonths.map(([mk, mt]) => {
-    const mD = mt.reduce((s,t) => s + (t.parteDiego||0), 0);
-    const mMT = mt.reduce((s,t) => s + (t.parteMT||0), 0);
-    const mLiq = mt.reduce((s,t) => s + (t.liquido||0), 0);
-    const mDesp = mt.reduce((s,t) => s + (t.despesaGuia||0), 0);
-    return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)} (${mt.length} tours) ${fechadoBtn('guias', mk)}</span><span class="total">Liq: ${fmtBrl(mLiq)} | Diego: ${fmtBrl(mD)} | MT: ${fmtBrl(mMT)}</span></div>
-    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Destino</th><th>Guia</th><th>Pess.</th><th>BRL</th><th>Desp.</th><th>Liq.</th><th>Diego</th><th>M+T</th></tr></thead><tbody>${
-      mt.sort((a,b)=>(a.dataTour||'').localeCompare(b.dataTour||'')).map(t => {
-        const da = (!t.despesaGuia || t.despesaGuia === 0) ? '<span class="alert-chip alert-desp" title="Sem despesa">$ ?</span>' : '';
-        return `<tr><td>${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.destino}</td><td>${t.guia}</td><td>${t.pessoas}</td><td>${fmtBrl(t.valorBrl)}</td><td>${fmtBrl(t.despesaGuia)}${da}</td><td>${fmtBrl(t.liquido)}</td><td>${fmtBrl(t.parteDiego)}</td><td>${fmtBrl(t.parteMT)}</td></tr>`;
-      }).join('')
-    }</tbody></table></div></div>`;
-  }).join('') || '<div class="empty">Nenhum tour de guias externos.</div>';
+  const categorias = [
+    { key: 'socios', label: 'Fechamento Socios' },
+    { key: 'guias', label: 'Fechamento Guias Externos' },
+    { key: 'transfer', label: 'Fechamento Transfer' },
+    { key: 'pshopper', label: 'Fechamento Personal Shopper' }
+  ];
+
+  document.getElementById('fechChecklist').innerHTML = sortedMonths.map(mk => {
+    const items = categorias.map(cat => {
+      const fkey = mk + '-' + cat.key;
+      const fechado = allFechamentos[fkey];
+      const checked = fechado ? 'checked' : '';
+      const labelStyle = fechado ? 'color:var(--green);text-decoration:line-through' : 'color:var(--ink)';
+      return `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;font-size:0.85rem;${labelStyle}">
+        <input type="checkbox" ${checked} onchange="toggleFechado('${fkey}')" style="width:18px;height:18px;cursor:pointer;accent-color:var(--green)">
+        ${cat.label}
+        ${fechado ? '<span style="font-size:0.7rem;background:var(--green);color:#fff;padding:1px 8px;border-radius:10px;text-decoration:none">FECHADO</span>' : ''}
+      </label>`;
+    }).join('');
+    const totalChecked = categorias.filter(cat => allFechamentos[mk + '-' + cat.key]).length;
+    const progressPct = (totalChecked / categorias.length * 100).toFixed(0);
+    const progressColor = totalChecked === categorias.length ? 'var(--green)' : 'var(--accent)';
+    return `<div class="card" style="margin-bottom:0.75rem;padding:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-weight:700;font-size:0.95rem;color:var(--ink)">${monthLabel(mk)}</span>
+        <span style="font-size:0.75rem;color:var(--ink-soft)">${totalChecked}/${categorias.length}</span>
+      </div>
+      <div style="height:4px;background:var(--surface-alt);border-radius:2px;margin-bottom:10px;overflow:hidden">
+        <div style="height:100%;width:${progressPct}%;background:${progressColor};border-radius:2px;transition:width 0.3s"></div>
+      </div>
+      ${items}
+    </div>`;
+  }).join('') || '<div class="empty">Nenhum mes com dados.</div>';
 
   // Transfer por mes
   const tfMonths = {};
@@ -950,7 +944,7 @@ function renderFechamento() {
   document.getElementById('fechTransfer').innerHTML = tfSorted.map(([mk, mt]) => {
     const mLucro = mt.reduce((s,t) => s + ((t.cobrado||0)-(t.fornecedor||0)), 0);
     const mCobrado = mt.reduce((s,t) => s + (t.cobrado||0), 0);
-    return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)} (${mt.length}) ${fechadoBtn('transfer', mk)}</span><span class="total">Cobrado: ${fmtBrl(mCobrado)} | Lucro: ${fmtBrl(mLucro)}</span></div>
+    return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)} (${mt.length})</span><span class="total">Cobrado: ${fmtBrl(mCobrado)} | Lucro: ${fmtBrl(mLucro)}</span></div>
     <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Trajeto</th><th>Fornecedor</th><th>Cobrado</th><th>Lucro</th><th></th></tr></thead><tbody>${
       mt.sort((a,b)=>(a.data||'').localeCompare(b.data||'')).map(t => {
         const lucro = (t.cobrado||0) - (t.fornecedor||0);
@@ -966,7 +960,7 @@ function renderFechamento() {
   document.getElementById('fechPShopper').innerHTML = psSorted.map(([mk, mt]) => {
     const mLucro = mt.reduce((s,t) => s + ((t.cobrado||0)-(t.custo||0)), 0);
     const mCobrado = mt.reduce((s,t) => s + (t.cobrado||0), 0);
-    return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)} (${mt.length}) ${fechadoBtn('pshopper', mk)}</span><span class="total">Cobrado: ${fmtBrl(mCobrado)} | Lucro: ${fmtBrl(mLucro)}</span></div>
+    return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)} (${mt.length})</span><span class="total">Cobrado: ${fmtBrl(mCobrado)} | Lucro: ${fmtBrl(mLucro)}</span></div>
     <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Descricao</th><th>Custo</th><th>Cobrado</th><th>Lucro</th><th></th></tr></thead><tbody>${
       mt.sort((a,b)=>(a.data||'').localeCompare(b.data||'')).map(t => {
         const lucro = (t.cobrado||0) - (t.custo||0);
