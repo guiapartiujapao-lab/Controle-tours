@@ -801,7 +801,7 @@ function renderCalendario() {
     const dateStr = ym + '-' + pad(d);
     const isToday = dateStr === todayStr;
     html += `<div class="cal-day${isToday?' today':''}"><div class="cal-num">${d}</div>`;
-    if (dayFolgas[d]) dayFolgas[d].forEach(f => { html += `<div class="cal-chip cal-folga" title="FOLGA: ${f.guia} - ${f.motivo||''}">${f.guia} folga</div>`; });
+    if (dayFolgas[d]) dayFolgas[d].forEach(f => { html += `<div class="cal-chip cal-folga" style="cursor:pointer" data-folgaid="${f.id}" title="FOLGA: ${f.guia} - ${f.motivo||''} (clique para remover)">${f.guia} folga</div>`; });
     if (dayTours[d]) dayTours[d].forEach(t => {
       const cls = t.guia === 'A DEFINIR' ? 'cal-definir' : SOCIOS.includes(t.guia) ? 'cal-tour-socio' : 'cal-tour';
       const dur = t.duracao ? ' '+t.duracao : '';
@@ -816,6 +816,10 @@ function renderCalendario() {
   document.querySelectorAll('[data-tourid]').forEach(el => el.addEventListener('click', () => {
     const t = allTours.find(x => x.id === el.dataset.tourid);
     if (t) showTourDetail(t);
+  }));
+  document.querySelectorAll('[data-folgaid]').forEach(el => el.addEventListener('click', () => {
+    const f = allFolgas.find(x => x.id === el.dataset.folgaid);
+    if (f && confirm(`Remover folga de ${f.guia} em ${fmtDate(f.data)}?`)) deleteFolga(f.id);
   }));
 }
 function showTourDetail(t) {
