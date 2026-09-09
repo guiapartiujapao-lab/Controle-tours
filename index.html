@@ -127,13 +127,39 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 .status-bar{background:var(--green-soft);color:var(--green);padding:0.4rem 1rem;font-size:0.78rem;text-align:center;font-weight:500}
 .status-bar.offline{background:var(--red-soft);color:var(--red)}
 @media(max-width:700px){
-  .topbar-inner{flex-direction:column;align-items:flex-start;gap:0}
-  .logo{padding:0.6rem 0 0}
-  .tabs{width:100%}
-  .form-grid{grid-template-columns:1fr 1fr}
+  .topbar-inner{flex-wrap:wrap;padding:0 0.5rem;gap:0}
+  .logo{padding:0.5rem 0 0.2rem;font-size:1rem;flex:1}
+  .btn-logout{padding:0.25rem 0.6rem;font-size:0.72rem;margin-top:0.5rem}
+  .tabs{width:100%;order:3;padding-bottom:0.3rem}
+  .tab{padding:0.5rem 0.65rem;font-size:0.73rem}
+  .page{padding:1rem 0.5rem 2rem}
+  .form-grid{grid-template-columns:1fr}
+  .form-row{flex-wrap:wrap}
   .stats{grid-template-columns:1fr 1fr}
-  .cal-day{min-height:60px}
-  .cal-chip{font-size:0.55rem}
+  .stat-card{padding:0.7rem 0.5rem}
+  .stat-val{font-size:1.1rem}
+  .stat-label{font-size:0.62rem}
+  .card{padding:0.9rem}
+  .section-title{font-size:1rem}
+  .filter-row{flex-direction:column;gap:6px}
+  .filter-row select,.filter-row input{width:100%}
+  table{font-size:0.72rem}
+  th{font-size:0.65rem;padding:0.4rem 0.3rem}
+  td{padding:0.4rem 0.3rem}
+  .month-header{flex-direction:column;gap:4px;font-size:0.85rem;padding:0.5rem}
+  .month-header .total{font-size:0.75rem}
+  .cal-day{min-height:50px}
+  .cal-chip{font-size:0.5rem}
+  .cal-num{font-size:0.7rem}
+  .cal-head{font-size:0.6rem;padding:0.3rem}
+  .cal-nav{gap:0.5rem}
+  .cal-month{font-size:0.9rem;min-width:140px}
+  .report-box{padding:1rem;font-size:0.82rem}
+  .modal{width:95vw;padding:1.25rem}
+  .btn{padding:0.5rem 1rem;font-size:0.8rem}
+  #dashGrid,#metricasGrid{grid-template-columns:1fr!important}
+  .toast{left:0.5rem;right:0.5rem;bottom:1rem;text-align:center}
+  #searchCliente{font-size:0.85rem;padding:8px 12px}
 }
 #loginScreen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center}
 #loginScreen.hidden{display:none}
