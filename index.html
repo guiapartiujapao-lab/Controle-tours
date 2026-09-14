@@ -855,10 +855,32 @@ function showTourDetail(t) {
   const dur = t.duracao || '-';
   const ext = t.extensao === 'SIM' ? 'Sim' : 'Nao';
   const pess = t.pessoas || 0;
-  let body = `<b>Cliente:</b> ${t.cliente||'-'}<br><b>Destino:</b> ${t.destino||'-'}<br><b>Duracao:</b> ${dur}<br><b>Extensao:</b> ${ext}<br><b>Pessoas:</b> ${pess}<br><b>Data:</b> ${fmtDate(t.dataTour)}<br><b>Guia:</b> ${t.guia||'-'}<br><b>Status:</b> ${t.status||'-'}`;
+  let body = `<b>Cliente:</b> ${t.cliente||'-'}<br><b>Destino:</b> ${t.destino||'-'}<br><b>Duracao:</b> ${dur}<br><b>Extensao:</b> ${ext}<br><b>Pessoas:</b> ${pess}<br><b>Data:</b> ${fmtDate(t.dataTour)}<br><b>Status:</b> ${t.status||'-'}`;
+  if (!loggedGuiaNome && t.guia === 'A DEFINIR') {
+    const opts = GUIAS.filter(g => g !== 'A DEFINIR').map(g => `<option value="${g}">${g}</option>`).join('');
+    body += `<br><b>Guia:</b> <select id="selGuiaDetail" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:0.85rem"><option value="A DEFINIR">A DEFINIR</option>${opts}</select>`;
+    body += `<button id="btnSalvarGuia" style="margin-left:8px;padding:4px 12px;border-radius:4px;border:none;background:var(--accent);color:#fff;font-size:0.8rem;cursor:pointer">Salvar Guia</button>`;
+  } else {
+    body += `<br><b>Guia:</b> ${t.guia||'-'}`;
+  }
   if (!loggedGuiaNome) body += `<br><b>Valor USD:</b> ${fmtUsd(t.valorUsd)}<br><b>Valor BRL:</b> ${fmtBrl(t.valorBrl)}<br><b>Pagamento:</b> ${t.formaPagamento||'-'}`;
   if (t.obs) body += `<br><b>Obs:</b> ${t.obs}`;
   document.getElementById('detailContent').innerHTML = body;
+  if (!loggedGuiaNome && t.guia === 'A DEFINIR') {
+    document.getElementById('btnSalvarGuia').addEventListener('click', async () => {
+      const novoGuia = document.getElementById('selGuiaDetail').value;
+      if (novoGuia === 'A DEFINIR') return;
+      const isSocio = SOCIOS.includes(novoGuia);
+      const liq = (t.valorBrl||0) - (t.despesaGuia||0);
+      await db.collection('tours').doc(t.id).update({
+        guia: novoGuia,
+        tipoGuia: isSocio ? 'SOCIO' : 'EXTERNO',
+        parteDiego: isSocio ? liq * 0.2 : liq * 0.5,
+        parteMT: isSocio ? liq * 0.8 : liq * 0.5
+      });
+      document.getElementById('modalDetail').classList.remove('open');
+    });
+  }
   document.getElementById('modalDetail').classList.add('open');
 }
 
