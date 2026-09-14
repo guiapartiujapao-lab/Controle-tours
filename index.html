@@ -514,7 +514,7 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
-const DESTINOS = ['MT FUJI','TOKYO','TOKYO TP','TOKYO CARRO','KAMAKURA','HAKONE','NIKKO','OSAKA','KYOTO','NARA','KOBE','HIROSHIMA','TOUR GASTRONOMICO'];
+const DESTINOS = ['MT FUJI','TOKYO TP','TOKYO CARRO','KAMAKURA','HAKONE','NIKKO','OSAKA','KYOTO','NARA','KOBE','HIROSHIMA','TOUR GASTRONOMICO'];
 const GUIAS = ['A DEFINIR','MAYRA','TOTTI','GABRIELLE','GIOVANA','JONAS','LARISSA','CLINTE','LORRAN','LEONARDO','KETLIN'];
 const SOCIOS = ['MAYRA','TOTTI'];
 const PAGS = ['PIX','CARTAO DE CREDITO','DOLAR CASH','WISE','NOMAD','PAYPAL'];
@@ -1438,6 +1438,10 @@ document.getElementById('btnConfirmImport').addEventListener('click', async () =
 db.collection('tours').where('guia','==','LOHAN').get().then(snap => {
   snap.forEach(d => d.ref.update({ guia: 'LORRAN' }));
   if (snap.size) console.log(`Migrados ${snap.size} tours de LOHAN para LORRAN`);
+});
+db.collection('tours').where('destino','==','TOKYO').get().then(snap => {
+  snap.forEach(d => d.ref.update({ destino: 'TOKYO TP' }));
+  if (snap.size) console.log(`Migrados ${snap.size} tours de TOKYO para TOKYO TP`);
 });
 
 // FIREBASE REAL-TIME LISTENERS
