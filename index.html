@@ -89,6 +89,7 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 .tag-green{background:var(--green-soft);color:var(--green)}
 .tag-gold{background:var(--gold-soft);color:var(--gold)}
 .tag-red{background:var(--red-soft);color:var(--red)}
+.tag-purple{background:#f3e8ff;color:#7c3aed}
 .alert-chip{display:inline-block;padding:1px 5px;border-radius:3px;font-size:0.68rem;font-weight:600;margin-left:4px;vertical-align:middle}
 .alert-guia{background:var(--orange-soft);color:var(--orange)}
 .alert-desp{background:var(--gold-soft);color:var(--gold)}
@@ -113,10 +114,19 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 .cal-day.today{outline:2px solid var(--accent);outline-offset:-2px}
 .cal-num{font-size:0.78rem;font-weight:600;color:var(--ink-soft);margin-bottom:2px}
 .cal-chip{display:block;padding:1px 4px;border-radius:3px;font-size:0.62rem;font-weight:500;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default}
-.cal-tour{background:var(--blue-soft);color:var(--blue)}
-.cal-tour-socio{background:var(--accent-soft);color:var(--accent)}
 .cal-folga{background:var(--red-soft);color:var(--red)}
-.cal-definir{background:var(--orange-soft);color:var(--orange)}
+.cal-definir{background:#fff7ed;color:#ea580c}
+.cal-chip[class*="cal-guia-"]{background:#e0f2fe;color:#0369a1}
+.cal-guia-mayra{background:#f3e8ff;color:#7c3aed}
+.cal-guia-totti{background:#e0f2fe;color:#0369a1}
+.cal-guia-gabrielle{background:#ccfbf1;color:#0d9488}
+.cal-guia-giovana{background:#fae8ff;color:#c026d3}
+.cal-guia-jonas{background:#dbeafe;color:#2563eb}
+.cal-guia-larissa{background:#fef3c7;color:#d97706}
+.cal-guia-clinte{background:#d1fae5;color:#059669}
+.cal-guia-lorran{background:#fee2e2;color:#b91c1c}
+.cal-guia-leonardo{background:#e0e7ff;color:#4f46e5}
+.cal-guia-ketlin{background:#fce7f3;color:#be185d}
 .cal-legend{display:flex;gap:1rem;margin-top:0.75rem;font-size:0.75rem;color:var(--ink-muted);flex-wrap:wrap}
 .cal-legend span{display:flex;align-items:center;gap:4px}
 .cal-legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
@@ -259,6 +269,7 @@ body.role-guia .manage-folga-table{display:none!important}
         <div class="form-group fin-only"><label>Diego</label><input type="text" id="f-diego" readonly></div>
         <div class="form-group fin-only"><label>Mayra+Totti</label><input type="text" id="f-mt" readonly></div>
         <div class="form-group"><label>Status</label><select id="f-status"><option value="CONFIRMADO">CONFIRMADO</option><option value="PENDENTE">PENDENTE</option><option value="CANCELADO">CANCELADO</option></select></div>
+        <div class="form-group" id="grpEstorno" style="display:none"><label>Estornado?</label><select id="f-estorno"><option value="NAO">NAO</option><option value="SIM">SIM</option></select></div>
         <div class="form-group"><label>Observacoes</label><input type="text" id="f-obs" placeholder="Opcional"></div>
       </div>
       <div class="form-row">
@@ -550,6 +561,10 @@ document.getElementById('f-extensao').addEventListener('change', () => {
   recalcForm();
 });
 document.getElementById('f-valorExtensao').addEventListener('input', recalcForm);
+document.getElementById('f-status').addEventListener('change', () => {
+  document.getElementById('grpEstorno').style.display = document.getElementById('f-status').value === 'CANCELADO' ? '' : 'none';
+  if (document.getElementById('f-status').value !== 'CANCELADO') document.getElementById('f-estorno').value = 'NAO';
+});
 
 function getBrl() {
   if (brlManual) return parseFloat(document.getElementById('f-valorBrl').value) || 0;
@@ -593,6 +608,8 @@ function clearForm() {
   document.getElementById('f-valorExtensao').value = '';
   document.getElementById('grpValorExtensao').style.display = 'none';
   document.getElementById('f-status').value = 'CONFIRMADO';
+  document.getElementById('f-estorno').value = 'NAO';
+  document.getElementById('grpEstorno').style.display = 'none';
   ['f-valorBrl','f-sinal','f-restante','f-liquido','f-diego','f-mt'].forEach(id => document.getElementById(id).value = '');
   brlManual = false; sinalManual = false; restanteManual = false;
   editingId = null;
@@ -630,6 +647,7 @@ function getFormData() {
     parteMT: isSocio ? liq * 0.8 : liq * 0.5,
     tipoGuia: isSocio ? 'SOCIO' : 'EXTERNO',
     status: document.getElementById('f-status').value,
+    estorno: document.getElementById('f-status').value === 'CANCELADO' ? document.getElementById('f-estorno').value : 'NAO',
     obs: document.getElementById('f-obs').value.trim(),
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   };
@@ -654,6 +672,8 @@ function fillForm(t) {
   document.getElementById('f-restantePago').value = t.restantePago || 'NAO';
   document.getElementById('f-despesa').value = t.despesaGuia || '';
   document.getElementById('f-status').value = t.status || 'CONFIRMADO';
+  document.getElementById('grpEstorno').style.display = t.status === 'CANCELADO' ? '' : 'none';
+  document.getElementById('f-estorno').value = t.estorno || 'NAO';
   document.getElementById('f-obs').value = t.obs || '';
   brlManual = true; sinalManual = true; restanteManual = true;
   document.getElementById('f-valorBrl').value = t.valorBrl || '';
@@ -803,7 +823,7 @@ function renderCalendario() {
     html += `<div class="cal-day${isToday?' today':''}"><div class="cal-num">${d}</div>`;
     if (dayFolgas[d]) dayFolgas[d].forEach(f => { html += `<div class="cal-chip cal-folga" style="cursor:pointer" data-folgaid="${f.id}" title="FOLGA: ${f.guia} - ${f.motivo||''} (clique para remover)">${f.guia} folga</div>`; });
     if (dayTours[d]) dayTours[d].forEach(t => {
-      const cls = t.guia === 'A DEFINIR' ? 'cal-definir' : SOCIOS.includes(t.guia) ? 'cal-tour-socio' : 'cal-tour';
+      const cls = t.guia === 'A DEFINIR' ? 'cal-definir' : ('cal-guia-' + (t.guia||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''));
       const dur = t.duracao ? ' '+t.duracao : '';
       html += `<div class="cal-chip ${cls}" style="cursor:pointer" data-tourid="${t.id}" title="${t.guia}: ${t.destino}${dur} - ${t.cliente} (${t.pessoas}p)">${t.guia} ${t.destino}${dur}</div>`;
     });
@@ -854,12 +874,13 @@ function renderTourTable() {
   tours.forEach(t => {
     const tr = document.createElement('tr');
     const sc = t.status === 'CONFIRMADO' ? 'tag-green' : t.status === 'PENDENTE' ? 'tag-gold' : 'tag-red';
+    const estornoTag = t.status === 'CANCELADO' && t.estorno === 'SIM' ? ' <span class="tag tag-purple" style="font-size:0.65rem">ESTORNADO</span>' : (t.status === 'CANCELADO' ? ' <span class="tag tag-gold" style="font-size:0.65rem">SEM ESTORNO</span>' : '');
     const isADefinir = t.guia === 'A DEFINIR';
     const semDesp = t.status !== 'CANCELADO' && t.guia !== 'A DEFINIR' && (!t.despesaGuia || t.despesaGuia === 0);
     const guiaCell = isADefinir ? `<span style="color:var(--orange);font-weight:600">${t.guia}</span><span class="alert-chip alert-guia">!</span>` : (t.guia||'-');
     const despAlert = semDesp ? '<span class="alert-chip alert-desp" title="Sem despesa">$ ?</span>' : '';
     const sinalTag = t.sinalPago === 'SIM' ? '<span class="tag tag-green">PAGO</span>' : '<span class="tag tag-gold">PENDENTE</span>';
-    tr.innerHTML = `<td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente||'-'}</td><td style="text-align:left">${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${guiaCell}</td><td>${t.pessoas||0}</td><td class="fin-only">${fmtBrl(t.valorBrl)}${despAlert}</td><td>${sinalTag}</td><td><span class="tag ${sc}">${t.status}</span></td><td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" data-edit="${t.id}">editar</span> <span style="cursor:pointer;color:var(--red);font-size:0.78rem;margin-left:6px" data-del="${t.id}">x</span></td>`;
+    tr.innerHTML = `<td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente||'-'}</td><td style="text-align:left">${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${guiaCell}</td><td>${t.pessoas||0}</td><td class="fin-only">${fmtBrl(t.valorBrl)}${despAlert}</td><td>${sinalTag}</td><td><span class="tag ${sc}">${t.status}</span>${estornoTag}</td><td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" data-edit="${t.id}">editar</span> <span style="cursor:pointer;color:var(--red);font-size:0.78rem;margin-left:6px" data-del="${t.id}">x</span></td>`;
     tbody.appendChild(tr);
   });
   tbody.querySelectorAll('[data-edit]').forEach(el => el.addEventListener('click', () => {
