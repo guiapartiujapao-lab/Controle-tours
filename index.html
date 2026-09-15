@@ -834,7 +834,8 @@ function renderCalendario() {
     if (dayTours[d]) dayTours[d].forEach(t => {
       const cls = t.status === 'CANCELADO' ? 'cal-cancelado' : t.guia === 'A DEFINIR' ? 'cal-definir' : ('cal-guia-' + (t.guia||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''));
       const dur = t.duracao ? ' '+t.duracao : '';
-      html += `<div class="cal-chip ${cls}" style="cursor:pointer" data-tourid="${t.id}" title="${t.guia}: ${t.destino}${dur} - ${t.cliente} (${t.pessoas}p)">${t.guia} ${t.destino}${dur}</div>`;
+      const chipLabel = loggedRole === 'vendedor' ? `${t.guia} ${t.cliente||''}` : `${t.guia} ${t.destino}${dur}`;
+      html += `<div class="cal-chip ${cls}" style="cursor:pointer" data-tourid="${t.id}" title="${t.guia}: ${t.destino}${dur} - ${t.cliente} (${t.pessoas}p)">${chipLabel}</div>`;
     });
     html += '</div>';
   }
@@ -1608,11 +1609,13 @@ async function sha256(str) {
 }
 
 let loggedGuiaNome = null;
+let loggedRole = 'admin';
 function showApp(user) {
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appWrap').classList.add('visible');
   const u = USERS[user];
   const role = u ? u.role : 'vendedor';
+  loggedRole = role;
   if (role === 'vendedor') document.body.classList.add('role-vendedor');
   if (role === 'guia') {
     document.body.classList.add('role-guia');
