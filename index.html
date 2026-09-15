@@ -834,7 +834,7 @@ function renderCalendario() {
     if (dayTours[d]) dayTours[d].forEach(t => {
       const cls = t.status === 'CANCELADO' ? 'cal-cancelado' : t.guia === 'A DEFINIR' ? 'cal-definir' : ('cal-guia-' + (t.guia||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''));
       const dur = t.duracao ? ' '+t.duracao : '';
-      const chipLabel = loggedRole === 'vendedor' ? `${t.guia} ${t.cliente||''}` : `${t.guia} ${t.destino}${dur}`;
+      const chipLabel = loggedRole === 'vendedor' ? `${t.guia} - ${t.cliente||''}` : `${t.guia} ${t.destino}${dur}`;
       html += `<div class="cal-chip ${cls}" style="cursor:pointer" data-tourid="${t.id}" title="${t.guia}: ${t.destino}${dur} - ${t.cliente} (${t.pessoas}p)">${chipLabel}</div>`;
     });
     html += '</div>';
