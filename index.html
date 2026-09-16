@@ -149,8 +149,10 @@ th:not(:first-child),td:not(:first-child){text-align:right}
   .tabs.menu-open{display:flex}
   .tab{padding:0.7rem 1rem;font-size:0.85rem;border-bottom:none;border-left:3px solid transparent}
   .tab.active{border-bottom:none;border-left-color:var(--accent)}
-  .cal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -0.5rem;padding:0 0.5rem}
-  .cal-grid{min-width:500px}
+  .cal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -0.5rem;padding:0 0.5rem;touch-action:pan-x pan-y}
+  .cal-grid{min-width:500px;touch-action:pan-x pan-y}
+  .cal-chip{touch-action:pan-x pan-y}
+  .cal-day{touch-action:pan-x pan-y}
   .page{padding:1rem 0.5rem 2rem}
   .form-grid{grid-template-columns:1fr}
   .form-row{flex-wrap:wrap}
