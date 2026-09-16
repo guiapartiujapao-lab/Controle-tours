@@ -107,9 +107,9 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 .cal-nav button{background:var(--surface-alt);border:1px solid var(--rule);border-radius:6px;padding:0.4rem 0.8rem;cursor:pointer;font-family:inherit;font-size:0.85rem;color:var(--ink)}
 .cal-nav button:hover{background:var(--rule-light)}
 .cal-month{font-family:'Noto Sans JP',sans-serif;font-weight:600;font-size:1.05rem;min-width:180px;text-align:center}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
-.cal-head{background:var(--surface-alt);padding:0.5rem;text-align:center;font-size:0.72rem;font-weight:600;text-transform:uppercase;color:var(--ink-muted)}
-.cal-day{background:var(--surface);min-height:90px;padding:0.35rem;position:relative}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.cal-head{background:var(--surface-alt);padding:0.5rem;text-align:center;font-size:0.72rem;font-weight:600;text-transform:uppercase;color:var(--ink-muted);min-width:0;overflow:hidden}
+.cal-day{background:var(--surface);min-height:90px;padding:0.35rem;position:relative;min-width:0;overflow:hidden}
 .cal-day.other{background:var(--surface-alt);opacity:0.4}
 .cal-day.today{outline:2px solid var(--accent);outline-offset:-2px}
 .cal-num{font-size:0.78rem;font-weight:600;color:var(--ink-soft);margin-bottom:2px}
