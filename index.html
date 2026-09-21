@@ -892,8 +892,8 @@ function renderCalendario() {
     const dateStr = ym + '-' + pad(d);
     const isToday = dateStr === todayStr;
     html += `<div class="cal-day${isToday?' today':''}"><div class="cal-num">${d}</div>`;
-    if (dayFolgas[d]) dayFolgas[d].forEach(f => { html += `<div class="cal-chip cal-folga" style="cursor:pointer" data-folgaid="${f.id}" title="FOLGA: ${f.guia} - ${f.motivo||''} (clique para remover)">${f.guia} folga</div>`; });
-    if (dayServicos[d]) dayServicos[d].forEach(s => { html += `<div class="cal-chip cal-servico" style="cursor:pointer" data-servicoid="${s.id}" title="SERVICO: CLINTE - ${s.descricao||''} (clique para remover)">CLINTE servico</div>`; });
+    if (dayFolgas[d]) dayFolgas[d].forEach(f => { html += `<div class="cal-chip cal-folga" style="cursor:pointer" data-folgaid="${f.id}" title="FOLGA: ${f.guia} - ${f.motivo||''} (clique para remover)">${f.guia} FOLGA</div>`; });
+    if (dayServicos[d]) dayServicos[d].forEach(s => { html += `<div class="cal-chip cal-servico" style="cursor:pointer" data-servicoid="${s.id}" title="SERVICO: CLINTE - ${s.descricao||''} (clique para remover)">CLINTE SERVICO</div>`; });
     if (dayTours[d]) dayTours[d].forEach(t => {
       const cls = t.status === 'CANCELADO' ? 'cal-cancelado' : t.guia === 'A DEFINIR' ? 'cal-definir' : ('cal-guia-' + (t.guia||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''));
       const dur = t.duracao ? ' '+t.duracao : '';
