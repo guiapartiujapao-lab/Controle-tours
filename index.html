@@ -127,6 +127,7 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 .cal-guia-leonardo{background:#4f46e5;color:#fff}
 .cal-guia-ketlin{background:#16a34a;color:#fff}
 .cal-cancelado{background:#1f1f1f;color:#fff}
+.cal-servico{background:#0ea5e9;color:#fff}
 .cal-legend{display:flex;gap:1rem;margin-top:0.75rem;font-size:0.75rem;color:var(--ink-muted);flex-wrap:wrap}
 .cal-legend span{display:flex;align-items:center;gap:4px}
 .cal-legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
@@ -300,6 +301,7 @@ body.role-guia .manage-folga-table{display:none!important}
     <div class="filter-row">
       <select id="calGuiaFilter"><option value="">Todos os guias</option></select>
       <button class="btn btn-secondary btn-sm" id="btnFolga">+ Adicionar Folga</button>
+      <button class="btn btn-secondary btn-sm" id="btnServico" style="display:none">+ Adicionar Servico</button>
     </div>
     <div class="cal-nav">
       <button id="calPrev">&larr;</button>
@@ -477,6 +479,21 @@ body.role-guia .manage-folga-table{display:none!important}
   </div>
 </div>
 
+<div class="modal-bg" id="modalServico">
+  <div class="modal">
+    <h3>Adicionar Servico</h3>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="form-group"><label>Data Inicio</label><input type="date" id="sv-data"></div>
+      <div class="form-group"><label>Data Fim (opcional)</label><input type="date" id="sv-dataFim"></div>
+      <div class="form-group"><label>Descricao</label><input type="text" id="sv-descricao" placeholder="Ex: Transfer aeroporto"></div>
+      <div class="form-row" style="margin-top:0.5rem">
+        <button class="btn btn-primary" id="btnSalvarServico">Salvar</button>
+        <button class="btn btn-secondary" id="btnCancelServico">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modalDetail">
   <div class="modal">
     <h3>Detalhes do Tour</h3>
@@ -522,7 +539,7 @@ const SOCIOS = ['MAYRA','TOTTI'];
 const PAGS = ['PIX','CARTAO DE CREDITO','DOLAR CASH','WISE','NOMAD','PAYPAL'];
 const MESES_NOME = {1:'Janeiro',2:'Fevereiro',3:'Marco',4:'Abril',5:'Maio',6:'Junho',7:'Julho',8:'Agosto',9:'Setembro',10:'Outubro',11:'Novembro',12:'Dezembro'};
 
-let allTours = [], allFolgas = [], allTransfers = [], allPShoppers = [], allFechamentos = {}, editingId = null, editingTransferId = null, editingPShopperId = null;
+let allTours = [], allFolgas = [], allServicos = [], allTransfers = [], allPShoppers = [], allFechamentos = {}, editingId = null, editingTransferId = null, editingPShopperId = null;
 let calYear, calMon;
 { const now = new Date(); calYear = now.getFullYear(); calMon = now.getMonth(); }
 
@@ -781,6 +798,40 @@ async function deleteFolga(id) {
   catch(e) { toast('Erro: ' + e.message, false); }
 }
 
+document.getElementById('btnServico').addEventListener('click', () => {
+  document.getElementById('sv-data').value = '';
+  document.getElementById('sv-dataFim').value = '';
+  document.getElementById('sv-descricao').value = '';
+  document.getElementById('modalServico').classList.add('open');
+});
+document.getElementById('btnCancelServico').addEventListener('click', () => document.getElementById('modalServico').classList.remove('open'));
+document.getElementById('btnSalvarServico').addEventListener('click', async () => {
+  const dataInicio = document.getElementById('sv-data').value;
+  const dataFim = document.getElementById('sv-dataFim').value;
+  const descricao = document.getElementById('sv-descricao').value.trim();
+  if (!dataInicio) { toast('Preencha a data inicio.', false); return; }
+  try {
+    const dates = [];
+    const start = new Date(dataInicio + 'T12:00:00');
+    const end = dataFim ? new Date(dataFim + 'T12:00:00') : start;
+    if (end < start) { toast('Data fim deve ser depois da data inicio.', false); return; }
+    for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+      dates.push(dt.toISOString().slice(0, 10));
+    }
+    for (const d of dates) {
+      await db.collection('servicos').add({ guia: 'CLINTE', data: d, descricao, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    }
+    document.getElementById('modalServico').classList.remove('open');
+    toast(`${dates.length} servico(s) adicionado(s)!`);
+  } catch(e) { toast('Erro: ' + e.message, false); }
+});
+
+async function deleteServico(id) {
+  if (!confirm('Remover este servico?')) return;
+  try { await db.collection('servicos').doc(id).delete(); toast('Servico removido.'); }
+  catch(e) { toast('Erro: ' + e.message, false); }
+}
+
 function renderFolgaTable() {
   const tbody = document.querySelector('#tblFolgas tbody');
   const sorted = [...allFolgas].sort((a,b) => (a.data||'').localeCompare(b.data||''));
@@ -810,7 +861,8 @@ function renderCalendario() {
   const today = new Date(); const todayStr = today.toISOString().slice(0,10);
   const pad = n => String(n).padStart(2,'0');
   const ym = calYear + '-' + pad(calMon+1);
-  const dayTours = {}, dayFolgas = {};
+  const dayTours = {}, dayFolgas = {}, dayServicos = {};
+  const showServicos = loggedGuiaNome === 'CLINTE' || loggedRole === 'vendedor';
   allTours.forEach(t => {
     if (!t.dataTour || !t.dataTour.startsWith(ym)) return;
     if (guiaFilter && t.guia !== guiaFilter) return;
@@ -825,6 +877,14 @@ function renderCalendario() {
     if (!dayFolgas[d]) dayFolgas[d] = [];
     dayFolgas[d].push(f);
   });
+  if (showServicos) {
+    allServicos.forEach(s => {
+      if (!s.data || !s.data.startsWith(ym)) return;
+      const d = parseInt(s.data.split('-')[2]);
+      if (!dayServicos[d]) dayServicos[d] = [];
+      dayServicos[d].push(s);
+    });
+  }
   let html = '';
   ['DOM','SEG','TER','QUA','QUI','SEX','SAB'].forEach(d => html += `<div class="cal-head">${d}</div>`);
   for (let i = 0; i < startDow; i++) html += '<div class="cal-day other"></div>';
@@ -833,6 +893,7 @@ function renderCalendario() {
     const isToday = dateStr === todayStr;
     html += `<div class="cal-day${isToday?' today':''}"><div class="cal-num">${d}</div>`;
     if (dayFolgas[d]) dayFolgas[d].forEach(f => { html += `<div class="cal-chip cal-folga" style="cursor:pointer" data-folgaid="${f.id}" title="FOLGA: ${f.guia} - ${f.motivo||''} (clique para remover)">${f.guia} folga</div>`; });
+    if (dayServicos[d]) dayServicos[d].forEach(s => { html += `<div class="cal-chip cal-servico" style="cursor:pointer" data-servicoid="${s.id}" title="SERVICO: CLINTE - ${s.descricao||''} (clique para remover)">CLINTE servico</div>`; });
     if (dayTours[d]) dayTours[d].forEach(t => {
       const cls = t.status === 'CANCELADO' ? 'cal-cancelado' : t.guia === 'A DEFINIR' ? 'cal-definir' : ('cal-guia-' + (t.guia||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''));
       const dur = t.duracao ? ' '+t.duracao : '';
@@ -852,6 +913,10 @@ function renderCalendario() {
   document.querySelectorAll('[data-folgaid]').forEach(el => el.addEventListener('click', () => {
     const f = allFolgas.find(x => x.id === el.dataset.folgaid);
     if (f && confirm(`Remover folga de ${f.guia} em ${fmtDate(f.data)}?`)) deleteFolga(f.id);
+  }));
+  document.querySelectorAll('[data-servicoid]').forEach(el => el.addEventListener('click', () => {
+    const s = allServicos.find(x => x.id === el.dataset.servicoid);
+    if (s && confirm(`Remover servico de CLINTE em ${fmtDate(s.data)}?`)) deleteServico(s.id);
   }));
 }
 function showTourDetail(t) {
@@ -1491,6 +1556,11 @@ db.collection('folgas').onSnapshot(snap => {
   renderCalendario(); renderFolgaTable();
 }, err => { console.error('Firestore folgas error', err); });
 
+db.collection('servicos').onSnapshot(snap => {
+  allServicos = snap.docs.map(d => ({id: d.id, ...d.data()}));
+  renderCalendario();
+}, err => { console.error('Firestore servicos error', err); });
+
 db.collection('transfers').onSnapshot(snap => {
   allTransfers = snap.docs.map(d => ({id: d.id, ...d.data()}));
   renderFechamento();
@@ -1654,6 +1724,9 @@ function showApp(user) {
     document.querySelector('[data-tab="calendario"]').classList.add('active');
     document.getElementById('p-calendario').classList.add('active');
     renderCalendario();
+  }
+  if (loggedGuiaNome === 'CLINTE' || role === 'vendedor') {
+    document.getElementById('btnServico').style.display = '';
   }
 }
 
