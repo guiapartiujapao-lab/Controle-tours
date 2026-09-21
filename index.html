@@ -834,7 +834,9 @@ async function deleteServico(id) {
 
 function renderFolgaTable() {
   const tbody = document.querySelector('#tblFolgas tbody');
-  const sorted = [...allFolgas].sort((a,b) => (a.data||'').localeCompare(b.data||''));
+  const pad = n => String(n).padStart(2,'0');
+  const ym = calYear + '-' + pad(calMon+1);
+  const sorted = [...allFolgas].filter(f => f.data && f.data.startsWith(ym)).sort((a,b) => (a.data||'').localeCompare(b.data||''));
   tbody.innerHTML = '';
   document.getElementById('emptyFolgas').style.display = sorted.length ? 'none' : 'block';
   sorted.forEach(f => {
@@ -918,6 +920,7 @@ function renderCalendario() {
     const s = allServicos.find(x => x.id === el.dataset.servicoid);
     if (s && confirm(`Remover servico de CLINTE em ${fmtDate(s.data)}?`)) deleteServico(s.id);
   }));
+  renderFolgaTable();
 }
 function showTourDetail(t) {
   const dur = t.duracao || '-';
