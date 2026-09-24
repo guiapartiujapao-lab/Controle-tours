@@ -203,6 +203,8 @@ body.role-guia .tab-cadastro{display:none!important}
 body.role-guia #p-cadastro{display:none!important}
 body.role-guia .manage-folga-table{display:none!important}
 body.role-guia .cal-legend{display:none!important}
+.vendedor-confirm-section{display:none;margin-top:1.5rem}
+body.role-vendedor .vendedor-confirm-section{display:block}
 .subtabs{display:flex;gap:0;border-bottom:2px solid var(--rule);margin-bottom:1rem}
 .subtab{padding:0.5rem 1.2rem;font-size:0.85rem;font-weight:600;cursor:pointer;border:none;background:none;color:var(--ink-muted);border-bottom:2px solid transparent;margin-bottom:-2px;font-family:inherit}
 .subtab.active{color:var(--accent);border-bottom-color:var(--accent)}
@@ -365,6 +367,26 @@ body.role-vendedor .guia-tours-section{display:none!important}
           <th>Data</th><th>Destino</th><th>Duracao</th><th>Pessoas</th>
         </tr></thead><tbody></tbody></table></div>
         <div class="empty" id="emptyGuiaRealizado">Nenhum tour realizado.</div>
+      </div>
+    </div>
+
+    <div class="vendedor-confirm-section">
+      <h3 style="font-size:0.95rem;font-weight:600;margin-bottom:0.75rem">Confirmacao dos Guias</h3>
+      <div class="subtabs" id="vendorSubtabs">
+        <button class="subtab active" data-vendortab="naoVisto">Nao Visto (<span id="countNaoVisto">0</span>)</button>
+        <button class="subtab" data-vendortab="visto">Visto (<span id="countVisto">0</span>)</button>
+      </div>
+      <div class="subtab-panel active" id="subNaoVisto">
+        <div class="table-wrap"><table id="tblVendNaoVisto"><thead><tr>
+          <th>Data</th><th>Guia</th><th>Destino</th><th>Cliente</th><th>Pessoas</th>
+        </tr></thead><tbody></tbody></table></div>
+        <div class="empty" id="emptyNaoVisto">Todos os tours foram confirmados pelos guias.</div>
+      </div>
+      <div class="subtab-panel" id="subVisto">
+        <div class="table-wrap"><table id="tblVendVisto"><thead><tr>
+          <th>Data</th><th>Guia</th><th>Destino</th><th>Cliente</th><th>Pessoas</th><th>Confirmado em</th>
+        </tr></thead><tbody></tbody></table></div>
+        <div class="empty" id="emptyVisto">Nenhum tour confirmado ainda.</div>
       </div>
     </div>
   </div>
@@ -934,6 +956,40 @@ function renderGuiaTours() {
   });
 }
 
+document.querySelectorAll('[data-vendortab]').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('#vendorSubtabs .subtab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.vendedor-confirm-section .subtab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const id = btn.dataset.vendortab === 'naoVisto' ? 'subNaoVisto' : 'subVisto';
+  document.getElementById(id).classList.add('active');
+}));
+
+function renderVendedorConfirm() {
+  if (loggedRole !== 'vendedor') return;
+  const hoje = new Date().toISOString().slice(0,10);
+  const futuros = allTours.filter(t => (t.dataTour||'') >= hoje && t.status !== 'CANCELADO' && t.guia !== 'A DEFINIR');
+  const naoVisto = futuros.filter(t => t.guiaConfirmou !== 'SIM').sort((a,b) => (a.dataTour||'').localeCompare(b.dataTour||''));
+  const visto = futuros.filter(t => t.guiaConfirmou === 'SIM').sort((a,b) => (a.dataTour||'').localeCompare(b.dataTour||''));
+  document.getElementById('countNaoVisto').textContent = naoVisto.length;
+  document.getElementById('countVisto').textContent = visto.length;
+  const tbodyN = document.querySelector('#tblVendNaoVisto tbody');
+  tbodyN.innerHTML = '';
+  document.getElementById('emptyNaoVisto').style.display = naoVisto.length ? 'none' : 'block';
+  naoVisto.forEach(t => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${fmtDate(t.dataTour)}</td><td>${t.guia||'-'}</td><td>${t.destino||'-'}</td><td>${t.cliente||'-'}</td><td>${t.pessoas||0}</td>`;
+    tbodyN.appendChild(tr);
+  });
+  const tbodyV = document.querySelector('#tblVendVisto tbody');
+  tbodyV.innerHTML = '';
+  document.getElementById('emptyVisto').style.display = visto.length ? 'none' : 'block';
+  visto.forEach(t => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${fmtDate(t.dataTour)}</td><td>${t.guia||'-'}</td><td>${t.destino||'-'}</td><td>${t.cliente||'-'}</td><td>${t.pessoas||0}</td><td>${fmtDate(t.guiaConfirmouEm)||'-'}</td>`;
+    tbodyV.appendChild(tr);
+  });
+}
+
 // CALENDARIO
 document.getElementById('calPrev').addEventListener('click', () => { calMon--; if(calMon<0){calMon=11;calYear--;} renderCalendario(); });
 document.getElementById('calNext').addEventListener('click', () => { calMon++; if(calMon>11){calMon=0;calYear++;} renderCalendario(); });
@@ -1069,7 +1125,7 @@ function showTourDetail(t) {
 }
 
 // RENDER
-function renderAll() { renderTourTable(); renderSocios(); renderGuias(); renderFechamento(); renderDashboard(); renderCalendario(); renderFolgaTable(); renderGuiaTours(); updateMonthFilters(); renderMetricas(); renderControle(); }
+function renderAll() { renderTourTable(); renderSocios(); renderGuias(); renderFechamento(); renderDashboard(); renderCalendario(); renderFolgaTable(); renderGuiaTours(); renderVendedorConfirm(); updateMonthFilters(); renderMetricas(); renderControle(); }
 function getConfirmed() { return allTours.filter(t => t.status === 'CONFIRMADO'); }
 
 function renderTourTable() {
