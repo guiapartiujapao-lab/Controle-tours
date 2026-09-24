@@ -1814,6 +1814,7 @@ function showApp(user) {
     document.querySelector('[data-tab="calendario"]').classList.add('active');
     document.getElementById('p-calendario').classList.add('active');
     renderCalendario();
+    renderGuiaTours();
   }
   if (loggedGuiaNome === 'CLINTE' || role === 'vendedor') {
     document.getElementById('btnServico').style.display = '';
