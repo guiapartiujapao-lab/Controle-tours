@@ -345,6 +345,7 @@ body.role-vendedor .guia-tours-section{display:none!important}
       <div class="subtabs">
         <button class="subtab active" data-subtab="pendente">Pendente (<span id="countPendente">0</span>)</button>
         <button class="subtab" data-subtab="confirmado">Confirmado (<span id="countConfirmado">0</span>)</button>
+        <button class="subtab" data-subtab="realizado">Realizado (<span id="countRealizado">0</span>)</button>
       </div>
       <div class="subtab-panel active" id="subPendente">
         <div class="table-wrap"><table id="tblGuiaPendente"><thead><tr>
@@ -357,6 +358,12 @@ body.role-vendedor .guia-tours-section{display:none!important}
           <th>Data</th><th>Destino</th><th>Duracao</th><th>Pessoas</th><th>Confirmado em</th>
         </tr></thead><tbody></tbody></table></div>
         <div class="empty" id="emptyGuiaConfirmado">Nenhum tour confirmado ainda.</div>
+      </div>
+      <div class="subtab-panel" id="subRealizado">
+        <div class="table-wrap"><table id="tblGuiaRealizado"><thead><tr>
+          <th>Data</th><th>Destino</th><th>Duracao</th><th>Pessoas</th>
+        </tr></thead><tbody></tbody></table></div>
+        <div class="empty" id="emptyGuiaRealizado">Nenhum tour realizado.</div>
       </div>
     </div>
   </div>
@@ -884,11 +891,16 @@ document.querySelectorAll('.subtab').forEach(btn => btn.addEventListener('click'
 
 function renderGuiaTours() {
   if (!loggedGuiaNome) return;
+  const hoje = new Date().toISOString().slice(0,10);
   const meusTours = allTours.filter(t => t.guia === loggedGuiaNome && t.status !== 'CANCELADO');
-  const pendentes = meusTours.filter(t => t.guiaConfirmou !== 'SIM').sort((a,b) => (a.dataTour||'').localeCompare(b.dataTour||''));
-  const confirmados = meusTours.filter(t => t.guiaConfirmou === 'SIM').sort((a,b) => (b.dataTour||'').localeCompare(a.dataTour||''));
+  const futuros = meusTours.filter(t => (t.dataTour||'') >= hoje);
+  const passados = meusTours.filter(t => (t.dataTour||'') < hoje);
+  const pendentes = futuros.filter(t => t.guiaConfirmou !== 'SIM').sort((a,b) => (a.dataTour||'').localeCompare(b.dataTour||''));
+  const confirmados = futuros.filter(t => t.guiaConfirmou === 'SIM').sort((a,b) => (a.dataTour||'').localeCompare(b.dataTour||''));
+  const realizados = passados.sort((a,b) => (b.dataTour||'').localeCompare(a.dataTour||''));
   document.getElementById('countPendente').textContent = pendentes.length;
   document.getElementById('countConfirmado').textContent = confirmados.length;
+  document.getElementById('countRealizado').textContent = realizados.length;
   const tbodyP = document.querySelector('#tblGuiaPendente tbody');
   tbodyP.innerHTML = '';
   document.getElementById('emptyGuiaPendente').style.display = pendentes.length ? 'none' : 'block';
@@ -910,6 +922,14 @@ function renderGuiaTours() {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${fmtDate(t.dataTour)}</td><td>${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td>${t.pessoas||0}</td><td>${fmtDate(t.guiaConfirmouEm)||'-'}</td>`;
     tbodyC.appendChild(tr);
+  });
+  const tbodyR = document.querySelector('#tblGuiaRealizado tbody');
+  tbodyR.innerHTML = '';
+  document.getElementById('emptyGuiaRealizado').style.display = realizados.length ? 'none' : 'block';
+  realizados.forEach(t => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${fmtDate(t.dataTour)}</td><td>${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td>${t.pessoas||0}</td>`;
+    tbodyR.appendChild(tr);
   });
 }
 
