@@ -416,13 +416,40 @@ body.role-vendedor .guia-tours-section{display:none!important}
   <div class="panel" id="p-despesas">
     <h2 class="section-title">Despesas Fixas e Variaveis</h2>
     <p class="section-sub">Controle de gastos mensais separados por pais e tipo</p>
+
+    <h3 style="margin:0 0 0.5rem;font-size:1rem;color:var(--ink)">Modelos Recorrentes</h3>
+    <p style="font-size:0.78rem;color:var(--ink-muted);margin-bottom:0.5rem">Cadastre aqui as despesas que se repetem todo mes. Use o botao "Gerar Mes" para copiar para um mes especifico.</p>
+    <div class="card" style="margin-bottom:1rem;padding:1rem">
+      <div class="form-row">
+        <div class="form-group"><label>Pais</label><select id="modelo-pais"><option value="JAPAO">Japao</option><option value="BRASIL">Brasil</option></select></div>
+        <div class="form-group"><label>Descricao</label><input type="text" id="modelo-descricao" placeholder="Ex: Plataforma XYZ"></div>
+        <div class="form-group"><label>Valor (BRL)</label><input type="number" id="modelo-valor" step="0.01" placeholder="0.00"></div>
+        <div class="form-group"><label>Pagamento</label><select id="modelo-pagamento"><option value="PIX">PIX</option><option value="CARTAO EMPRESA">Cartao Empresa</option><option value="BOLETO">Boleto</option><option value="DEBITO AUTOMATICO">Debito Automatico</option><option value="TRANSFERENCIA">Transferencia</option><option value="DINHEIRO">Dinheiro</option><option value="OUTRO">Outro</option></select></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-primary" id="btnSalvarModelo">Salvar Modelo</button>
+        <button class="btn btn-secondary" id="btnLimparModelo">Limpar</button>
+      </div>
+    </div>
+    <div id="modelosList"></div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin:1.5rem 0 0.5rem;flex-wrap:wrap">
+      <h3 style="margin:0;font-size:1rem;color:var(--ink)">Despesas por Mes</h3>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="month" id="desp-gerarMes" style="padding:4px 8px;border:1px solid var(--rule);border-radius:6px;font-size:0.85rem">
+        <button class="btn btn-primary" id="btnGerarMes" style="white-space:nowrap">Gerar Mes</button>
+      </div>
+    </div>
+    <p style="font-size:0.78rem;color:var(--ink-muted);margin-bottom:0.75rem">Gera as despesas recorrentes para o mes selecionado. Despesas variaveis podem ser adicionadas manualmente abaixo.</p>
+
     <div class="card" style="margin-bottom:1rem;padding:1rem">
       <div class="form-row">
         <div class="form-group"><label>Mes/Ano</label><input type="month" id="desp-mes"></div>
         <div class="form-group"><label>Pais</label><select id="desp-pais"><option value="JAPAO">Japao</option><option value="BRASIL">Brasil</option></select></div>
         <div class="form-group"><label>Tipo</label><select id="desp-tipo"><option value="RECORRENTE">Recorrente</option><option value="VARIAVEL">Variavel</option></select></div>
-        <div class="form-group"><label>Descricao</label><input type="text" id="desp-descricao" placeholder="Ex: Plataforma, Imposto..."></div>
+        <div class="form-group"><label>Descricao</label><input type="text" id="desp-descricao" placeholder="Ex: Imposto, Comissao..."></div>
         <div class="form-group"><label>Valor (BRL)</label><input type="number" id="desp-valor" step="0.01" placeholder="0.00"></div>
+        <div class="form-group"><label>Pagamento</label><select id="desp-pagamento"><option value="PIX">PIX</option><option value="CARTAO EMPRESA">Cartao Empresa</option><option value="BOLETO">Boleto</option><option value="DEBITO AUTOMATICO">Debito Automatico</option><option value="TRANSFERENCIA">Transferencia</option><option value="DINHEIRO">Dinheiro</option><option value="OUTRO">Outro</option></select></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="btn btn-primary" id="btnSalvarDespesa">Salvar Despesa</button>
@@ -623,7 +650,7 @@ const SOCIOS = ['MAYRA','TOTTI'];
 const PAGS = ['PIX','CARTAO DE CREDITO','DOLAR CASH','WISE','NOMAD','PAYPAL'];
 const MESES_NOME = {1:'Janeiro',2:'Fevereiro',3:'Marco',4:'Abril',5:'Maio',6:'Junho',7:'Julho',8:'Agosto',9:'Setembro',10:'Outubro',11:'Novembro',12:'Dezembro'};
 
-let allTours = [], allFolgas = [], allServicos = [], allTransfers = [], allPShoppers = [], allFechamentos = {}, allDespesas = [], editingId = null, editingTransferId = null, editingPShopperId = null, editingDespesaId = null;
+let allTours = [], allFolgas = [], allServicos = [], allTransfers = [], allPShoppers = [], allFechamentos = {}, allDespesas = [], allModelos = [], editingId = null, editingTransferId = null, editingPShopperId = null, editingDespesaId = null, editingModeloId = null;
 let calYear, calMon;
 { const now = new Date(); calYear = now.getFullYear(); calMon = now.getMonth(); }
 
@@ -1248,15 +1275,103 @@ function renderGuias() {
   }).join('') || '<div class="empty">Nenhum tour com guias externos ainda.</div>';
 }
 
-// DESPESAS
+// DESPESAS - MODELOS RECORRENTES
+document.getElementById('btnSalvarModelo').addEventListener('click', async () => {
+  const pais = document.getElementById('modelo-pais').value;
+  const descricao = document.getElementById('modelo-descricao').value.trim();
+  const valor = parseFloat(document.getElementById('modelo-valor').value) || 0;
+  const pagamento = document.getElementById('modelo-pagamento').value;
+  if (!descricao || valor <= 0) { alert('Preencha descricao e valor.'); return; }
+  const data = { pais, descricao, valor, pagamento };
+  if (editingModeloId) {
+    await db.collection('despesasModelo').doc(editingModeloId).update(data);
+    editingModeloId = null;
+    document.getElementById('btnSalvarModelo').textContent = 'Salvar Modelo';
+  } else {
+    await db.collection('despesasModelo').add(data);
+  }
+  ['modelo-descricao','modelo-valor'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('modelo-pais').value = 'JAPAO';
+  document.getElementById('modelo-pagamento').value = 'PIX';
+});
+
+document.getElementById('btnLimparModelo').addEventListener('click', () => {
+  editingModeloId = null;
+  document.getElementById('btnSalvarModelo').textContent = 'Salvar Modelo';
+  ['modelo-descricao','modelo-valor'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('modelo-pais').value = 'JAPAO';
+  document.getElementById('modelo-pagamento').value = 'PIX';
+});
+
+function editModelo(id) {
+  const m = allModelos.find(x => x.id === id);
+  if (!m) return;
+  editingModeloId = id;
+  document.getElementById('modelo-pais').value = m.pais || 'JAPAO';
+  document.getElementById('modelo-descricao').value = m.descricao || '';
+  document.getElementById('modelo-valor').value = m.valor || '';
+  document.getElementById('modelo-pagamento').value = m.pagamento || 'PIX';
+  document.getElementById('btnSalvarModelo').textContent = 'Atualizar Modelo';
+  document.querySelector('#p-despesas').scrollIntoView({behavior:'smooth'});
+}
+
+async function deleteModelo(id) {
+  if (!confirm('Remover este modelo recorrente?')) return;
+  await db.collection('despesasModelo').doc(id).delete();
+}
+
+function renderModelos() {
+  const japao = allModelos.filter(m => m.pais === 'JAPAO');
+  const brasil = allModelos.filter(m => m.pais === 'BRASIL');
+  const totalModelos = allModelos.reduce((s,m) => s + (m.valor||0), 0);
+
+  function renderModeloTable(list) {
+    if (!list.length) return '';
+    let html = '<div class="table-wrap"><table><thead><tr><th>Descricao</th><th>Valor</th><th>Pagamento</th><th></th></tr></thead><tbody>';
+    list.forEach(m => { html += `<tr><td>${m.descricao||'-'}</td><td>${fmtBrl(m.valor)}</td><td>${m.pagamento||'-'}</td><td style="white-space:nowrap"><button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem" onclick="editModelo('${m.id}')">Editar</button> <button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem;color:var(--red)" onclick="deleteModelo('${m.id}')">X</button></td></tr>`; });
+    html += `<tr style="font-weight:700"><td>Subtotal</td><td>${fmtBrl(list.reduce((s,m)=>s+(m.valor||0),0))}</td><td></td><td></td></tr></tbody></table></div>`;
+    return html;
+  }
+
+  let html = '';
+  if (!allModelos.length) { html = '<div class="empty" style="margin-bottom:1rem">Nenhum modelo recorrente cadastrado.</div>'; }
+  else {
+    html = `<div class="card" style="margin-bottom:1rem;padding:1rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-weight:700;font-size:0.9rem;color:var(--ink)">Modelos Cadastrados</span><span style="font-size:0.85rem;font-weight:600;color:var(--accent)">Total mensal: ${fmtBrl(totalModelos)}</span></div>`;
+    if (japao.length) html += `<h4 style="font-size:0.85rem;font-weight:700;color:var(--ink);margin:0.5rem 0 0.3rem">JAPAO</h4>` + renderModeloTable(japao);
+    if (brasil.length) html += `<h4 style="font-size:0.85rem;font-weight:700;color:var(--ink);margin:0.5rem 0 0.3rem">BRASIL</h4>` + renderModeloTable(brasil);
+    html += '</div>';
+  }
+  document.getElementById('modelosList').innerHTML = html;
+}
+
+// GERAR MES - copia modelos recorrentes para o mes
+document.getElementById('btnGerarMes').addEventListener('click', async () => {
+  const mes = document.getElementById('desp-gerarMes').value;
+  if (!mes) { alert('Selecione o mes para gerar.'); return; }
+  if (!allModelos.length) { alert('Nenhum modelo recorrente cadastrado.'); return; }
+  const jaExiste = allDespesas.filter(d => d.mes === mes && d.tipo === 'RECORRENTE');
+  if (jaExiste.length > 0) {
+    if (!confirm('Ja existem ' + jaExiste.length + ' despesa(s) recorrente(s) em ' + monthLabel(mes) + '. Deseja adicionar os modelos novamente?')) return;
+  }
+  const batch = db.batch();
+  allModelos.forEach(m => {
+    const ref = db.collection('despesas').doc();
+    batch.set(ref, { mes, pais: m.pais, tipo: 'RECORRENTE', descricao: m.descricao, valor: m.valor, pagamento: m.pagamento || 'PIX' });
+  });
+  await batch.commit();
+  alert(allModelos.length + ' despesa(s) recorrente(s) gerada(s) para ' + monthLabel(mes) + '.');
+});
+
+// DESPESAS AVULSAS (manuais)
 document.getElementById('btnSalvarDespesa').addEventListener('click', async () => {
   const mes = document.getElementById('desp-mes').value;
   const pais = document.getElementById('desp-pais').value;
   const tipo = document.getElementById('desp-tipo').value;
   const descricao = document.getElementById('desp-descricao').value.trim();
   const valor = parseFloat(document.getElementById('desp-valor').value) || 0;
+  const pagamento = document.getElementById('desp-pagamento').value;
   if (!mes || !descricao || valor <= 0) { alert('Preencha mes, descricao e valor.'); return; }
-  const data = { mes, pais, tipo, descricao, valor };
+  const data = { mes, pais, tipo, descricao, valor, pagamento };
   if (editingDespesaId) {
     await db.collection('despesas').doc(editingDespesaId).update(data);
     editingDespesaId = null;
@@ -1277,6 +1392,7 @@ function limparFormDespesa() {
   ['desp-descricao','desp-valor'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('desp-pais').value = 'JAPAO';
   document.getElementById('desp-tipo').value = 'RECORRENTE';
+  document.getElementById('desp-pagamento').value = 'PIX';
 }
 
 function editDespesa(id) {
@@ -1288,8 +1404,9 @@ function editDespesa(id) {
   document.getElementById('desp-tipo').value = d.tipo || 'RECORRENTE';
   document.getElementById('desp-descricao').value = d.descricao || '';
   document.getElementById('desp-valor').value = d.valor || '';
+  document.getElementById('desp-pagamento').value = d.pagamento || 'PIX';
   document.getElementById('btnSalvarDespesa').textContent = 'Atualizar Despesa';
-  document.querySelector('#p-despesas').scrollIntoView({behavior:'smooth'});
+  document.querySelector('#p-despesas .card:last-of-type').scrollIntoView({behavior:'smooth'});
 }
 
 async function deleteDespesa(id) {
@@ -1325,13 +1442,11 @@ function renderDespesas() {
     ['Variavel', fmtBrl(totalVariavel), 'gold']
   ]);
 
-  // Populate month filter
   const allMeses = new Set(allDespesas.map(d => d.mes).filter(Boolean));
   const selMes = document.getElementById('despFilterMes');
   const curVal = selMes.value;
   selMes.innerHTML = '<option value="">Todos os meses</option>' + [...allMeses].sort().reverse().map(m => `<option value="${m}"${m === curVal ? ' selected':''}>${monthLabel(m)}</option>`).join('');
 
-  // Group by month
   const groups = {};
   desp.forEach(d => { const k = d.mes || 'SEM-MES'; if (!groups[k]) groups[k] = []; groups[k].push(d); });
   const sorted = Object.entries(groups).sort((a,b) => b[0].localeCompare(a[0]));
@@ -1348,16 +1463,16 @@ function renderDespesas() {
       let html = `<h4 style="font-size:0.85rem;font-weight:700;color:var(--ink);margin:0.75rem 0 0.4rem;padding-left:4px">${title}</h4>`;
       if (recorrentes.length) {
         html += `<div style="font-size:0.75rem;font-weight:600;color:var(--green);margin:0.4rem 0 0.2rem;padding-left:8px">RECORRENTE</div>`;
-        html += `<div class="table-wrap"><table><thead><tr><th>Descricao</th><th>Valor</th><th></th></tr></thead><tbody>`;
-        recorrentes.forEach(d => { html += `<tr><td>${d.descricao||'-'}</td><td>${fmtBrl(d.valor)}</td><td style="white-space:nowrap"><button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem" onclick="editDespesa('${d.id}')">Editar</button> <button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem;color:var(--red)" onclick="deleteDespesa('${d.id}')">X</button></td></tr>`; });
-        html += `<tr style="font-weight:700"><td>Subtotal</td><td>${fmtBrl(recorrentes.reduce((s,d)=>s+(d.valor||0),0))}</td><td></td></tr>`;
+        html += `<div class="table-wrap"><table><thead><tr><th>Descricao</th><th>Valor</th><th>Pagamento</th><th></th></tr></thead><tbody>`;
+        recorrentes.forEach(d => { html += `<tr><td>${d.descricao||'-'}</td><td>${fmtBrl(d.valor)}</td><td>${d.pagamento||'-'}</td><td style="white-space:nowrap"><button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem" onclick="editDespesa('${d.id}')">Editar</button> <button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem;color:var(--red)" onclick="deleteDespesa('${d.id}')">X</button></td></tr>`; });
+        html += `<tr style="font-weight:700"><td>Subtotal</td><td>${fmtBrl(recorrentes.reduce((s,d)=>s+(d.valor||0),0))}</td><td></td><td></td></tr>`;
         html += `</tbody></table></div>`;
       }
       if (variaveis.length) {
         html += `<div style="font-size:0.75rem;font-weight:600;color:var(--gold,#d97706);margin:0.4rem 0 0.2rem;padding-left:8px">VARIAVEL</div>`;
-        html += `<div class="table-wrap"><table><thead><tr><th>Descricao</th><th>Valor</th><th></th></tr></thead><tbody>`;
-        variaveis.forEach(d => { html += `<tr><td>${d.descricao||'-'}</td><td>${fmtBrl(d.valor)}</td><td style="white-space:nowrap"><button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem" onclick="editDespesa('${d.id}')">Editar</button> <button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem;color:var(--red)" onclick="deleteDespesa('${d.id}')">X</button></td></tr>`; });
-        html += `<tr style="font-weight:700"><td>Subtotal</td><td>${fmtBrl(variaveis.reduce((s,d)=>s+(d.valor||0),0))}</td><td></td></tr>`;
+        html += `<div class="table-wrap"><table><thead><tr><th>Descricao</th><th>Valor</th><th>Pagamento</th><th></th></tr></thead><tbody>`;
+        variaveis.forEach(d => { html += `<tr><td>${d.descricao||'-'}</td><td>${fmtBrl(d.valor)}</td><td>${d.pagamento||'-'}</td><td style="white-space:nowrap"><button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem" onclick="editDespesa('${d.id}')">Editar</button> <button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem;color:var(--red)" onclick="deleteDespesa('${d.id}')">X</button></td></tr>`; });
+        html += `<tr style="font-weight:700"><td>Subtotal</td><td>${fmtBrl(variaveis.reduce((s,d)=>s+(d.valor||0),0))}</td><td></td><td></td></tr>`;
         html += `</tbody></table></div>`;
       }
       return html;
@@ -1883,6 +1998,11 @@ db.collection('despesas').onSnapshot(snap => {
   allDespesas = snap.docs.map(d => ({id: d.id, ...d.data()}));
   renderDespesas();
 }, err => { console.error('Firestore despesas error', err); });
+
+db.collection('despesasModelo').onSnapshot(snap => {
+  allModelos = snap.docs.map(d => ({id: d.id, ...d.data()}));
+  renderModelos();
+}, err => { console.error('Firestore despesasModelo error', err); });
 
 // Transfer - lucro automatico
 ['tf-fornecedor','tf-cobrado'].forEach(id => {
