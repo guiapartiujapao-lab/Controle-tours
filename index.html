@@ -245,6 +245,7 @@ body.role-vendedor .guia-tours-section{display:none!important}
       <div class="tab tab-admin" data-tab="guias">Guias Externos</div>
       <div class="tab tab-admin" data-tab="fechamento">Fechamento</div>
       <div class="tab tab-admin" data-tab="despesas">Despesas</div>
+      <div class="tab tab-admin" data-tab="transfer">Transfer</div>
       <div class="tab tab-admin" data-tab="servicos">Outros Servicos</div>
       <div class="tab tab-admin" data-tab="dashboard">Dashboard</div>
       <div class="tab tab-admin" data-tab="controle">Controle</div>
@@ -509,15 +510,15 @@ body.role-vendedor .guia-tours-section{display:none!important}
     </div>
   </div>
 
-  <div class="panel" id="p-servicos">
-    <h2 class="section-title">Cadastro de Outros Servicos</h2>
-    <p class="section-sub">Transfer e Personal Shopper</p>
-    <h3 style="margin:1rem 0 0.5rem;font-size:1rem;color:var(--ink)">Transfer</h3>
+  <div class="panel" id="p-transfer">
+    <h2 class="section-title">Cadastro de Transfer</h2>
+    <p class="section-sub">Controle de transfers — parceiro ou empresa</p>
     <div class="card" style="margin-bottom:1rem;padding:1rem">
       <div class="form-row">
         <div class="form-group"><label>Data</label><input type="date" id="tf-data"></div>
         <div class="form-group"><label>Cliente</label><input type="text" id="tf-cliente" placeholder="Nome"></div>
-        <div class="form-group"><label>Trajeto</label><input type="text" id="tf-trajeto" placeholder="Ex: Narita → Hotel"></div>
+        <div class="form-group"><label>Tipo</label><select id="tf-tipo"><option value="PARCEIRO">Parceiro</option><option value="EMPRESA">Empresa</option></select></div>
+        <div class="form-group"><label>Trajeto</label><select id="tf-trajeto"><option value="HOTEL → NARITA">Hotel → Narita</option><option value="NARITA → HOTEL">Narita → Hotel</option><option value="HANEDA → HOTEL">Haneda → Hotel</option><option value="HOTEL → HANEDA">Hotel → Haneda</option><option value="HOTEL → KANSAI">Hotel → Kansai</option><option value="KANSAI → HOTEL">Kansai → Hotel</option></select></div>
         <div class="form-group"><label>Valor Fornecedor</label><input type="number" id="tf-fornecedor" step="0.01" placeholder="0.00"></div>
         <div class="form-group"><label>Valor Cobrado</label><input type="number" id="tf-cobrado" step="0.01" placeholder="0.00"></div>
         <div class="form-group"><label>Lucro</label><input type="text" id="tf-lucro" readonly style="background:var(--surface-alt)"></div>
@@ -528,7 +529,12 @@ body.role-vendedor .guia-tours-section{display:none!important}
       </div>
     </div>
     <div id="fechTransfer"></div>
-    <h3 style="margin:2rem 0 0.5rem;font-size:1rem;color:var(--ink)">Personal Shopper</h3>
+  </div>
+
+  <div class="panel" id="p-servicos">
+    <h2 class="section-title">Cadastro de Outros Servicos</h2>
+    <p class="section-sub">Personal Shopper</p>
+    <h3 style="margin:1rem 0 0.5rem;font-size:1rem;color:var(--ink)">Personal Shopper</h3>
     <div class="card" style="margin-bottom:1rem;padding:1rem">
       <div class="form-row">
         <div class="form-group"><label>Data</label><input type="date" id="ps-data"></div>
@@ -1594,10 +1600,10 @@ function renderFechamento() {
     const mLucro = mt.reduce((s,t) => s + ((t.cobrado||0)-(t.fornecedor||0)), 0);
     const mCobrado = mt.reduce((s,t) => s + (t.cobrado||0), 0);
     return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)} (${mt.length})</span><span class="total">Cobrado: ${fmtBrl(mCobrado)} | Lucro: ${fmtBrl(mLucro)}</span></div>
-    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Trajeto</th><th>Fornecedor</th><th>Cobrado</th><th>Lucro</th><th></th></tr></thead><tbody>${
+    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Tipo</th><th>Trajeto</th><th>Fornecedor</th><th>Cobrado</th><th>Lucro</th><th></th></tr></thead><tbody>${
       mt.sort((a,b)=>(a.data||'').localeCompare(b.data||'')).map(t => {
         const lucro = (t.cobrado||0) - (t.fornecedor||0);
-        return `<tr><td>${fmtDate(t.data)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.trajeto||'-'}</td><td>${fmtBrl(t.fornecedor)}</td><td>${fmtBrl(t.cobrado)}</td><td style="color:var(--green);font-weight:600">${fmtBrl(lucro)}</td><td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" onclick="editTransfer('${t.id}')">editar</span> <span style="cursor:pointer;color:var(--red);font-size:0.78rem" onclick="deleteTransfer('${t.id}')">x</span></td></tr>`;
+        return `<tr><td>${fmtDate(t.data)}</td><td style="text-align:left">${t.cliente}</td><td>${t.tipo||'-'}</td><td style="text-align:left">${t.trajeto||'-'}</td><td>${fmtBrl(t.fornecedor)}</td><td>${fmtBrl(t.cobrado)}</td><td style="color:var(--green);font-weight:600">${fmtBrl(lucro)}</td><td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" onclick="editTransfer('${t.id}')">editar</span> <span style="cursor:pointer;color:var(--red);font-size:0.78rem" onclick="deleteTransfer('${t.id}')">x</span></td></tr>`;
       }).join('')
     }</tbody></table></div></div>`;
   }).join('') || '<div class="empty">Nenhum transfer cadastrado.</div>';
@@ -2050,7 +2056,9 @@ db.collection('despesasModelo').onSnapshot(snap => {
 });
 
 function clearTransferForm() {
-  ['tf-data','tf-cliente','tf-trajeto','tf-fornecedor','tf-cobrado','tf-lucro'].forEach(id => document.getElementById(id).value = '');
+  ['tf-data','tf-cliente','tf-fornecedor','tf-cobrado','tf-lucro'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('tf-tipo').value = 'PARCEIRO';
+  document.getElementById('tf-trajeto').value = 'HOTEL → NARITA';
   editingTransferId = null;
   document.getElementById('btnSalvarTransfer').textContent = 'Salvar Transfer';
 }
@@ -2060,7 +2068,8 @@ document.getElementById('btnSalvarTransfer').addEventListener('click', async () 
   const data = {
     data: document.getElementById('tf-data').value,
     cliente: document.getElementById('tf-cliente').value.toUpperCase().trim(),
-    trajeto: document.getElementById('tf-trajeto').value.trim(),
+    tipo: document.getElementById('tf-tipo').value,
+    trajeto: document.getElementById('tf-trajeto').value,
     fornecedor: parseFloat(document.getElementById('tf-fornecedor').value) || 0,
     cobrado: parseFloat(document.getElementById('tf-cobrado').value) || 0,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -2076,9 +2085,11 @@ document.getElementById('btnSalvarTransfer').addEventListener('click', async () 
 function editTransfer(id) {
   const t = allTransfers.find(x => x.id === id);
   if (!t) return;
+  document.querySelector('[data-tab="transfer"]').click();
   document.getElementById('tf-data').value = t.data || '';
   document.getElementById('tf-cliente').value = t.cliente || '';
-  document.getElementById('tf-trajeto').value = t.trajeto || '';
+  document.getElementById('tf-tipo').value = t.tipo || 'PARCEIRO';
+  document.getElementById('tf-trajeto').value = t.trajeto || 'HOTEL → NARITA';
   document.getElementById('tf-fornecedor').value = t.fornecedor || '';
   document.getElementById('tf-cobrado').value = t.cobrado || '';
   document.getElementById('tf-lucro').value = fmtBrl((t.cobrado||0) - (t.fornecedor||0));
