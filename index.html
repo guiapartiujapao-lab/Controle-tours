@@ -596,6 +596,13 @@ body.role-vendedor .guia-tours-section{display:none!important}
       <div class="card"><h3 style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;color:var(--ink)">Vendas por Destino</h3><div id="ctrlDestChart"></div></div>
       <div class="card"><h3 style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;color:var(--ink)">Tours Atuais vs Futuros</h3><div id="ctrlFuturoChart"></div></div>
     </div>
+
+    <h2 class="section-title" style="margin-top:2.5rem">Relatorio de Vendas do Mes</h2>
+    <p class="section-sub">Gere um relatorio detalhado das vendas fechadas no mes selecionado acima.</p>
+    <div style="display:flex;align-items:center;gap:12px;margin:0.75rem 0">
+      <button class="btn btn-primary" id="btnRelVendas">Gerar Relatorio de Vendas</button>
+    </div>
+    <div class="report-box" id="reportVendas">Selecione um mes acima e clique em "Gerar Relatorio de Vendas".</div>
   </div>
 
   <div class="panel" id="p-backup">
@@ -1856,6 +1863,77 @@ function renderControle() {
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.8rem"><span style="width:100px;text-align:right;color:var(--ink-soft)">Futuros</span><div style="flex:1;height:20px;background:var(--surface-alt);border-radius:3px;overflow:hidden"><div style="height:100%;width:${toursFuturos/maxFut*100}%;background:var(--blue);border-radius:3px"></div></div><span style="width:30px;font-weight:600">${toursFuturos}</span></div>
   ` : '<p style="color:var(--ink-muted);font-size:0.8rem">Nenhuma venda neste mes.</p>';
 }
+
+document.getElementById('btnRelVendas').addEventListener('click', () => {
+  const mes = document.getElementById('ctrlMesVenda').value;
+  if (!mes) { toast('Selecione um mes.', false); return; }
+  const vendas = allTours.filter(t => t.dataVenda && t.dataVenda.startsWith(mes));
+  if (!vendas.length) { document.getElementById('reportVendas').textContent = 'Nenhuma venda encontrada neste mes.'; return; }
+  const confirmados = vendas.filter(t => t.status === 'CONFIRMADO');
+  const cancelados = vendas.filter(t => t.status === 'CANCELADO');
+  const pendentes = vendas.filter(t => t.status !== 'CONFIRMADO' && t.status !== 'CANCELADO');
+  const totalUsd = vendas.reduce((s,t) => s + (t.valorUsd||0), 0);
+  const totalBrl = vendas.reduce((s,t) => s + (t.valorBrl||0), 0);
+  const totalPess = vendas.reduce((s,t) => s + (t.pessoas||0), 0);
+  const clientes = new Set(vendas.map(t => t.cliente)).size;
+  const destCount = {}; vendas.forEach(t => destCount[t.destino] = (destCount[t.destino]||0)+1);
+  const topDest = Object.entries(destCount).sort((a,b)=>b[1]-a[1]);
+  const durCount = {}; vendas.forEach(t => { const d = t.duracao || 'N/A'; durCount[d] = (durCount[d]||0)+1; });
+  const topDur = Object.entries(durCount).sort((a,b)=>b[1]-a[1]);
+  const guiaCount = {}; vendas.forEach(t => guiaCount[t.guia||'A DEFINIR'] = (guiaCount[t.guia||'A DEFINIR']||0)+1);
+  const topGuia = Object.entries(guiaCount).sort((a,b)=>b[1]-a[1]);
+  const toursMesAtual = vendas.filter(t => monthKey(t.dataTour) === mes).length;
+  const toursFuturos = vendas.filter(t => monthKey(t.dataTour) !== mes).length;
+  const confUsd = confirmados.reduce((s,t) => s + (t.valorUsd||0), 0);
+  const confBrl = confirmados.reduce((s,t) => s + (t.valorBrl||0), 0);
+
+  let r = `RELATORIO DE VENDAS - ${monthLabel(mes).toUpperCase()}\n${'='.repeat(50)}\n\n`;
+  r += `RESUMO DE VENDAS\n`;
+  r += `  Total de tours vendidos: ${vendas.length}\n`;
+  r += `  Confirmados: ${confirmados.length}\n`;
+  if (pendentes.length) r += `  Pendentes: ${pendentes.length}\n`;
+  if (cancelados.length) r += `  Cancelados: ${cancelados.length}\n`;
+  r += `  Clientes unicos: ${clientes}\n`;
+  r += `  Total de pessoas: ${totalPess}\n`;
+  r += `  Media pessoas/tour: ${(totalPess/vendas.length).toFixed(1)}\n\n`;
+
+  r += `FINANCEIRO (todas as vendas)\n`;
+  r += `  Faturamento USD: ${fmtUsd(totalUsd)}\n`;
+  r += `  Faturamento BRL: ${fmtBrl(totalBrl)}\n`;
+  r += `  Ticket medio USD: ${fmtUsd(vendas.length ? totalUsd/vendas.length : 0)}\n`;
+  r += `  Ticket medio BRL: ${fmtBrl(vendas.length ? totalBrl/vendas.length : 0)}\n\n`;
+
+  if (confirmados.length && confirmados.length !== vendas.length) {
+    r += `FINANCEIRO (somente confirmados)\n`;
+    r += `  Faturamento USD: ${fmtUsd(confUsd)}\n`;
+    r += `  Faturamento BRL: ${fmtBrl(confBrl)}\n\n`;
+  }
+
+  r += `DESTINOS VENDIDOS\n`;
+  topDest.forEach(([d,c]) => {
+    const pct = (c/vendas.length*100).toFixed(0);
+    r += `  ${d}: ${c} tour${c>1?'s':''} (${pct}%)\n`;
+  });
+
+  r += `\nDURACAO DOS TOURS\n`;
+  topDur.forEach(([d,c]) => r += `  ${d}: ${c} tour${c>1?'s':''}\n`);
+
+  r += `\nGUIAS ALOCADOS\n`;
+  topGuia.forEach(([g,c]) => r += `  ${g}: ${c} tour${c>1?'s':''}\n`);
+
+  r += `\nDISTRIBUICAO\n`;
+  r += `  Tours para o mes atual: ${toursMesAtual}\n`;
+  r += `  Tours para meses futuros: ${toursFuturos}\n`;
+
+  const semGuia = vendas.filter(t => !t.guia || t.guia === 'A DEFINIR').length;
+  if (semGuia > 0 || cancelados.length > 0) {
+    r += `\nALERTAS\n`;
+    if (semGuia > 0) r += `  ${semGuia} tour(s) sem guia definido\n`;
+    if (cancelados.length > 0) r += `  ${cancelados.length} tour(s) cancelado(s)\n`;
+  }
+
+  document.getElementById('reportVendas').textContent = r;
+});
 
 // BACKUP
 document.getElementById('btnBackup').addEventListener('click', () => {
