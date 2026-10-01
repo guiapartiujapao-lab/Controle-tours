@@ -1921,6 +1921,12 @@ document.getElementById('btnRelVendas').addEventListener('click', () => {
   r += `\nGUIAS ALOCADOS\n`;
   topGuia.forEach(([g,c]) => r += `  ${g}: ${c} tour${c>1?'s':''}\n`);
 
+  const mesesTour = {};
+  vendas.forEach(t => { const k = monthKey(t.dataTour); if (k) mesesTour[k] = (mesesTour[k]||0)+1; });
+  const topMeses = Object.entries(mesesTour).sort((a,b) => a[0].localeCompare(b[0]));
+  r += `\nTOURS VENDIDOS PARA QUAIS MESES\n`;
+  topMeses.forEach(([m,c]) => r += `  ${monthLabel(m)}: ${c} tour${c>1?'s':''}\n`);
+
   r += `\nDISTRIBUICAO\n`;
   r += `  Tours para o mes atual: ${toursMesAtual}\n`;
   r += `  Tours para meses futuros: ${toursFuturos}\n`;
