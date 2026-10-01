@@ -287,6 +287,7 @@ body.role-vendedor .guia-tours-section{display:none!important}
         <div class="form-group grp-direto"><label>Comprovante Sinal</label><div style="display:flex;align-items:center;gap:8px"><button type="button" id="btnUpSinalForm" style="padding:4px 12px;border-radius:4px;border:1px dashed var(--blue);background:transparent;color:var(--blue);font-size:0.78rem;cursor:pointer">Anexar Comprovante</button><span id="sinalFormNome" style="font-size:0.75rem;color:var(--green);display:none"></span><button type="button" id="btnRemSinalForm" style="padding:3px 8px;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:0.72rem;cursor:pointer;display:none">X</button></div></div>
         <div class="form-group grp-direto"><label>Valor Confirmação</label><input type="number" id="f-restante" step="0.01" placeholder="0.00"></div>
         <div class="form-group grp-direto"><label>Confirmação Pago?</label><select id="f-restantePago"><option value="NAO">NAO</option><option value="SIM">SIM</option></select></div>
+        <div class="form-group grp-direto"><label>Comprovante Conf.</label><div style="display:flex;align-items:center;gap:8px"><button type="button" id="btnUpConfForm" style="padding:4px 12px;border-radius:4px;border:1px dashed var(--blue);background:transparent;color:var(--blue);font-size:0.78rem;cursor:pointer">Anexar Comprovante</button><span id="confFormNome" style="font-size:0.75rem;color:var(--green);display:none"></span><button type="button" id="btnRemConfForm" style="padding:3px 8px;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:0.72rem;cursor:pointer;display:none">X</button></div></div>
         <div class="form-group fin-only"><label>Despesa Guia (BRL)</label><input type="number" id="f-despesa" step="0.01" placeholder="0.00"></div>
         <div class="form-group fin-only"><label>Liquido</label><input type="text" id="f-liquido" readonly></div>
         <div class="form-group fin-only"><label>Diego</label><input type="text" id="f-diego" readonly></div>
@@ -295,6 +296,7 @@ body.role-vendedor .guia-tours-section{display:none!important}
         <div class="form-group" id="grpEstorno" style="display:none"><label>Estornado?</label><select id="f-estorno"><option value="NAO">NAO</option><option value="SIM">SIM</option></select></div>
         <div class="form-group grp-agencia" style="display:none"><label>Horario de Inicio</label><input type="time" id="f-horario"></div>
         <div class="form-group grp-agencia" style="display:none"><label>Hotel para Encontro</label><input type="text" id="f-hotel" placeholder="Nome do hotel"></div>
+        <div class="form-group grp-agencia" style="display:none"><label>Comprovante</label><div style="display:flex;align-items:center;gap:8px"><button type="button" id="btnUpAgenciaForm" style="padding:4px 12px;border-radius:4px;border:1px dashed var(--blue);background:transparent;color:var(--blue);font-size:0.78rem;cursor:pointer">Anexar Comprovante</button><span id="agenciaFormNome" style="font-size:0.75rem;color:var(--green);display:none"></span><button type="button" id="btnRemAgenciaForm" style="padding:3px 8px;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:0.72rem;cursor:pointer;display:none">X</button></div></div>
         <div class="form-group"><label>Observacoes</label><input type="text" id="f-obs" placeholder="Opcional"></div>
       </div>
       <div class="form-row">
@@ -802,6 +804,8 @@ const monthLabel = k => { const [y,m] = k.split('-'); return (MESES_NOME[parseIn
 let brlManual = false, sinalManual = false, restanteManual = false;
 let tipoTourAtual = 'DIRETO';
 let comprovanteSinalTemp = null, comprovanteSinalNomeTemp = null;
+let comprovanteConfTemp = null, comprovanteConfNomeTemp = null;
+let comprovanteAgenciaTemp = null, comprovanteAgenciaNomeTemp = null;
 
 function setTipoTour(tipo) {
   tipoTourAtual = tipo;
@@ -843,6 +847,58 @@ document.getElementById('btnRemSinalForm').addEventListener('click', () => {
   comprovanteSinalNomeTemp = null;
   document.getElementById('sinalFormNome').style.display = 'none';
   document.getElementById('btnRemSinalForm').style.display = 'none';
+});
+document.getElementById('btnUpConfForm').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*,application/pdf';
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 800 * 1024) { toast('Arquivo muito grande (max 800KB). Tente uma foto menor.', false); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      comprovanteConfTemp = reader.result;
+      comprovanteConfNomeTemp = file.name;
+      document.getElementById('confFormNome').textContent = file.name;
+      document.getElementById('confFormNome').style.display = '';
+      document.getElementById('btnRemConfForm').style.display = '';
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+});
+document.getElementById('btnRemConfForm').addEventListener('click', () => {
+  comprovanteConfTemp = null;
+  comprovanteConfNomeTemp = null;
+  document.getElementById('confFormNome').style.display = 'none';
+  document.getElementById('btnRemConfForm').style.display = 'none';
+});
+document.getElementById('btnUpAgenciaForm').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*,application/pdf';
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 800 * 1024) { toast('Arquivo muito grande (max 800KB). Tente uma foto menor.', false); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      comprovanteAgenciaTemp = reader.result;
+      comprovanteAgenciaNomeTemp = file.name;
+      document.getElementById('agenciaFormNome').textContent = file.name;
+      document.getElementById('agenciaFormNome').style.display = '';
+      document.getElementById('btnRemAgenciaForm').style.display = '';
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+});
+document.getElementById('btnRemAgenciaForm').addEventListener('click', () => {
+  comprovanteAgenciaTemp = null;
+  comprovanteAgenciaNomeTemp = null;
+  document.getElementById('agenciaFormNome').style.display = 'none';
+  document.getElementById('btnRemAgenciaForm').style.display = 'none';
 });
 
 document.getElementById('f-extensao').addEventListener('change', () => {
@@ -904,8 +960,14 @@ function clearForm() {
   ['f-valorBrl','f-sinal','f-restante','f-liquido','f-diego','f-mt'].forEach(id => document.getElementById(id).value = '');
   brlManual = false; sinalManual = false; restanteManual = false;
   comprovanteSinalTemp = null; comprovanteSinalNomeTemp = null;
+  comprovanteConfTemp = null; comprovanteConfNomeTemp = null;
+  comprovanteAgenciaTemp = null; comprovanteAgenciaNomeTemp = null;
   document.getElementById('sinalFormNome').style.display = 'none';
   document.getElementById('btnRemSinalForm').style.display = 'none';
+  document.getElementById('confFormNome').style.display = 'none';
+  document.getElementById('btnRemConfForm').style.display = 'none';
+  document.getElementById('agenciaFormNome').style.display = 'none';
+  document.getElementById('btnRemAgenciaForm').style.display = 'none';
   editingId = null;
   document.getElementById('btnSalvar').textContent = 'Salvar Tour';
   setTipoTour('DIRETO');
@@ -945,6 +1007,10 @@ function getFormData() {
     data.hotel = document.getElementById('f-hotel').value.trim();
     data.dataVenda = document.getElementById('f-dataTour').value;
     data.valorUsd = 0; data.cambio = 0;
+    if (comprovanteAgenciaTemp) {
+      data.comprovanteSinal = comprovanteAgenciaTemp;
+      data.comprovanteSinalNome = comprovanteAgenciaNomeTemp;
+    }
   } else {
     data.dataVenda = document.getElementById('f-dataVenda').value;
     data.telefone = '';
@@ -959,6 +1025,10 @@ function getFormData() {
     if (comprovanteSinalTemp) {
       data.comprovanteSinal = comprovanteSinalTemp;
       data.comprovanteSinalNome = comprovanteSinalNomeTemp;
+    }
+    if (comprovanteConfTemp) {
+      data.comprovanteConf = comprovanteConfTemp;
+      data.comprovanteConfNome = comprovanteConfNomeTemp;
     }
   }
   return data;
@@ -981,6 +1051,13 @@ function fillForm(t) {
     document.getElementById('f-agencia').value = t.agencia || '';
     document.getElementById('f-horario').value = t.horario || '';
     document.getElementById('f-hotel').value = t.hotel || '';
+    if (t.comprovanteSinal) {
+      comprovanteAgenciaTemp = t.comprovanteSinal;
+      comprovanteAgenciaNomeTemp = t.comprovanteSinalNome || 'comprovante';
+      document.getElementById('agenciaFormNome').textContent = comprovanteAgenciaNomeTemp;
+      document.getElementById('agenciaFormNome').style.display = '';
+      document.getElementById('btnRemAgenciaForm').style.display = '';
+    }
   } else {
     document.getElementById('f-dataVenda').value = t.dataVenda || '';
     document.getElementById('f-extensao').value = t.extensao || 'NAO';
@@ -999,6 +1076,13 @@ function fillForm(t) {
       document.getElementById('sinalFormNome').textContent = comprovanteSinalNomeTemp;
       document.getElementById('sinalFormNome').style.display = '';
       document.getElementById('btnRemSinalForm').style.display = '';
+    }
+    if (t.comprovanteConf) {
+      comprovanteConfTemp = t.comprovanteConf;
+      comprovanteConfNomeTemp = t.comprovanteConfNome || 'comprovante';
+      document.getElementById('confFormNome').textContent = comprovanteConfNomeTemp;
+      document.getElementById('confFormNome').style.display = '';
+      document.getElementById('btnRemConfForm').style.display = '';
     }
   }
   brlManual = true; sinalManual = true; restanteManual = true;
