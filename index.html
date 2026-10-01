@@ -89,6 +89,7 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 .tag-green{background:var(--green-soft);color:var(--green)}
 .tag-gold{background:var(--gold-soft);color:var(--gold)}
 .tag-red{background:var(--red-soft);color:var(--red)}
+.tag-blue{background:#e0edff;color:#2563eb}
 .tag-purple{background:#f3e8ff;color:#7c3aed}
 .alert-chip{display:inline-block;padding:1px 5px;border-radius:3px;font-size:0.68rem;font-weight:600;margin-left:4px;vertical-align:middle}
 .alert-guia{background:var(--orange-soft);color:var(--orange)}
@@ -289,7 +290,7 @@ body.role-vendedor .guia-tours-section{display:none!important}
         <div class="form-group fin-only"><label>Liquido</label><input type="text" id="f-liquido" readonly></div>
         <div class="form-group fin-only"><label>Diego</label><input type="text" id="f-diego" readonly></div>
         <div class="form-group fin-only"><label>Mayra+Totti</label><input type="text" id="f-mt" readonly></div>
-        <div class="form-group"><label>Status</label><select id="f-status"><option value="CONFIRMADO">CONFIRMADO</option><option value="PENDENTE">PENDENTE</option><option value="CANCELADO">CANCELADO</option></select></div>
+        <div class="form-group"><label>Status</label><select id="f-status"><option value="CONFIRMADO">CONFIRMADO</option><option value="PENDENTE">PENDENTE</option><option value="DATA RESERVADA">DATA RESERVADA</option><option value="CANCELADO">CANCELADO</option></select></div>
         <div class="form-group" id="grpEstorno" style="display:none"><label>Estornado?</label><select id="f-estorno"><option value="NAO">NAO</option><option value="SIM">SIM</option></select></div>
         <div class="form-group grp-agencia" style="display:none"><label>Horario de Inicio</label><input type="time" id="f-horario"></div>
         <div class="form-group grp-agencia" style="display:none"><label>Hotel para Encontro</label><input type="text" id="f-hotel" placeholder="Nome do hotel"></div>
@@ -361,19 +362,19 @@ body.role-vendedor .guia-tours-section{display:none!important}
       </div>
       <div class="subtab-panel active" id="subPendente">
         <div class="table-wrap"><table id="tblGuiaPendente"><thead><tr>
-          <th>Data</th><th>Destino</th><th>Duracao</th><th>Pessoas</th><th></th>
+          <th>Data</th><th>Cliente</th><th>Destino</th><th>Duracao</th><th>Pessoas</th><th>Horario</th><th>Hotel</th><th>Obs</th><th></th>
         </tr></thead><tbody></tbody></table></div>
         <div class="empty" id="emptyGuiaPendente">Nenhum tour pendente de confirmacao.</div>
       </div>
       <div class="subtab-panel" id="subConfirmado">
         <div class="table-wrap"><table id="tblGuiaConfirmado"><thead><tr>
-          <th>Data</th><th>Destino</th><th>Duracao</th><th>Pessoas</th><th>Confirmado em</th>
+          <th>Data</th><th>Cliente</th><th>Destino</th><th>Duracao</th><th>Pessoas</th><th>Horario</th><th>Hotel</th><th>Obs</th><th>Confirmado em</th>
         </tr></thead><tbody></tbody></table></div>
         <div class="empty" id="emptyGuiaConfirmado">Nenhum tour confirmado ainda.</div>
       </div>
       <div class="subtab-panel" id="subRealizado">
         <div class="table-wrap"><table id="tblGuiaRealizado"><thead><tr>
-          <th>Data</th><th>Destino</th><th>Duracao</th><th>Pessoas</th>
+          <th>Data</th><th>Cliente</th><th>Destino</th><th>Duracao</th><th>Pessoas</th><th>Horario</th><th>Hotel</th><th>Obs</th>
         </tr></thead><tbody></tbody></table></div>
         <div class="empty" id="emptyGuiaRealizado">Nenhum tour realizado.</div>
       </div>
@@ -746,6 +747,50 @@ function toast(msg, ok=true) {
   setTimeout(() => el.classList.remove('show'), 2500);
 }
 
+function uploadComprovante(tourId, tipo) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*,application/pdf';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 800 * 1024) { toast('Arquivo muito grande (max 800KB). Tente uma foto menor.', false); return; }
+    try {
+      toast('Salvando comprovante...', true);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result;
+        const campo = tipo === 'sinal' ? 'comprovanteSinal' : 'comprovanteConf';
+        const campoNome = tipo === 'sinal' ? 'comprovanteSinalNome' : 'comprovanteConfNome';
+        await db.collection('tours').doc(tourId).update({ [campo]: base64, [campoNome]: file.name });
+        toast('Comprovante anexado!', true);
+      };
+      reader.readAsDataURL(file);
+    } catch(e) {
+      toast('Erro ao salvar: ' + e.message, false);
+    }
+  };
+  input.click();
+}
+
+function verComprovante(dataUrl, nome) {
+  const w = window.open('', '_blank');
+  if (!w) { toast('Permita pop-ups para visualizar', false); return; }
+  if (dataUrl.startsWith('data:application/pdf')) {
+    w.document.write('<html><head><title>'+(nome||'Comprovante')+'</title></head><body style="margin:0"><iframe src="'+dataUrl+'" style="width:100%;height:100vh;border:none"></iframe></body></html>');
+  } else {
+    w.document.write('<html><head><title>'+(nome||'Comprovante')+'</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f0f0f0"><img src="'+dataUrl+'" style="max-width:100%;max-height:100vh;object-fit:contain"></body></html>');
+  }
+  w.document.close();
+}
+
+function removerComprovante(tourId, tipo) {
+  if (!confirm('Remover comprovante?')) return;
+  const campo = tipo === 'sinal' ? 'comprovanteSinal' : 'comprovanteConf';
+  const campoNome = tipo === 'sinal' ? 'comprovanteSinalNome' : 'comprovanteConfNome';
+  db.collection('tours').doc(tourId).update({ [campo]: firebase.firestore.FieldValue.delete(), [campoNome]: firebase.firestore.FieldValue.delete() }).then(() => toast('Comprovante removido', true));
+}
+
 const fmtBrl = v => 'R$ ' + (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtYen = v => '¥ ' + Math.round(v||0).toLocaleString('ja-JP');
 const fmtUsd = v => 'US$ ' + (v||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
@@ -1085,7 +1130,7 @@ function renderGuiaTours() {
   document.getElementById('emptyGuiaPendente').style.display = pendentes.length ? 'none' : 'block';
   pendentes.forEach(t => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${fmtDate(t.dataTour)}</td><td>${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td>${t.pessoas||0}</td><td><button class="btn btn-primary btn-sm" data-confirm="${t.id}" style="font-size:0.72rem;padding:3px 10px">Confirmar</button></td>`;
+    tr.innerHTML = `<td>${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente||'-'}</td><td>${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td>${t.pessoas||0}</td><td>${t.horario||'-'}</td><td style="text-align:left">${t.hotel||'-'}</td><td style="text-align:left;font-size:0.78rem">${t.obs||'-'}</td><td><button class="btn btn-primary btn-sm" data-confirm="${t.id}" style="font-size:0.72rem;padding:3px 10px">Confirmar</button></td>`;
     tbodyP.appendChild(tr);
   });
   tbodyP.querySelectorAll('[data-confirm]').forEach(el => el.addEventListener('click', async () => {
@@ -1099,7 +1144,7 @@ function renderGuiaTours() {
   document.getElementById('emptyGuiaConfirmado').style.display = confirmados.length ? 'none' : 'block';
   confirmados.forEach(t => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${fmtDate(t.dataTour)}</td><td>${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td>${t.pessoas||0}</td><td>${fmtDate(t.guiaConfirmouEm)||'-'}</td>`;
+    tr.innerHTML = `<td>${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente||'-'}</td><td>${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td>${t.pessoas||0}</td><td>${t.horario||'-'}</td><td style="text-align:left">${t.hotel||'-'}</td><td style="text-align:left;font-size:0.78rem">${t.obs||'-'}</td><td>${fmtDate(t.guiaConfirmouEm)||'-'}</td>`;
     tbodyC.appendChild(tr);
   });
   const tbodyR = document.querySelector('#tblGuiaRealizado tbody');
@@ -1107,7 +1152,7 @@ function renderGuiaTours() {
   document.getElementById('emptyGuiaRealizado').style.display = realizados.length ? 'none' : 'block';
   realizados.forEach(t => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${fmtDate(t.dataTour)}</td><td>${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td>${t.pessoas||0}</td>`;
+    tr.innerHTML = `<td>${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente||'-'}</td><td>${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td>${t.pessoas||0}</td><td>${t.horario||'-'}</td><td style="text-align:left">${t.hotel||'-'}</td><td style="text-align:left;font-size:0.78rem">${t.obs||'-'}</td>`;
     tbodyR.appendChild(tr);
   });
 }
@@ -1235,17 +1280,33 @@ function showTourDetail(t) {
   }
   if (!loggedGuiaNome) body += `<br><b>Valor USD:</b> ${fmtUsd(t.valorUsd)}<br><b>Valor BRL:</b> ${fmtBrl(t.valorBrl)}<br><b>Pagamento:</b> ${t.formaPagamento||'-'}`;
   if (t.obs) body += `<br><b>Obs:</b> ${t.obs}`;
-  if (loggedRole === 'vendedor') {
+  if (loggedRole === 'vendedor' || loggedRole === 'admin') {
     const sinalAtual = t.sinalPago === 'SIM' ? 'SIM' : 'NAO';
     const confAtual = t.restantePago === 'SIM' ? 'SIM' : 'NAO';
     body += `<hr style="margin:10px 0;border:none;border-top:1px solid var(--rule)">`;
     body += `<div style="display:flex;flex-direction:column;gap:8px">`;
     body += `<div style="display:flex;align-items:center;justify-content:space-between"><span><b>Sinal:</b> ${sinalAtual === 'SIM' ? '<span class="tag tag-green">PAGO</span>' : '<span class="tag tag-gold">PENDENTE</span>'}</span><button id="btnToggleSinal" style="padding:4px 12px;border-radius:4px;border:none;background:${sinalAtual === 'SIM' ? 'var(--red)' : 'var(--green)'};color:#fff;font-size:0.78rem;cursor:pointer">${sinalAtual === 'SIM' ? 'Marcar Pendente' : 'Marcar Pago'}</button></div>`;
+    body += `<div style="display:flex;align-items:center;gap:6px;margin-left:4px">`;
+    if (t.comprovanteSinal) {
+      body += `<button id="btnVerSinal" style="padding:3px 8px;border-radius:4px;border:1px solid var(--green);background:var(--green-soft);color:var(--green);font-size:0.72rem;cursor:pointer">Ver Comprovante Sinal</button>`;
+      body += `<button id="btnRemSinal" style="padding:3px 8px;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:0.72rem;cursor:pointer">Remover</button>`;
+    } else {
+      body += `<button id="btnUpSinal" style="padding:3px 8px;border-radius:4px;border:1px dashed var(--blue);background:transparent;color:var(--blue);font-size:0.72rem;cursor:pointer">Anexar Comprovante Sinal</button>`;
+    }
+    body += `</div>`;
     body += `<div style="display:flex;align-items:center;justify-content:space-between"><span><b>Confirmacao:</b> ${confAtual === 'SIM' ? '<span class="tag tag-green">CONFIRMADO</span>' : '<span class="tag tag-gold">NAO CONFIRMADO</span>'}</span><button id="btnToggleConf" style="padding:4px 12px;border-radius:4px;border:none;background:${confAtual === 'SIM' ? 'var(--red)' : 'var(--green)'};color:#fff;font-size:0.78rem;cursor:pointer">${confAtual === 'SIM' ? 'Marcar Nao Confirmado' : 'Marcar Confirmado'}</button></div>`;
+    body += `<div style="display:flex;align-items:center;gap:6px;margin-left:4px">`;
+    if (t.comprovanteConf) {
+      body += `<button id="btnVerConf" style="padding:3px 8px;border-radius:4px;border:1px solid var(--green);background:var(--green-soft);color:var(--green);font-size:0.72rem;cursor:pointer">Ver Comprovante Conf.</button>`;
+      body += `<button id="btnRemConf" style="padding:3px 8px;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:0.72rem;cursor:pointer">Remover</button>`;
+    } else {
+      body += `<button id="btnUpConf" style="padding:3px 8px;border-radius:4px;border:1px dashed var(--blue);background:transparent;color:var(--blue);font-size:0.72rem;cursor:pointer">Anexar Comprovante Conf.</button>`;
+    }
+    body += `</div>`;
     body += `</div>`;
   }
   document.getElementById('detailContent').innerHTML = body;
-  if (loggedRole === 'vendedor') {
+  if (loggedRole === 'vendedor' || loggedRole === 'admin') {
     const btnSinal = document.getElementById('btnToggleSinal');
     const btnConf = document.getElementById('btnToggleConf');
     if (btnSinal) btnSinal.addEventListener('click', async () => {
@@ -1261,6 +1322,18 @@ function showTourDetail(t) {
       document.getElementById('modalDetail').classList.remove('open');
       toast(novo === 'SIM' ? 'Pagamento CONFIRMADO' : 'Pagamento marcado NAO CONFIRMADO', true);
     });
+    const bvs = document.getElementById('btnVerSinal');
+    if (bvs) bvs.addEventListener('click', () => verComprovante(t.comprovanteSinal, t.comprovanteSinalNome));
+    const brs = document.getElementById('btnRemSinal');
+    if (brs) brs.addEventListener('click', () => removerComprovante(t.id, 'sinal'));
+    const bus = document.getElementById('btnUpSinal');
+    if (bus) bus.addEventListener('click', () => uploadComprovante(t.id, 'sinal'));
+    const bvc = document.getElementById('btnVerConf');
+    if (bvc) bvc.addEventListener('click', () => verComprovante(t.comprovanteConf, t.comprovanteConfNome));
+    const brc = document.getElementById('btnRemConf');
+    if (brc) brc.addEventListener('click', () => removerComprovante(t.id, 'conf'));
+    const buc = document.getElementById('btnUpConf');
+    if (buc) buc.addEventListener('click', () => uploadComprovante(t.id, 'conf'));
   }
   if (!loggedGuiaNome && t.guia === 'A DEFINIR') {
     document.getElementById('btnSalvarGuia').addEventListener('click', async () => {
@@ -1300,14 +1373,16 @@ function renderTourTable() {
   document.getElementById('tourCount').textContent = tours.length ? `(${tours.length} tours)` : '';
   tours.forEach(t => {
     const tr = document.createElement('tr');
-    const sc = t.status === 'CONFIRMADO' ? 'tag-green' : t.status === 'PENDENTE' ? 'tag-gold' : 'tag-red';
+    const sc = t.status === 'CONFIRMADO' ? 'tag-green' : t.status === 'PENDENTE' ? 'tag-gold' : t.status === 'DATA RESERVADA' ? 'tag-blue' : 'tag-red';
     const estornoTag = t.status === 'CANCELADO' && t.estorno === 'SIM' ? ' <span class="tag tag-purple" style="font-size:0.65rem">ESTORNADO</span>' : (t.status === 'CANCELADO' ? ' <span class="tag tag-gold" style="font-size:0.65rem">SEM ESTORNO</span>' : '');
     const isADefinir = t.guia === 'A DEFINIR';
     const semDesp = t.status !== 'CANCELADO' && t.guia !== 'A DEFINIR' && (!t.despesaGuia || t.despesaGuia === 0);
     const guiaCell = isADefinir ? `<span style="color:var(--orange);font-weight:600">${t.guia}</span><span class="alert-chip alert-guia">!</span>` : (t.guia||'-');
     const despAlert = semDesp ? '<span class="alert-chip alert-desp" title="Sem despesa">$ ?</span>' : '';
-    const sinalTag = t.sinalPago === 'SIM' ? '<span class="tag tag-green">PAGO</span>' : '<span class="tag tag-gold">PENDENTE</span>';
-    const confTag = t.restantePago === 'SIM' ? '<span class="tag tag-green">CONFIRMADO</span>' : '<span class="tag tag-gold">NAO CONFIRMADO</span>';
+    const sinalAnexo = t.comprovanteSinal ? '<span title="Comprovante anexado" style="font-size:0.7rem;margin-left:3px;cursor:pointer" data-compsinal="'+t.id+'">📎</span>' : '';
+    const confAnexo = t.comprovanteConf ? '<span title="Comprovante anexado" style="font-size:0.7rem;margin-left:3px;cursor:pointer" data-compconf="'+t.id+'">📎</span>' : '';
+    const sinalTag = (t.sinalPago === 'SIM' ? '<span class="tag tag-green">PAGO</span>' : '<span class="tag tag-gold">PENDENTE</span>') + sinalAnexo;
+    const confTag = (t.restantePago === 'SIM' ? '<span class="tag tag-green">CONFIRMADO</span>' : '<span class="tag tag-gold">NAO CONFIRMADO</span>') + confAnexo;
     const vistoTag = t.guia === 'A DEFINIR' ? '-' : (t.guiaConfirmou === 'SIM' ? '<span class="tag tag-green">VISTO</span>' : '<span class="tag tag-gold">NAO VISTO</span>');
     const agBadge = t.tipoTour === 'AGENCIA' ? '<span style="font-size:0.6rem;background:var(--blue);color:#fff;padding:1px 5px;border-radius:6px;margin-left:4px">AG</span>' : '';
     tr.innerHTML = `<td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente||'-'}${agBadge}</td><td style="text-align:left">${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${guiaCell}</td><td>${t.pessoas||0}</td><td class="fin-only">${fmtBrl(t.valorBrl)}${despAlert}</td><td>${sinalTag}</td><td>${confTag}</td><td><span class="tag ${sc}">${t.status}</span>${estornoTag}</td><td>${vistoTag}</td><td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" data-edit="${t.id}">editar</span> <span style="cursor:pointer;color:var(--red);font-size:0.78rem;margin-left:6px" data-del="${t.id}">x</span></td>`;
@@ -1318,6 +1393,8 @@ function renderTourTable() {
     if (t) { editingId = t.id; fillForm(t); document.getElementById('btnSalvar').textContent = 'Atualizar Tour'; window.scrollTo({top:0,behavior:'smooth'}); }
   }));
   tbody.querySelectorAll('[data-del]').forEach(el => el.addEventListener('click', () => deleteTour(el.dataset.del)));
+  tbody.querySelectorAll('[data-compsinal]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); const t = allTours.find(x => x.id === el.dataset.compsinal); if (t) verComprovante(t.comprovanteSinal, t.comprovanteSinalNome); }));
+  tbody.querySelectorAll('[data-compconf]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); const t = allTours.find(x => x.id === el.dataset.compconf); if (t) verComprovante(t.comprovanteConf, t.comprovanteConfNome); }));
 }
 document.getElementById('searchCliente').addEventListener('input', renderTourTable);
 document.getElementById('filterMes').addEventListener('change', renderTourTable);
