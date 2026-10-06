@@ -1543,19 +1543,21 @@ function renderStats(containerId, items) {
 function renderSocios() {
   const tours = getConfirmed().filter(t => SOCIOS.includes(t.guia));
   const totalBrl = tours.reduce((s,t) => s + (t.valorBrl||0), 0);
+  const totalDesp = tours.reduce((s,t) => s + (t.despesaGuia||0), 0);
   const totalLiq = tours.reduce((s,t) => s + (t.liquido||0), 0);
   const totalDiego = tours.reduce((s,t) => s + (t.parteDiego||0), 0);
   const totalMT = tours.reduce((s,t) => s + (t.parteMT||0), 0);
-  renderStats('statsSocios', [['Tours', tours.length, ''],['Faturamento', fmtBrl(totalBrl), ''],['Liquido', fmtBrl(totalLiq), 'green'],['Diego (20%)', fmtBrl(totalDiego), 'blue'],['Mayra+Totti (80%)', fmtBrl(totalMT), 'accent']]);
+  renderStats('statsSocios', [['Tours', tours.length, ''],['Faturamento', fmtBrl(totalBrl), ''],['Despesa', fmtBrl(totalDesp), 'accent'],['Liquido', fmtBrl(totalLiq), 'green'],['Diego (20%)', fmtBrl(totalDiego), 'blue'],['Mayra+Totti (80%)', fmtBrl(totalMT), 'accent']]);
   const months = groupByMonth(tours);
   document.getElementById('monthsSocios').innerHTML = months.map(([mk, mt]) => {
+    const mDesp = mt.reduce((s,t) => s + (t.despesaGuia||0), 0);
     const mD = mt.reduce((s,t) => s + (t.parteDiego||0), 0);
     const mMT = mt.reduce((s,t) => s + (t.parteMT||0), 0);
-    return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)} (${mt.length} tours)</span><span class="total">Diego: ${fmtBrl(mD)} | MT: ${fmtBrl(mMT)}</span></div>
-    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Destino</th><th>Dur.</th><th>Guia</th><th>Pess.</th><th>BRL</th><th>Liq.</th><th>Diego</th><th>M+T</th></tr></thead><tbody>${
+    return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)} (${mt.length} tours)</span><span class="total">Despesa: ${fmtBrl(mDesp)} | Diego: ${fmtBrl(mD)} | MT: ${fmtBrl(mMT)}</span></div>
+    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Destino</th><th>Dur.</th><th>Guia</th><th>Pess.</th><th>BRL</th><th>Desp.</th><th>Liq.</th><th>Diego</th><th>M+T</th></tr></thead><tbody>${
       mt.sort((a,b)=>(a.dataTour||'').localeCompare(b.dataTour||'')).map(t => {
         const da = (!t.despesaGuia || t.despesaGuia === 0) ? '<span class="alert-chip alert-desp" title="Sem despesa">$ ?</span>' : '';
-        return `<tr><td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.destino}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${t.guia}</td><td>${t.pessoas}</td><td>${fmtBrl(t.valorBrl)}${da}</td><td>${fmtBrl(t.liquido)}</td><td>${fmtBrl(t.parteDiego)}</td><td>${fmtBrl(t.parteMT)}</td></tr>`;
+        return `<tr><td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.destino}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${t.guia}</td><td>${t.pessoas}</td><td>${fmtBrl(t.valorBrl)}</td><td>${fmtBrl(t.despesaGuia)}${da}</td><td>${fmtBrl(t.liquido)}</td><td>${fmtBrl(t.parteDiego)}</td><td>${fmtBrl(t.parteMT)}</td></tr>`;
       }).join('')
     }</tbody></table></div></div>`;
   }).join('') || '<div class="empty">Nenhum tour com socios ainda.</div>';
