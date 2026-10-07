@@ -120,12 +120,9 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 .cal-guia-mayra{background:#3b82f6;color:#fff}
 .cal-guia-totti{background:#e5e5e5;color:#333}
 .cal-guia-gabrielle{background:#8b5cf6;color:#fff}
-.cal-guia-giovana{background:#6b7280;color:#fff}
 .cal-guia-jonas{background:#f97316;color:#fff}
-.cal-guia-larissa{background:#ec4899;color:#fff}
 .cal-guia-clinte{background:#1e3a5f;color:#fff}
 .cal-guia-lorran{background:#78542e;color:#fff}
-.cal-guia-leonardo{background:#4f46e5;color:#fff}
 .cal-guia-ketlin{background:#16a34a;color:#fff}
 .cal-cancelado{background:#1f1f1f;color:#fff}
 .cal-servico{background:#0ea5e9;color:#fff}
@@ -337,12 +334,9 @@ body.role-vendedor .guia-tours-section{display:none!important}
       <span><i style="background:#3b82f6"></i> Mayra</span>
       <span><i style="background:#e5e5e5;border:1px solid #aaa"></i> Totti</span>
       <span><i style="background:#8b5cf6"></i> Gabrielle</span>
-      <span><i style="background:#6b7280"></i> Giovana</span>
       <span><i style="background:#f97316"></i> Jonas</span>
-      <span><i style="background:#ec4899"></i> Larissa</span>
       <span><i style="background:#1e3a5f"></i> Clinte</span>
       <span><i style="background:#78542e"></i> Lorran</span>
-      <span><i style="background:#4f46e5"></i> Leonardo</span>
       <span><i style="background:#16a34a"></i> Ketlin</span>
       <span><i style="background:#eab308"></i> A Definir</span>
       <span><i style="background:#ef4444"></i> Folga</span>
@@ -713,7 +707,7 @@ firebase.initializeApp({
 const db = firebase.firestore();
 
 const DESTINOS = ['MT FUJI','TOKYO TP','TOKYO CARRO','KAMAKURA','HAKONE','NIKKO','OSAKA','KYOTO','NARA','KOBE','HIROSHIMA','TOUR GASTRONOMICO','PERSONALIZADO'];
-const GUIAS = ['A DEFINIR','MAYRA','TOTTI','GABRIELLE','GIOVANA','JONAS','LARISSA','CLINTE','LORRAN','LEONARDO','KETLIN'];
+const GUIAS = ['A DEFINIR','MAYRA','TOTTI','GABRIELLE','JONAS','CLINTE','LORRAN','KETLIN'];
 const SOCIOS = ['MAYRA','TOTTI'];
 const PAGS = ['PIX','CARTAO DE CREDITO','DOLAR CASH','WISE','NOMAD','PAYPAL'];
 const MESES_NOME = {1:'Janeiro',2:'Fevereiro',3:'Marco',4:'Abril',5:'Maio',6:'Junho',7:'Julho',8:'Agosto',9:'Setembro',10:'Outubro',11:'Novembro',12:'Dezembro'};
@@ -2500,12 +2494,9 @@ const USERS = {
   'mayra': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'admin' },
   'totti': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'TOTTI' },
   'gabrielle': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'GABRIELLE' },
-  'giovana': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'GIOVANA' },
   'jonas': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'JONAS' },
-  'larissa': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'LARISSA' },
   'clinte': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'CLINTE' },
   'lorran': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'LORRAN' },
-  'leonardo': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'LEONARDO' },
   'ketlin': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'KETLIN' }
 };
 
