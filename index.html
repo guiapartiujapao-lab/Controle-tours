@@ -420,8 +420,8 @@ body.role-vendedor .guia-tours-section{display:none!important}
   </div>
 
   <div class="panel" id="p-despesas">
-    <h2 class="section-title">Despesas Fixas e Variaveis</h2>
-    <p class="section-sub">Controle de gastos mensais — Japao em Yen, Brasil em Real</p>
+    <h2 class="section-title">Despesas</h2>
+    <p class="section-sub">Controle de gastos — Japao (¥) e Brasil (R$)</p>
 
     <div class="subtabs" id="despPaisTabs">
       <button class="subtab active" data-desppais="JAPAO">Japao (¥)</button>
@@ -429,89 +429,65 @@ body.role-vendedor .guia-tours-section{display:none!important}
     </div>
 
     <div class="subtab-panel active" id="despPaisJAPAO">
-      <h3 style="margin:0 0 0.5rem;font-size:1rem;color:var(--ink)">Modelos Recorrentes — Japao</h3>
-      <p style="font-size:0.78rem;color:var(--ink-muted);margin-bottom:0.5rem">Despesas fixas em Yen que se repetem todo mes.</p>
-      <div class="card" style="margin-bottom:1rem;padding:1rem">
-        <div class="form-row">
-          <div class="form-group"><label>Descricao</label><input type="text" id="modelo-descricao-jp" placeholder="Ex: Aluguel, Transporte"></div>
-          <div class="form-group"><label>Valor (¥)</label><input type="number" id="modelo-valor-jp" step="1" placeholder="0"></div>
-          <div class="form-group"><label>Pagamento</label><select id="modelo-pagamento-jp"><option value="PIX">PIX</option><option value="CARTAO EMPRESA">Cartao Empresa</option><option value="BOLETO">Boleto</option><option value="DEBITO AUTOMATICO">Debito Automatico</option><option value="TRANSFERENCIA">Transferencia</option><option value="DINHEIRO">Dinheiro</option><option value="OUTRO">Outro</option></select></div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button class="btn btn-primary" id="btnSalvarModeloJP">Salvar Modelo</button>
-          <button class="btn btn-secondary" id="btnLimparModeloJP">Limpar</button>
-        </div>
-      </div>
-      <div id="modelosListJP"></div>
-      <div style="display:flex;align-items:center;gap:10px;margin:1.5rem 0 0.5rem;flex-wrap:wrap">
-        <h3 style="margin:0;font-size:1rem;color:var(--ink)">Despesas Japao por Mes</h3>
-        <div style="display:flex;align-items:center;gap:8px">
-          <input type="month" id="desp-gerarMes-jp" style="padding:4px 8px;border:1px solid var(--rule);border-radius:6px;font-size:0.85rem">
-          <button class="btn btn-primary" id="btnGerarMesJP" style="white-space:nowrap">Gerar Mes</button>
-        </div>
-      </div>
-      <div class="card" style="margin-bottom:1rem;padding:1rem">
-        <div class="form-row">
-          <div class="form-group"><label>Mes/Ano</label><input type="month" id="desp-mes-jp"></div>
-          <div class="form-group"><label>Tipo</label><select id="desp-tipo-jp"><option value="RECORRENTE">Recorrente</option><option value="VARIAVEL">Variavel</option></select></div>
-          <div class="form-group"><label>Descricao</label><input type="text" id="desp-descricao-jp" placeholder="Ex: Imposto..."></div>
-          <div class="form-group"><label>Valor (¥)</label><input type="number" id="desp-valor-jp" step="1" placeholder="0"></div>
-          <div class="form-group"><label>Pagamento</label><select id="desp-pagamento-jp"><option value="PIX">PIX</option><option value="CARTAO EMPRESA">Cartao Empresa</option><option value="BOLETO">Boleto</option><option value="DEBITO AUTOMATICO">Debito Automatico</option><option value="TRANSFERENCIA">Transferencia</option><option value="DINHEIRO">Dinheiro</option><option value="OUTRO">Outro</option></select></div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button class="btn btn-primary" id="btnSalvarDespesaJP">Salvar Despesa</button>
-          <button class="btn btn-secondary" id="btnLimparDespesaJP">Limpar</button>
-        </div>
-      </div>
-      <div class="filter-row" style="margin-bottom:1rem">
-        <select id="despFilterMesJP"><option value="">Todos os meses</option></select>
-        <select id="despFilterTipoJP"><option value="">Todos os tipos</option><option value="RECORRENTE">Recorrente</option><option value="VARIAVEL">Variavel</option></select>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;flex-wrap:wrap">
+        <select id="despMesJP" style="padding:6px 12px;border:1px solid var(--rule);border-radius:6px;font-size:0.9rem;font-weight:600"></select>
+        <button class="btn btn-primary" id="btnAddDespJP" style="font-size:0.8rem">+ Adicionar Despesa</button>
+        <button class="btn btn-secondary" id="btnGerenciarFixasJP" style="font-size:0.8rem">Gerenciar Fixas e Anuais</button>
       </div>
       <div class="stats" id="statsDespesasJP"></div>
       <div id="despesasListJP"></div>
     </div>
 
     <div class="subtab-panel" id="despPaisBRASIL">
-      <h3 style="margin:0 0 0.5rem;font-size:1rem;color:var(--ink)">Modelos Recorrentes — Brasil</h3>
-      <p style="font-size:0.78rem;color:var(--ink-muted);margin-bottom:0.5rem">Despesas fixas em Real que se repetem todo mes.</p>
-      <div class="card" style="margin-bottom:1rem;padding:1rem">
-        <div class="form-row">
-          <div class="form-group"><label>Descricao</label><input type="text" id="modelo-descricao-br" placeholder="Ex: Contabilidade, Plataforma"></div>
-          <div class="form-group"><label>Valor (R$)</label><input type="number" id="modelo-valor-br" step="0.01" placeholder="0.00"></div>
-          <div class="form-group"><label>Pagamento</label><select id="modelo-pagamento-br"><option value="PIX">PIX</option><option value="CARTAO EMPRESA">Cartao Empresa</option><option value="BOLETO">Boleto</option><option value="DEBITO AUTOMATICO">Debito Automatico</option><option value="TRANSFERENCIA">Transferencia</option><option value="DINHEIRO">Dinheiro</option><option value="OUTRO">Outro</option></select></div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button class="btn btn-primary" id="btnSalvarModeloBR">Salvar Modelo</button>
-          <button class="btn btn-secondary" id="btnLimparModeloBR">Limpar</button>
-        </div>
-      </div>
-      <div id="modelosListBR"></div>
-      <div style="display:flex;align-items:center;gap:10px;margin:1.5rem 0 0.5rem;flex-wrap:wrap">
-        <h3 style="margin:0;font-size:1rem;color:var(--ink)">Despesas Brasil por Mes</h3>
-        <div style="display:flex;align-items:center;gap:8px">
-          <input type="month" id="desp-gerarMes-br" style="padding:4px 8px;border:1px solid var(--rule);border-radius:6px;font-size:0.85rem">
-          <button class="btn btn-primary" id="btnGerarMesBR" style="white-space:nowrap">Gerar Mes</button>
-        </div>
-      </div>
-      <div class="card" style="margin-bottom:1rem;padding:1rem">
-        <div class="form-row">
-          <div class="form-group"><label>Mes/Ano</label><input type="month" id="desp-mes-br"></div>
-          <div class="form-group"><label>Tipo</label><select id="desp-tipo-br"><option value="RECORRENTE">Recorrente</option><option value="VARIAVEL">Variavel</option></select></div>
-          <div class="form-group"><label>Descricao</label><input type="text" id="desp-descricao-br" placeholder="Ex: Imposto, Comissao..."></div>
-          <div class="form-group"><label>Valor (R$)</label><input type="number" id="desp-valor-br" step="0.01" placeholder="0.00"></div>
-          <div class="form-group"><label>Pagamento</label><select id="desp-pagamento-br"><option value="PIX">PIX</option><option value="CARTAO EMPRESA">Cartao Empresa</option><option value="BOLETO">Boleto</option><option value="DEBITO AUTOMATICO">Debito Automatico</option><option value="TRANSFERENCIA">Transferencia</option><option value="DINHEIRO">Dinheiro</option><option value="OUTRO">Outro</option></select></div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button class="btn btn-primary" id="btnSalvarDespesaBR">Salvar Despesa</button>
-          <button class="btn btn-secondary" id="btnLimparDespesaBR">Limpar</button>
-        </div>
-      </div>
-      <div class="filter-row" style="margin-bottom:1rem">
-        <select id="despFilterMesBR"><option value="">Todos os meses</option></select>
-        <select id="despFilterTipoBR"><option value="">Todos os tipos</option><option value="RECORRENTE">Recorrente</option><option value="VARIAVEL">Variavel</option></select>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;flex-wrap:wrap">
+        <select id="despMesBR" style="padding:6px 12px;border:1px solid var(--rule);border-radius:6px;font-size:0.9rem;font-weight:600"></select>
+        <button class="btn btn-primary" id="btnAddDespBR" style="font-size:0.8rem">+ Adicionar Despesa</button>
+        <button class="btn btn-secondary" id="btnGerenciarFixasBR" style="font-size:0.8rem">Gerenciar Fixas e Anuais</button>
       </div>
       <div class="stats" id="statsDespesasBR"></div>
       <div id="despesasListBR"></div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="modalDespesa">
+    <div class="modal">
+      <h3 id="modalDespTitulo">Adicionar Despesa</h3>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="form-group"><label>Descricao</label><input type="text" id="md-descricao" placeholder="Ex: Imposto, Material..."></div>
+        <div class="form-row">
+          <div class="form-group"><label>Valor</label><input type="number" id="md-valor" step="0.01" placeholder="0"></div>
+          <div class="form-group"><label>Pagamento</label><select id="md-pagamento"><option value="PIX">PIX</option><option value="CARTAO EMPRESA">Cartao Empresa</option><option value="BOLETO">Boleto</option><option value="DEBITO AUTOMATICO">Debito Automatico</option><option value="TRANSFERENCIA">Transferencia</option><option value="DINHEIRO">Dinheiro</option><option value="OUTRO">Outro</option></select></div>
+        </div>
+        <div class="form-row" style="margin-top:0.5rem">
+          <button class="btn btn-primary" id="btnSalvarDespModal">Salvar</button>
+          <button class="btn btn-secondary" id="btnCancelDespModal">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="modalFixas">
+    <div class="modal" style="width:600px;max-width:95vw">
+      <h3 id="modalFixasTitulo">Gerenciar Despesas Fixas e Anuais</h3>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="form-row">
+          <div class="form-group"><label>Tipo</label><select id="mf-tipo"><option value="FIXA">Fixa (mensal)</option><option value="ANUAL">Anual</option></select></div>
+          <div class="form-group" id="grpMesAnual" style="display:none"><label>Mes de Renovacao</label><select id="mf-mesRenovacao"><option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Marco</option><option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Descricao</label><input type="text" id="mf-descricao" placeholder="Ex: Aluguel, Dominio..."></div>
+          <div class="form-group"><label>Valor</label><input type="number" id="mf-valor" step="0.01" placeholder="0"></div>
+          <div class="form-group"><label>Pagamento</label><select id="mf-pagamento"><option value="PIX">PIX</option><option value="CARTAO EMPRESA">Cartao Empresa</option><option value="BOLETO">Boleto</option><option value="DEBITO AUTOMATICO">Debito Automatico</option><option value="TRANSFERENCIA">Transferencia</option><option value="DINHEIRO">Dinheiro</option><option value="OUTRO">Outro</option></select></div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" id="btnSalvarFixa">Salvar</button>
+          <button class="btn btn-secondary" id="btnLimparFixa">Limpar</button>
+        </div>
+        <div id="fixasList" style="margin-top:0.5rem"></div>
+        <div style="text-align:right;margin-top:0.5rem">
+          <button class="btn btn-secondary" id="btnFecharFixas">Fechar</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1587,107 +1563,139 @@ document.querySelectorAll('[data-desppais]').forEach(btn => btn.addEventListener
   document.getElementById('despPais' + btn.dataset.desppais).classList.add('active');
 }));
 
-// MODELOS - funcoes genericas por pais
-function setupModelo(pais) {
-  const suf = pais === 'JAPAO' ? 'JP' : 'BR';
-  const fmt = pais === 'JAPAO' ? fmtYen : fmtBrl;
-  document.getElementById('btnSalvarModelo' + suf).addEventListener('click', async () => {
-    const descricao = document.getElementById('modelo-descricao-' + suf.toLowerCase()).value.trim();
-    const valor = parseFloat(document.getElementById('modelo-valor-' + suf.toLowerCase()).value) || 0;
-    const pagamento = document.getElementById('modelo-pagamento-' + suf.toLowerCase()).value;
-    if (!descricao || valor <= 0) { alert('Preencha descricao e valor.'); return; }
-    const data = { pais, descricao, valor, pagamento };
-    if (editingModeloId) {
-      await db.collection('despesasModelo').doc(editingModeloId).update(data);
-      editingModeloId = null;
-      document.getElementById('btnSalvarModelo' + suf).textContent = 'Salvar Modelo';
-    } else {
-      await db.collection('despesasModelo').add(data);
-    }
-    document.getElementById('modelo-descricao-' + suf.toLowerCase()).value = '';
-    document.getElementById('modelo-valor-' + suf.toLowerCase()).value = '';
-    document.getElementById('modelo-pagamento-' + suf.toLowerCase()).value = 'PIX';
-  });
-  document.getElementById('btnLimparModelo' + suf).addEventListener('click', () => {
-    editingModeloId = null;
-    document.getElementById('btnSalvarModelo' + suf).textContent = 'Salvar Modelo';
-    document.getElementById('modelo-descricao-' + suf.toLowerCase()).value = '';
-    document.getElementById('modelo-valor-' + suf.toLowerCase()).value = '';
-    document.getElementById('modelo-pagamento-' + suf.toLowerCase()).value = 'PIX';
-  });
-  // Gerar Mes
-  document.getElementById('btnGerarMes' + suf).addEventListener('click', async () => {
-    const mes = document.getElementById('desp-gerarMes-' + suf.toLowerCase()).value;
-    if (!mes) { alert('Selecione o mes para gerar.'); return; }
-    const modelos = allModelos.filter(m => m.pais === pais);
-    if (!modelos.length) { alert('Nenhum modelo recorrente cadastrado para ' + (pais === 'JAPAO' ? 'Japao' : 'Brasil') + '.'); return; }
-    const jaExiste = allDespesas.filter(d => d.mes === mes && d.tipo === 'RECORRENTE' && d.pais === pais);
-    if (jaExiste.length > 0) {
-      if (!confirm('Ja existem ' + jaExiste.length + ' recorrente(s) de ' + (pais === 'JAPAO' ? 'Japao' : 'Brasil') + ' em ' + monthLabel(mes) + '. Adicionar novamente?')) return;
-    }
-    const batch = db.batch();
-    modelos.forEach(m => {
-      const ref = db.collection('despesas').doc();
-      batch.set(ref, { mes, pais, tipo: 'RECORRENTE', descricao: m.descricao, valor: m.valor, pagamento: m.pagamento || 'PIX' });
+// DESPESAS - redesign com fixas, anuais e variaveis
+let despModalPais = 'JAPAO';
+let fixasModalPais = 'JAPAO';
+
+function getCurrentMonth() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+function populateDespMeses() {
+  ['JP','BR'].forEach(suf => {
+    const pais = suf === 'JP' ? 'JAPAO' : 'BRASIL';
+    const sel = document.getElementById('despMes' + suf);
+    const allMeses = new Set();
+    allDespesas.filter(d => d.pais === pais).forEach(d => { if (d.mes) allMeses.add(d.mes); });
+    allModelos.filter(m => m.pais === pais && m.tipo === 'ANUAL' && m.mesRenovacao).forEach(m => {
+      const y = new Date().getFullYear();
+      allMeses.add(y + '-' + m.mesRenovacao);
     });
-    await batch.commit();
-    alert(modelos.length + ' despesa(s) recorrente(s) gerada(s) para ' + monthLabel(mes) + '.');
-  });
-  // Despesa avulsa
-  document.getElementById('btnSalvarDespesa' + suf).addEventListener('click', async () => {
-    const mes = document.getElementById('desp-mes-' + suf.toLowerCase()).value;
-    const tipo = document.getElementById('desp-tipo-' + suf.toLowerCase()).value;
-    const descricao = document.getElementById('desp-descricao-' + suf.toLowerCase()).value.trim();
-    const valor = parseFloat(document.getElementById('desp-valor-' + suf.toLowerCase()).value) || 0;
-    const pagamento = document.getElementById('desp-pagamento-' + suf.toLowerCase()).value;
-    if (!mes || !descricao || valor <= 0) { alert('Preencha mes, descricao e valor.'); return; }
-    const data = { mes, pais, tipo, descricao, valor, pagamento };
-    if (editingDespesaId) {
-      await db.collection('despesas').doc(editingDespesaId).update(data);
-      editingDespesaId = null;
-      document.getElementById('btnSalvarDespesa' + suf).textContent = 'Salvar Despesa';
-    } else {
-      await db.collection('despesas').add(data);
-    }
-    document.getElementById('desp-descricao-' + suf.toLowerCase()).value = '';
-    document.getElementById('desp-valor-' + suf.toLowerCase()).value = '';
-    document.getElementById('desp-tipo-' + suf.toLowerCase()).value = 'RECORRENTE';
-    document.getElementById('desp-pagamento-' + suf.toLowerCase()).value = 'PIX';
-  });
-  document.getElementById('btnLimparDespesa' + suf).addEventListener('click', () => {
-    editingDespesaId = null;
-    document.getElementById('btnSalvarDespesa' + suf).textContent = 'Salvar Despesa';
-    document.getElementById('desp-descricao-' + suf.toLowerCase()).value = '';
-    document.getElementById('desp-valor-' + suf.toLowerCase()).value = '';
-    document.getElementById('desp-tipo-' + suf.toLowerCase()).value = 'RECORRENTE';
-    document.getElementById('desp-pagamento-' + suf.toLowerCase()).value = 'PIX';
-  });
-  ['despFilterMes' + suf, 'despFilterTipo' + suf].forEach(id => {
-    document.getElementById(id).addEventListener('change', renderDespesas);
+    const cur = getCurrentMonth();
+    allMeses.add(cur);
+    const prev = sel.value || cur;
+    const sorted = [...allMeses].sort().reverse();
+    sel.innerHTML = sorted.map(m => `<option value="${m}"${m === prev ? ' selected' : ''}>${monthLabel(m)}</option>`).join('');
   });
 }
-setupModelo('JAPAO');
-setupModelo('BRASIL');
+
+function setupDespesas(pais) {
+  const suf = pais === 'JAPAO' ? 'JP' : 'BR';
+  document.getElementById('btnAddDesp' + suf).addEventListener('click', () => {
+    despModalPais = pais;
+    editingDespesaId = null;
+    document.getElementById('modalDespTitulo').textContent = 'Adicionar Despesa — ' + (pais === 'JAPAO' ? 'Japao' : 'Brasil');
+    document.getElementById('md-descricao').value = '';
+    document.getElementById('md-valor').value = '';
+    document.getElementById('md-pagamento').value = 'PIX';
+    document.getElementById('modalDespesa').classList.add('open');
+  });
+  document.getElementById('btnGerenciarFixas' + suf).addEventListener('click', () => {
+    fixasModalPais = pais;
+    editingModeloId = null;
+    document.getElementById('modalFixasTitulo').textContent = 'Fixas e Anuais — ' + (pais === 'JAPAO' ? 'Japao (¥)' : 'Brasil (R$)');
+    document.getElementById('mf-tipo').value = 'FIXA';
+    document.getElementById('grpMesAnual').style.display = 'none';
+    document.getElementById('mf-descricao').value = '';
+    document.getElementById('mf-valor').value = '';
+    document.getElementById('mf-pagamento').value = 'PIX';
+    document.getElementById('btnSalvarFixa').textContent = 'Salvar';
+    renderFixasList();
+    document.getElementById('modalFixas').classList.add('open');
+  });
+  document.getElementById('despMes' + suf).addEventListener('change', renderDespesas);
+}
+setupDespesas('JAPAO');
+setupDespesas('BRASIL');
+
+document.getElementById('mf-tipo').addEventListener('change', () => {
+  document.getElementById('grpMesAnual').style.display = document.getElementById('mf-tipo').value === 'ANUAL' ? '' : 'none';
+});
+
+document.getElementById('btnSalvarDespModal').addEventListener('click', async () => {
+  const descricao = document.getElementById('md-descricao').value.trim();
+  const valor = parseFloat(document.getElementById('md-valor').value) || 0;
+  const pagamento = document.getElementById('md-pagamento').value;
+  if (!descricao || valor <= 0) { alert('Preencha descricao e valor.'); return; }
+  const suf = despModalPais === 'JAPAO' ? 'JP' : 'BR';
+  const mes = document.getElementById('despMes' + suf).value;
+  if (!mes) { alert('Selecione um mes.'); return; }
+  const data = { mes, pais: despModalPais, tipo: 'VARIAVEL', descricao, valor, pagamento };
+  if (editingDespesaId) {
+    await db.collection('despesas').doc(editingDespesaId).update(data);
+    editingDespesaId = null;
+  } else {
+    await db.collection('despesas').add(data);
+  }
+  document.getElementById('modalDespesa').classList.remove('open');
+});
+
+document.getElementById('btnCancelDespModal').addEventListener('click', () => {
+  document.getElementById('modalDespesa').classList.remove('open');
+});
+
+document.getElementById('btnSalvarFixa').addEventListener('click', async () => {
+  const tipo = document.getElementById('mf-tipo').value;
+  const descricao = document.getElementById('mf-descricao').value.trim();
+  const valor = parseFloat(document.getElementById('mf-valor').value) || 0;
+  const pagamento = document.getElementById('mf-pagamento').value;
+  if (!descricao || valor <= 0) { alert('Preencha descricao e valor.'); return; }
+  const data = { pais: fixasModalPais, tipo, descricao, valor, pagamento };
+  if (tipo === 'ANUAL') data.mesRenovacao = document.getElementById('mf-mesRenovacao').value;
+  if (editingModeloId) {
+    await db.collection('despesasModelo').doc(editingModeloId).update(data);
+    editingModeloId = null;
+    document.getElementById('btnSalvarFixa').textContent = 'Salvar';
+  } else {
+    await db.collection('despesasModelo').add(data);
+  }
+  document.getElementById('mf-descricao').value = '';
+  document.getElementById('mf-valor').value = '';
+  document.getElementById('mf-pagamento').value = 'PIX';
+  document.getElementById('mf-tipo').value = 'FIXA';
+  document.getElementById('grpMesAnual').style.display = 'none';
+});
+
+document.getElementById('btnLimparFixa').addEventListener('click', () => {
+  editingModeloId = null;
+  document.getElementById('btnSalvarFixa').textContent = 'Salvar';
+  document.getElementById('mf-descricao').value = '';
+  document.getElementById('mf-valor').value = '';
+  document.getElementById('mf-pagamento').value = 'PIX';
+  document.getElementById('mf-tipo').value = 'FIXA';
+  document.getElementById('grpMesAnual').style.display = 'none';
+});
+
+document.getElementById('btnFecharFixas').addEventListener('click', () => {
+  document.getElementById('modalFixas').classList.remove('open');
+});
 
 function editModelo(id) {
   const m = allModelos.find(x => x.id === id);
   if (!m) return;
   editingModeloId = id;
-  const suf = m.pais === 'JAPAO' ? 'jp' : 'br';
-  // switch to correct tab
-  document.querySelectorAll('#despPaisTabs .subtab').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('#p-despesas > .subtab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelector('[data-desppais="' + m.pais + '"]').classList.add('active');
-  document.getElementById('despPais' + m.pais).classList.add('active');
-  document.getElementById('modelo-descricao-' + suf).value = m.descricao || '';
-  document.getElementById('modelo-valor-' + suf).value = m.valor || '';
-  document.getElementById('modelo-pagamento-' + suf).value = m.pagamento || 'PIX';
-  document.getElementById('btnSalvarModelo' + suf.toUpperCase()).textContent = 'Atualizar Modelo';
-  document.querySelector('#p-despesas').scrollIntoView({behavior:'smooth'});
+  document.getElementById('mf-tipo').value = m.tipo || 'FIXA';
+  document.getElementById('grpMesAnual').style.display = m.tipo === 'ANUAL' ? '' : 'none';
+  if (m.tipo === 'ANUAL' && m.mesRenovacao) document.getElementById('mf-mesRenovacao').value = m.mesRenovacao;
+  document.getElementById('mf-descricao').value = m.descricao || '';
+  document.getElementById('mf-valor').value = m.valor || '';
+  document.getElementById('mf-pagamento').value = m.pagamento || 'PIX';
+  document.getElementById('btnSalvarFixa').textContent = 'Atualizar';
 }
 
 async function deleteModelo(id) {
-  if (!confirm('Remover este modelo recorrente?')) return;
+  if (!confirm('Remover esta despesa fixa/anual?')) return;
   await db.collection('despesasModelo').doc(id).delete();
 }
 
@@ -1695,17 +1703,12 @@ function editDespesa(id) {
   const d = allDespesas.find(x => x.id === id);
   if (!d) return;
   editingDespesaId = id;
-  const suf = d.pais === 'JAPAO' ? 'jp' : 'br';
-  document.querySelectorAll('#despPaisTabs .subtab').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('#p-despesas > .subtab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelector('[data-desppais="' + d.pais + '"]').classList.add('active');
-  document.getElementById('despPais' + d.pais).classList.add('active');
-  document.getElementById('desp-mes-' + suf).value = d.mes || '';
-  document.getElementById('desp-tipo-' + suf).value = d.tipo || 'RECORRENTE';
-  document.getElementById('desp-descricao-' + suf).value = d.descricao || '';
-  document.getElementById('desp-valor-' + suf).value = d.valor || '';
-  document.getElementById('desp-pagamento-' + suf).value = d.pagamento || 'PIX';
-  document.getElementById('btnSalvarDespesa' + suf.toUpperCase()).textContent = 'Atualizar Despesa';
+  despModalPais = d.pais;
+  document.getElementById('modalDespTitulo').textContent = 'Editar Despesa — ' + (d.pais === 'JAPAO' ? 'Japao' : 'Brasil');
+  document.getElementById('md-descricao').value = d.descricao || '';
+  document.getElementById('md-valor').value = d.valor || '';
+  document.getElementById('md-pagamento').value = d.pagamento || 'PIX';
+  document.getElementById('modalDespesa').classList.add('open');
 }
 
 async function deleteDespesa(id) {
@@ -1713,70 +1716,80 @@ async function deleteDespesa(id) {
   await db.collection('despesas').doc(id).delete();
 }
 
-function renderModelos() {
-  ['JAPAO','BRASIL'].forEach(pais => {
-    const suf = pais === 'JAPAO' ? 'JP' : 'BR';
-    const fmt = pais === 'JAPAO' ? fmtYen : fmtBrl;
-    const list = allModelos.filter(m => m.pais === pais);
-    const total = list.reduce((s,m) => s + (m.valor||0), 0);
-    if (!list.length) {
-      document.getElementById('modelosList' + suf).innerHTML = '<div class="empty" style="margin-bottom:1rem">Nenhum modelo recorrente cadastrado.</div>';
-      return;
-    }
-    let html = `<div class="card" style="margin-bottom:1rem;padding:1rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-weight:700;font-size:0.9rem;color:var(--ink)">Modelos Cadastrados</span><span style="font-size:0.85rem;font-weight:600;color:var(--accent)">Total mensal: ${fmt(total)}</span></div>`;
+function renderFixasList() {
+  const fmt = fixasModalPais === 'JAPAO' ? fmtYen : fmtBrl;
+  const list = allModelos.filter(m => m.pais === fixasModalPais);
+  const fixas = list.filter(m => m.tipo !== 'ANUAL');
+  const anuais = list.filter(m => m.tipo === 'ANUAL');
+  if (!list.length) {
+    document.getElementById('fixasList').innerHTML = '<div class="empty">Nenhuma despesa fixa ou anual cadastrada.</div>';
+    return;
+  }
+  let html = '';
+  if (fixas.length) {
+    const tF = fixas.reduce((s,m) => s + (m.valor||0), 0);
+    html += `<div style="font-size:0.78rem;font-weight:700;color:var(--green);margin-bottom:4px">FIXAS MENSAIS — Total: ${fmt(tF)}</div>`;
     html += '<div class="table-wrap"><table><thead><tr><th>Descricao</th><th>Valor</th><th>Pagamento</th><th></th></tr></thead><tbody>';
-    list.forEach(m => { html += `<tr><td>${m.descricao||'-'}</td><td>${fmt(m.valor)}</td><td>${m.pagamento||'-'}</td><td style="white-space:nowrap"><button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem" onclick="editModelo('${m.id}')">Editar</button> <button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem;color:var(--red)" onclick="deleteModelo('${m.id}')">X</button></td></tr>`; });
-    html += `<tr style="font-weight:700"><td>Subtotal</td><td>${fmt(total)}</td><td></td><td></td></tr></tbody></table></div></div>`;
-    document.getElementById('modelosList' + suf).innerHTML = html;
-  });
+    fixas.forEach(m => { html += `<tr><td>${m.descricao||'-'}</td><td>${fmt(m.valor)}</td><td>${m.pagamento||'-'}</td><td style="white-space:nowrap"><button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem" onclick="editModelo('${m.id}')">Editar</button> <button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem;color:var(--red)" onclick="deleteModelo('${m.id}')">X</button></td></tr>`; });
+    html += '</tbody></table></div>';
+  }
+  if (anuais.length) {
+    const tA = anuais.reduce((s,m) => s + (m.valor||0), 0);
+    html += `<div style="font-size:0.78rem;font-weight:700;color:var(--accent);margin:8px 0 4px">ANUAIS — Total: ${fmt(tA)}</div>`;
+    html += '<div class="table-wrap"><table><thead><tr><th>Descricao</th><th>Valor</th><th>Renovacao</th><th>Pagamento</th><th></th></tr></thead><tbody>';
+    anuais.forEach(m => { html += `<tr><td>${m.descricao||'-'}</td><td>${fmt(m.valor)}</td><td>${MESES_NOME[parseInt(m.mesRenovacao)]||m.mesRenovacao||'-'}</td><td>${m.pagamento||'-'}</td><td style="white-space:nowrap"><button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem" onclick="editModelo('${m.id}')">Editar</button> <button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem;color:var(--red)" onclick="deleteModelo('${m.id}')">X</button></td></tr>`; });
+    html += '</tbody></table></div>';
+  }
+  document.getElementById('fixasList').innerHTML = html;
+}
+
+function renderModelos() {
+  renderFixasList();
 }
 
 function renderDespesas() {
+  populateDespMeses();
   ['JAPAO','BRASIL'].forEach(pais => {
     const suf = pais === 'JAPAO' ? 'JP' : 'BR';
     const fmt = pais === 'JAPAO' ? fmtYen : fmtBrl;
-    const filterMes = document.getElementById('despFilterMes' + suf).value;
-    const filterTipo = document.getElementById('despFilterTipo' + suf).value;
-    let desp = allDespesas.filter(d => d.pais === pais);
-    if (filterMes) desp = desp.filter(d => d.mes === filterMes);
-    if (filterTipo) desp = desp.filter(d => d.tipo === filterTipo);
-    const totalGeral = desp.reduce((s,d) => s + (d.valor||0), 0);
-    const totalRecorrente = desp.filter(d => d.tipo === 'RECORRENTE').reduce((s,d) => s + (d.valor||0), 0);
-    const totalVariavel = desp.filter(d => d.tipo === 'VARIAVEL').reduce((s,d) => s + (d.valor||0), 0);
+    const mesSel = document.getElementById('despMes' + suf).value || getCurrentMonth();
+    const mesMM = mesSel.split('-')[1];
+    const fixas = allModelos.filter(m => m.pais === pais && m.tipo !== 'ANUAL');
+    const anuais = allModelos.filter(m => m.pais === pais && m.tipo === 'ANUAL' && m.mesRenovacao === mesMM);
+    const variaveis = allDespesas.filter(d => d.pais === pais && d.mes === mesSel);
+    const totalFixas = fixas.reduce((s,m) => s + (m.valor||0), 0);
+    const totalAnuais = anuais.reduce((s,m) => s + (m.valor||0), 0);
+    const totalVar = variaveis.reduce((s,d) => s + (d.valor||0), 0);
+    const totalGeral = totalFixas + totalAnuais + totalVar;
     renderStats('statsDespesas' + suf, [
       ['Total', fmt(totalGeral), ''],
-      ['Recorrente', fmt(totalRecorrente), 'green'],
-      ['Variavel', fmt(totalVariavel), 'gold']
+      ['Fixas', fmt(totalFixas), 'green'],
+      ['Anuais', fmt(totalAnuais), 'accent'],
+      ['Variaveis', fmt(totalVar), 'gold']
     ]);
-    // populate month filter
-    const allMeses = new Set(allDespesas.filter(d => d.pais === pais).map(d => d.mes).filter(Boolean));
-    const selMes = document.getElementById('despFilterMes' + suf);
-    const curVal = selMes.value;
-    selMes.innerHTML = '<option value="">Todos os meses</option>' + [...allMeses].sort().reverse().map(m => `<option value="${m}"${m === curVal ? ' selected':''}>${monthLabel(m)}</option>`).join('');
-    // group by month
-    const groups = {};
-    desp.forEach(d => { const k = d.mes || 'SEM-MES'; if (!groups[k]) groups[k] = []; groups[k].push(d); });
-    const sorted = Object.entries(groups).sort((a,b) => b[0].localeCompare(a[0]));
-    document.getElementById('despesasList' + suf).innerHTML = sorted.map(([mk, items]) => {
-      const mTotal = items.reduce((s,d) => s + (d.valor||0), 0);
-      const recorrentes = items.filter(d => d.tipo === 'RECORRENTE');
-      const variaveis = items.filter(d => d.tipo === 'VARIAVEL');
-      let html = `<div class="card" style="margin-bottom:0.75rem;padding:1rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-weight:700;font-size:0.95rem;color:var(--ink)">${mk === 'SEM-MES' ? 'Sem mes' : monthLabel(mk)}</span><span style="font-size:0.85rem;font-weight:600;color:var(--accent)">Total: ${fmt(mTotal)}</span></div>`;
-      if (recorrentes.length) {
-        html += `<div style="font-size:0.75rem;font-weight:600;color:var(--green);margin:0.4rem 0 0.2rem;padding-left:8px">RECORRENTE</div>`;
-        html += `<div class="table-wrap"><table><thead><tr><th>Descricao</th><th>Valor</th><th>Pagamento</th><th></th></tr></thead><tbody>`;
-        recorrentes.forEach(d => { html += `<tr><td>${d.descricao||'-'}</td><td>${fmt(d.valor)}</td><td>${d.pagamento||'-'}</td><td style="white-space:nowrap"><button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem" onclick="editDespesa('${d.id}')">Editar</button> <button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem;color:var(--red)" onclick="deleteDespesa('${d.id}')">X</button></td></tr>`; });
-        html += `<tr style="font-weight:700"><td>Subtotal</td><td>${fmt(recorrentes.reduce((s,d)=>s+(d.valor||0),0))}</td><td></td><td></td></tr></tbody></table></div>`;
-      }
-      if (variaveis.length) {
-        html += `<div style="font-size:0.75rem;font-weight:600;color:var(--gold,#d97706);margin:0.4rem 0 0.2rem;padding-left:8px">VARIAVEL</div>`;
-        html += `<div class="table-wrap"><table><thead><tr><th>Descricao</th><th>Valor</th><th>Pagamento</th><th></th></tr></thead><tbody>`;
-        variaveis.forEach(d => { html += `<tr><td>${d.descricao||'-'}</td><td>${fmt(d.valor)}</td><td>${d.pagamento||'-'}</td><td style="white-space:nowrap"><button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem" onclick="editDespesa('${d.id}')">Editar</button> <button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem;color:var(--red)" onclick="deleteDespesa('${d.id}')">X</button></td></tr>`; });
-        html += `<tr style="font-weight:700"><td>Subtotal</td><td>${fmt(variaveis.reduce((s,d)=>s+(d.valor||0),0))}</td><td></td><td></td></tr></tbody></table></div>`;
-      }
-      html += '</div>';
-      return html;
-    }).join('') || '<div class="empty">Nenhuma despesa cadastrada.</div>';
+    let html = '';
+    if (fixas.length) {
+      html += `<div class="card" style="margin-bottom:0.75rem;padding:1rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-weight:700;font-size:0.85rem;color:var(--green)">FIXAS MENSAIS</span><span style="font-size:0.8rem;font-weight:600;color:var(--green)">${fmt(totalFixas)}</span></div>`;
+      html += '<div class="table-wrap"><table><thead><tr><th>Descricao</th><th>Valor</th><th>Pagamento</th></tr></thead><tbody>';
+      fixas.forEach(m => { html += `<tr><td>${m.descricao||'-'}</td><td>${fmt(m.valor)}</td><td>${m.pagamento||'-'}</td></tr>`; });
+      html += '</tbody></table></div></div>';
+    }
+    if (anuais.length) {
+      html += `<div class="card" style="margin-bottom:0.75rem;padding:1rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-weight:700;font-size:0.85rem;color:var(--accent)">ANUAIS — Renovacao em ${MESES_NOME[parseInt(mesMM)]||mesMM}</span><span style="font-size:0.8rem;font-weight:600;color:var(--accent)">${fmt(totalAnuais)}</span></div>`;
+      html += '<div class="table-wrap"><table><thead><tr><th>Descricao</th><th>Valor</th><th>Pagamento</th></tr></thead><tbody>';
+      anuais.forEach(m => { html += `<tr><td>${m.descricao||'-'}</td><td>${fmt(m.valor)}</td><td>${m.pagamento||'-'}</td></tr>`; });
+      html += '</tbody></table></div></div>';
+    }
+    if (variaveis.length) {
+      html += `<div class="card" style="margin-bottom:0.75rem;padding:1rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-weight:700;font-size:0.85rem;color:var(--gold,#d97706)">VARIAVEIS</span><span style="font-size:0.8rem;font-weight:600;color:var(--gold,#d97706)">${fmt(totalVar)}</span></div>`;
+      html += '<div class="table-wrap"><table><thead><tr><th>Descricao</th><th>Valor</th><th>Pagamento</th><th></th></tr></thead><tbody>';
+      variaveis.forEach(d => { html += `<tr><td>${d.descricao||'-'}</td><td>${fmt(d.valor)}</td><td>${d.pagamento||'-'}</td><td style="white-space:nowrap"><button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem" onclick="editDespesa('${d.id}')">Editar</button> <button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem;color:var(--red)" onclick="deleteDespesa('${d.id}')">X</button></td></tr>`; });
+      html += '</tbody></table></div></div>';
+    }
+    if (!fixas.length && !anuais.length && !variaveis.length) {
+      html = '<div class="empty">Nenhuma despesa para este mes.</div>';
+    }
+    document.getElementById('despesasList' + suf).innerHTML = html;
   });
 }
 
@@ -2371,6 +2384,7 @@ db.collection('despesas').onSnapshot(snap => {
 db.collection('despesasModelo').onSnapshot(snap => {
   allModelos = snap.docs.map(d => ({id: d.id, ...d.data()}));
   renderModelos();
+  renderDespesas();
 }, err => { console.error('Firestore despesasModelo error', err); });
 
 // Transfer - lucro automatico
