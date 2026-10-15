@@ -1525,7 +1525,7 @@ document.getElementById('btnFecharPendDesp').addEventListener('click', () => {
 
 function renderPendDesp() {
   const hoje = new Date().toISOString().slice(0, 10);
-  const pend = allTours.filter(t => t.dataTour && t.dataTour <= hoje && t.status !== 'CANCELADO' && (!t.despesaGuia || t.despesaGuia === 0))
+  const pend = allTours.filter(t => t.dataTour && t.dataTour >= '2026-09-01' && t.dataTour <= hoje && t.status !== 'CANCELADO' && (!t.despesaGuia || t.despesaGuia === 0))
     .sort((a,b) => (b.dataTour||'').localeCompare(a.dataTour||''));
   if (!pend.length) {
     document.getElementById('pendDespList').innerHTML = '<div class="empty">Todos os tours passados ja tem despesa cadastrada!</div>';
