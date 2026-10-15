@@ -310,6 +310,7 @@ body.role-vendedor .guia-tours-section{display:none!important}
       <select id="filterStatus"><option value="">Todos status</option><option value="CONFIRMADO">Confirmado</option><option value="PENDENTE">Pendente</option><option value="CANCELADO">Cancelado</option></select>
       <select id="filterGuia"><option value="">Todos guias</option></select>
       <select id="filterDespesa"><option value="">Despesa</option><option value="SEM">Sem despesa</option><option value="COM">Com despesa</option></select>
+      <button class="btn btn-primary" id="btnPendDesp" style="font-size:0.78rem;white-space:nowrap">Pendentes de Despesa</button>
     </div>
     <div class="table-wrap"><table id="tblAll"><thead><tr>
       <th>Data Tour</th><th>Cliente</th><th>Destino</th><th>Dur.</th><th>Guia</th><th>Pess.</th><th class="fin-only">BRL</th><th>Sinal</th><th>Confirmacao</th><th>Status</th><th>Guia Visto</th><th></th>
@@ -488,6 +489,17 @@ body.role-vendedor .guia-tours-section{display:none!important}
         <div style="text-align:right;margin-top:0.5rem">
           <button class="btn btn-secondary" id="btnFecharFixas">Fechar</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="modalPendDesp">
+    <div class="modal" style="width:700px;max-width:95vw;max-height:85vh;overflow-y:auto">
+      <h3>Tours Pendentes de Despesa</h3>
+      <p style="font-size:0.78rem;color:var(--ink-muted);margin-bottom:1rem">Tours com data passada e sem despesa de guia cadastrada. Preencha o valor e clique em Salvar.</p>
+      <div id="pendDespList"></div>
+      <div style="text-align:right;margin-top:1rem">
+        <button class="btn btn-secondary" id="btnFecharPendDesp">Fechar</button>
       </div>
     </div>
   </div>
@@ -1503,6 +1515,57 @@ document.getElementById('filterStatus').addEventListener('change', renderTourTab
 document.getElementById('filterGuia').addEventListener('change', renderTourTable);
 document.getElementById('filterDespesa').addEventListener('change', renderTourTable);
 
+document.getElementById('btnPendDesp').addEventListener('click', () => {
+  renderPendDesp();
+  document.getElementById('modalPendDesp').classList.add('open');
+});
+document.getElementById('btnFecharPendDesp').addEventListener('click', () => {
+  document.getElementById('modalPendDesp').classList.remove('open');
+});
+
+function renderPendDesp() {
+  const hoje = new Date().toISOString().slice(0, 10);
+  const pend = allTours.filter(t => t.dataTour && t.dataTour <= hoje && t.status !== 'CANCELADO' && (!t.despesaGuia || t.despesaGuia === 0))
+    .sort((a,b) => (b.dataTour||'').localeCompare(a.dataTour||''));
+  if (!pend.length) {
+    document.getElementById('pendDespList').innerHTML = '<div class="empty">Todos os tours passados ja tem despesa cadastrada!</div>';
+    return;
+  }
+  let html = '<div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Destino</th><th>Guia</th><th>Valor BRL</th><th>Despesa Guia (BRL)</th><th></th></tr></thead><tbody>';
+  pend.forEach(t => {
+    html += `<tr><td style="white-space:nowrap">${fmtDate(t.dataTour)}</td><td>${t.cliente||'-'}</td><td>${t.destino||'-'}</td><td>${t.guia||'-'}</td><td>${fmtBrl(t.valorBrl)}</td><td><input type="number" step="0.01" placeholder="0.00" data-pendid="${t.id}" style="width:100px;padding:4px 8px;border:1px solid var(--rule);border-radius:6px;font-size:0.85rem"></td><td><button class="btn btn-primary" style="padding:3px 12px;font-size:0.75rem" data-savepend="${t.id}">Salvar</button></td></tr>`;
+  });
+  html += '</tbody></table></div>';
+  html += `<div style="margin-top:0.75rem;font-size:0.8rem;color:var(--ink-muted)">${pend.length} tour(s) pendente(s)</div>`;
+  document.getElementById('pendDespList').innerHTML = html;
+  document.querySelectorAll('[data-savepend]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.savepend;
+      const input = document.querySelector('[data-pendid="'+id+'"]');
+      const valor = parseFloat(input.value) || 0;
+      if (valor <= 0) { alert('Preencha o valor da despesa.'); return; }
+      btn.textContent = '...';
+      btn.disabled = true;
+      try {
+        const tour = allTours.find(x => x.id === id);
+        const liq = (tour.valorBrl||0) - valor;
+        const isSocio = SOCIOS.includes(tour.guia);
+        await db.collection('tours').doc(id).update({
+          despesaGuia: valor,
+          liquido: liq,
+          parteDiego: isSocio ? liq * 0.2 : liq * 0.5,
+          parteMT: isSocio ? liq * 0.8 : liq * 0.5
+        });
+        toast('Despesa salva!', true);
+        renderPendDesp();
+      } catch(e) {
+        toast('Erro: ' + e.message, false);
+        btn.textContent = 'Salvar';
+        btn.disabled = false;
+      }
+    });
+  });
+}
 
 function groupByMonth(tours) {
   const groups = {};
