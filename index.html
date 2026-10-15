@@ -309,6 +309,7 @@ body.role-vendedor .guia-tours-section{display:none!important}
       <select id="filterMes"><option value="">Todos os meses</option></select>
       <select id="filterStatus"><option value="">Todos status</option><option value="CONFIRMADO">Confirmado</option><option value="PENDENTE">Pendente</option><option value="CANCELADO">Cancelado</option></select>
       <select id="filterGuia"><option value="">Todos guias</option></select>
+      <select id="filterDespesa"><option value="">Despesa</option><option value="SEM">Sem despesa</option><option value="COM">Com despesa</option></select>
     </div>
     <div class="table-wrap"><table id="tblAll"><thead><tr>
       <th>Data Tour</th><th>Cliente</th><th>Destino</th><th>Dur.</th><th>Guia</th><th>Pess.</th><th class="fin-only">BRL</th><th>Sinal</th><th>Confirmacao</th><th>Status</th><th>Guia Visto</th><th></th>
@@ -1458,12 +1459,15 @@ function renderTourTable() {
   const mesF = document.getElementById('filterMes').value;
   const statusF = document.getElementById('filterStatus').value;
   const guiaF = document.getElementById('filterGuia').value;
+  const despF = document.getElementById('filterDespesa').value;
   const searchF = document.getElementById('searchCliente').value.trim().toLowerCase();
   let tours = [...allTours].sort((a,b) => (b.dataTour||'').localeCompare(a.dataTour||''));
   if (searchF) tours = tours.filter(t => (t.cliente||'').toLowerCase().includes(searchF));
   if (mesF) tours = tours.filter(t => monthKey(t.dataTour) === mesF);
   if (statusF) tours = tours.filter(t => t.status === statusF);
   if (guiaF) tours = tours.filter(t => t.guia === guiaF);
+  if (despF === 'SEM') tours = tours.filter(t => !t.despesaGuia || t.despesaGuia === 0);
+  if (despF === 'COM') tours = tours.filter(t => t.despesaGuia && t.despesaGuia > 0);
   const tbody = document.querySelector('#tblAll tbody');
   tbody.innerHTML = '';
   document.getElementById('emptyAll').style.display = tours.length ? 'none' : 'block';
@@ -1497,6 +1501,7 @@ document.getElementById('searchCliente').addEventListener('input', renderTourTab
 document.getElementById('filterMes').addEventListener('change', renderTourTable);
 document.getElementById('filterStatus').addEventListener('change', renderTourTable);
 document.getElementById('filterGuia').addEventListener('change', renderTourTable);
+document.getElementById('filterDespesa').addEventListener('change', renderTourTable);
 
 
 function groupByMonth(tours) {
