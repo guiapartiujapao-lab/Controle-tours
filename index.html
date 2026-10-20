@@ -1096,6 +1096,8 @@ document.getElementById('btnSalvar').addEventListener('click', async () => {
   try {
     if (editingId) { await db.collection('tours').doc(editingId).set(data); toast('Tour atualizado!'); }
     else {
+      data.criadoPor = loggedUser || 'desconhecido';
+      data.criadoEm = new Date().toISOString().slice(0, 10);
       await db.collection('tours').add(data);
       enviarPlanilha(data);
       toast('Tour salvo!');
@@ -1390,6 +1392,9 @@ function showTourDetail(t) {
   }
   if (!loggedGuiaNome) body += `<br><b>Valor USD:</b> ${fmtUsd(t.valorUsd)}<br><b>Valor BRL:</b> ${fmtBrl(t.valorBrl)}<br><b>Pagamento:</b> ${t.formaPagamento||'-'}`;
   if (t.obs) body += `<br><b>Obs:</b> ${t.obs}`;
+  if (loggedRole === 'admin' && t.criadoPor) {
+    body += `<br><span style="font-size:0.78rem;color:var(--ink-muted)">Cadastrado por: <b>${t.criadoPor}</b>${t.criadoEm ? ' em ' + fmtDate(t.criadoEm) : ''}</span>`;
+  }
   if (loggedRole === 'vendedor' || loggedRole === 'admin') {
     const sinalAtual = t.sinalPago === 'SIM' ? 'SIM' : 'NAO';
     const confAtual = t.restantePago === 'SIM' ? 'SIM' : 'NAO';
@@ -2589,12 +2594,14 @@ async function sha256(str) {
 
 let loggedGuiaNome = null;
 let loggedRole = 'admin';
+let loggedUser = '';
 function showApp(user) {
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appWrap').classList.add('visible');
   const u = USERS[user];
   const role = u ? u.role : 'vendedor';
   loggedRole = role;
+  loggedUser = user;
   if (role === 'vendedor') document.body.classList.add('role-vendedor');
   if (role === 'guia') {
     document.body.classList.add('role-guia');
