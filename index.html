@@ -225,6 +225,7 @@ body.role-roteiro .cal-servico{display:none!important}
 .cal-dispo{font-size:0.65rem;padding:2px 4px;margin:1px 0;border-radius:4px;line-height:1.2}
 .cal-dispo-livre{background:#dcfce7;color:#166534}
 .cal-dispo-cheio{background:#fee2e2;color:#991b1b}
+body.role-roteiro .cal-day.cal-past{opacity:0.35;pointer-events:none}
 body.role-vendedor .guia-tours-section{display:none!important}
 .btn-logout{background:none;border:1px solid var(--rule);color:var(--ink-muted);padding:0.3rem 0.8rem;border-radius:6px;font-size:0.78rem;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .15s}
 .btn-logout:hover{border-color:var(--accent);color:var(--accent)}
@@ -1373,7 +1374,8 @@ function renderCalendario() {
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = ym + '-' + pad(d);
     const isToday = dateStr === todayStr;
-    html += `<div class="cal-day${isToday?' today':''}"${loggedRole === 'roteiro' ? ' data-caldate="'+dateStr+'" style="cursor:pointer"' : ''}><div class="cal-num">${d}</div>`;
+    const isPast = loggedRole === 'roteiro' && dateStr < todayStr;
+    html += `<div class="cal-day${isToday?' today':''}${isPast?' cal-past':''}"${loggedRole === 'roteiro' && !isPast ? ' data-caldate="'+dateStr+'" style="cursor:pointer"' : ''}><div class="cal-num">${d}</div>`;
     if (dayFolgas[d]) dayFolgas[d].forEach(f => { html += `<div class="cal-chip cal-folga" style="cursor:pointer" data-folgaid="${f.id}" title="FOLGA: ${f.guia} - ${f.motivo||''} (clique para remover)">${f.guia} FOLGA</div>`; });
     if (dayServicos[d]) dayServicos[d].forEach(s => { html += `<div class="cal-chip cal-servico" style="cursor:pointer" data-servicoid="${s.id}" title="SERVICO: CLINTE - ${s.descricao||''} (clique para remover)">CLINTE SERVICO</div>`; });
     if (loggedRole === 'roteiro') {
