@@ -210,6 +210,21 @@ body.role-vendedor .vendedor-confirm-section{display:block}
 .subtab-panel.active{display:block}
 .guia-tours-section{display:none;margin-top:1.5rem}
 body.role-guia .guia-tours-section{display:block}
+body.role-roteiro .fin-only{display:none!important}
+body.role-roteiro .tab-admin{display:none!important}
+body.role-roteiro .tab-cadastro{display:none!important}
+body.role-roteiro #p-cadastro{display:none!important}
+body.role-roteiro .manage-folga-table{display:none!important}
+body.role-roteiro .guia-tours-section{display:none!important}
+body.role-roteiro #calGuiaFilter{display:none!important}
+body.role-roteiro #btnFolga{display:none!important}
+body.role-roteiro #btnServico{display:none!important}
+body.role-roteiro .vendedor-confirm-section{display:none!important}
+body.role-roteiro .cal-folga{display:none!important}
+body.role-roteiro .cal-servico{display:none!important}
+.cal-dispo{font-size:0.65rem;padding:2px 4px;margin:1px 0;border-radius:4px;line-height:1.2}
+.cal-dispo-livre{background:#dcfce7;color:#166534}
+.cal-dispo-cheio{background:#fee2e2;color:#991b1b}
 body.role-vendedor .guia-tours-section{display:none!important}
 .btn-logout{background:none;border:1px solid var(--rule);color:var(--ink-muted);padding:0.3rem 0.8rem;border-radius:6px;font-size:0.78rem;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .15s}
 .btn-logout:hover{border-color:var(--accent);color:var(--accent)}
@@ -1349,15 +1364,36 @@ function renderCalendario() {
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = ym + '-' + pad(d);
     const isToday = dateStr === todayStr;
-    html += `<div class="cal-day${isToday?' today':''}"><div class="cal-num">${d}</div>`;
+    html += `<div class="cal-day${isToday?' today':''}"${loggedRole === 'roteiro' ? ' data-caldate="'+dateStr+'" style="cursor:pointer"' : ''}><div class="cal-num">${d}</div>`;
     if (dayFolgas[d]) dayFolgas[d].forEach(f => { html += `<div class="cal-chip cal-folga" style="cursor:pointer" data-folgaid="${f.id}" title="FOLGA: ${f.guia} - ${f.motivo||''} (clique para remover)">${f.guia} FOLGA</div>`; });
     if (dayServicos[d]) dayServicos[d].forEach(s => { html += `<div class="cal-chip cal-servico" style="cursor:pointer" data-servicoid="${s.id}" title="SERVICO: CLINTE - ${s.descricao||''} (clique para remover)">CLINTE SERVICO</div>`; });
-    if (dayTours[d]) dayTours[d].forEach(t => {
-      const cls = t.status === 'CANCELADO' ? 'cal-cancelado' : t.guia === 'A DEFINIR' ? 'cal-definir' : ('cal-guia-' + (t.guia||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''));
-      const dur = t.duracao ? ' '+t.duracao : '';
-      const chipLabel = loggedRole === 'vendedor' ? `${t.destino||'-'} - ${t.cliente||'-'}` : `${t.guia} ${t.destino}${dur}`;
-      html += `<div class="cal-chip ${cls}" style="cursor:pointer" data-tourid="${t.id}" title="${t.guia}: ${t.destino}${dur} - ${t.cliente} (${t.pessoas}p)">${chipLabel}</div>`;
-    });
+    if (loggedRole === 'roteiro') {
+      const toursHoje = (dayTours[d] || []).filter(t => t.status !== 'CANCELADO');
+      const guiasOcupados = new Set(toursHoje.map(t => t.guia).filter(g => g && g !== 'A DEFINIR'));
+      const guiasTotal = GUIAS.filter(g => g !== 'A DEFINIR');
+      const folgasHoje = (dayFolgas[d] || []).map(f => f.guia);
+      const guiasDisponiveis = guiasTotal.filter(g => !guiasOcupados.has(g) && !folgasHoje.includes(g));
+      const destinosOcupados = new Set(toursHoje.map(t => t.destino));
+      if (guiasDisponiveis.length === 0) {
+        html += '<div class="cal-dispo cal-dispo-cheio">Sem disponibilidade</div>';
+      } else {
+        const destinosPrincipais = ['TOKYO TP','MT FUJI','KAMAKURA','HAKONE','OSAKA','KYOTO','NARA','HIROSHIMA'];
+        const livres = destinosPrincipais.filter(dest => !destinosOcupados.has(dest));
+        if (livres.length) {
+          livres.slice(0, 4).forEach(dest => { html += `<div class="cal-dispo cal-dispo-livre">Livre ${dest}</div>`; });
+          if (livres.length > 4) html += `<div class="cal-dispo cal-dispo-livre">+${livres.length - 4} destinos</div>`;
+        } else {
+          html += `<div class="cal-dispo cal-dispo-livre">${guiasDisponiveis.length} guia(s) livre(s)</div>`;
+        }
+      }
+    } else {
+      if (dayTours[d]) dayTours[d].forEach(t => {
+        const cls = t.status === 'CANCELADO' ? 'cal-cancelado' : t.guia === 'A DEFINIR' ? 'cal-definir' : ('cal-guia-' + (t.guia||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''));
+        const dur = t.duracao ? ' '+t.duracao : '';
+        const chipLabel = loggedRole === 'vendedor' ? `${t.destino||'-'} - ${t.cliente||'-'}` : `${t.guia} ${t.destino}${dur}`;
+        html += `<div class="cal-chip ${cls}" style="cursor:pointer" data-tourid="${t.id}" title="${t.guia}: ${t.destino}${dur} - ${t.cliente} (${t.pessoas}p)">${chipLabel}</div>`;
+      });
+    }
     html += '</div>';
   }
   const totalCells = startDow + daysInMonth;
@@ -1375,6 +1411,9 @@ function renderCalendario() {
   document.querySelectorAll('[data-servicoid]').forEach(el => el.addEventListener('click', () => {
     const s = allServicos.find(x => x.id === el.dataset.servicoid);
     if (s && confirm(`Remover servico de CLINTE em ${fmtDate(s.data)}?`)) deleteServico(s.id);
+  }));
+  document.querySelectorAll('[data-caldate]').forEach(el => el.addEventListener('click', () => {
+    showDisponibilidade(el.dataset.caldate);
   }));
   renderFolgaTable();
 }
@@ -1465,6 +1504,41 @@ function showTourDetail(t) {
       document.getElementById('modalDetail').classList.remove('open');
     });
   }
+  document.getElementById('modalDetail').classList.add('open');
+}
+
+function showDisponibilidade(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const diaSemana = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][d.getDay()];
+  const label = diaSemana + ', ' + fmtDate(dateStr);
+  const toursHoje = allTours.filter(t => t.dataTour === dateStr && t.status !== 'CANCELADO');
+  const guiasOcupados = new Set(toursHoje.map(t => t.guia).filter(g => g && g !== 'A DEFINIR'));
+  const guiasTotal = GUIAS.filter(g => g !== 'A DEFINIR');
+  const folgasHoje = allFolgas.filter(f => {
+    if (f.data === dateStr) return true;
+    if (f.dataInicio && f.dataFim && dateStr >= f.dataInicio && dateStr <= f.dataFim) return true;
+    return false;
+  }).map(f => f.guia);
+  const guiasDisponiveis = guiasTotal.filter(g => !guiasOcupados.has(g) && !folgasHoje.includes(g));
+  const destinosPrincipais = ['TOKYO TP','MT FUJI','KAMAKURA','HAKONE','OSAKA','KYOTO','NARA','HIROSHIMA'];
+  const destinosOcupados = new Set(toursHoje.map(t => t.destino));
+  let html = '<h3 style="margin:0 0 12px">📅 ' + label + '</h3>';
+  html += '<p style="margin:0 0 8px;font-size:0.85rem;color:var(--ink-muted)">' + toursHoje.length + ' tour(s) agendado(s) · ' + guiasDisponiveis.length + ' guia(s) disponível(eis)</p>';
+  if (guiasDisponiveis.length === 0) {
+    html += '<div style="background:#fee2e2;color:#991b1b;padding:12px;border-radius:8px;text-align:center;font-weight:600;margin:8px 0">Sem disponibilidade neste dia</div>';
+  } else {
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0">';
+    destinosPrincipais.forEach(dest => {
+      const ocupado = destinosOcupados.has(dest);
+      if (ocupado) {
+        html += '<div style="background:#fee2e2;color:#991b1b;padding:10px 12px;border-radius:8px;font-size:0.85rem">❌ ' + dest + ' — Ocupado</div>';
+      } else {
+        html += '<div style="background:#dcfce7;color:#166534;padding:10px 12px;border-radius:8px;font-size:0.85rem;font-weight:600">✅ Livre ' + dest + '</div>';
+      }
+    });
+    html += '</div>';
+  }
+  document.getElementById('detailContent').innerHTML = html;
   document.getElementById('modalDetail').classList.add('open');
 }
 
@@ -2584,7 +2658,8 @@ const USERS = {
   'jonas': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'JONAS' },
   'clinte': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'CLINTE' },
   'lorran': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'LORRAN' },
-  'ketlin': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'KETLIN' }
+  'ketlin': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'KETLIN' },
+  'roteiro': { hash: 'bb153023b1434c39bfc175029120769e9758c0007b02929c5cc30fd9ecf47dac', role: 'roteiro' }
 };
 
 async function sha256(str) {
@@ -2612,6 +2687,14 @@ function showApp(user) {
     document.getElementById('p-calendario').classList.add('active');
     renderCalendario();
     renderGuiaTours();
+  }
+  if (role === 'roteiro') {
+    document.body.classList.add('role-roteiro');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-tab="calendario"]').classList.add('active');
+    document.getElementById('p-calendario').classList.add('active');
+    renderCalendario();
   }
   if (loggedGuiaNome === 'CLINTE' || role === 'vendedor') {
     document.getElementById('btnServico').style.display = '';
