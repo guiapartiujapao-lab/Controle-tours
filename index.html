@@ -712,6 +712,15 @@ const db = firebase.firestore();
 
 const DESTINOS = ['MT FUJI','TOKYO TP','TOKYO CARRO','KAMAKURA','HAKONE','NIKKO','OSAKA','KYOTO','NARA','KOBE','HIROSHIMA','TOUR GASTRONOMICO','PERSONALIZADO'];
 const GUIAS = ['A DEFINIR','MAYRA','TOTTI','GABRIELLE','JONAS','CLINTE','LORRAN','KETLIN'];
+const GUIA_DESTINOS = {
+  'MAYRA': ['TOKYO TP','MT FUJI'],
+  'TOTTI': ['TOKYO TP','MT FUJI'],
+  'GABRIELLE': ['TOKYO TP'],
+  'JONAS': ['TOKYO TP','MT FUJI'],
+  'CLINTE': ['OSAKA','KYOTO','NARA'],
+  'LORRAN': ['OSAKA','KYOTO','NARA'],
+  'KETLIN': ['HIROSHIMA']
+};
 const SOCIOS = ['MAYRA','TOTTI'];
 const PAGS = ['PIX','CARTAO DE CREDITO','DOLAR CASH','WISE','NOMAD','PAYPAL'];
 const MESES_NOME = {1:'Janeiro',2:'Fevereiro',3:'Marco',4:'Abril',5:'Maio',6:'Junho',7:'Julho',8:'Agosto',9:'Setembro',10:'Outubro',11:'Novembro',12:'Dezembro'};
@@ -1373,18 +1382,16 @@ function renderCalendario() {
       const guiasTotal = GUIAS.filter(g => g !== 'A DEFINIR');
       const folgasHoje = (dayFolgas[d] || []).map(f => f.guia);
       const guiasDisponiveis = guiasTotal.filter(g => !guiasOcupados.has(g) && !folgasHoje.includes(g));
-      const destinosOcupados = new Set(toursHoje.map(t => t.destino));
+      const destinosComGuia = new Set();
+      guiasDisponiveis.forEach(g => { (GUIA_DESTINOS[g] || []).forEach(dest => destinosComGuia.add(dest)); });
       if (guiasDisponiveis.length === 0) {
         html += '<div class="cal-dispo cal-dispo-cheio">Sem disponibilidade</div>';
+      } else if (destinosComGuia.size === 0) {
+        html += `<div class="cal-dispo cal-dispo-livre">${guiasDisponiveis.length} guia(s) livre(s)</div>`;
       } else {
-        const destinosPrincipais = ['TOKYO TP','MT FUJI','KAMAKURA','HAKONE','OSAKA','KYOTO','NARA','HIROSHIMA'];
-        const livres = destinosPrincipais.filter(dest => !destinosOcupados.has(dest));
-        if (livres.length) {
-          livres.slice(0, 4).forEach(dest => { html += `<div class="cal-dispo cal-dispo-livre">Livre ${dest}</div>`; });
-          if (livres.length > 4) html += `<div class="cal-dispo cal-dispo-livre">+${livres.length - 4} destinos</div>`;
-        } else {
-          html += `<div class="cal-dispo cal-dispo-livre">${guiasDisponiveis.length} guia(s) livre(s)</div>`;
-        }
+        const destArr = Array.from(destinosComGuia);
+        destArr.slice(0, 4).forEach(dest => { html += `<div class="cal-dispo cal-dispo-livre">Livre ${dest}</div>`; });
+        if (destArr.length > 4) html += `<div class="cal-dispo cal-dispo-livre">+${destArr.length - 4} destinos</div>`;
       }
     } else {
       if (dayTours[d]) dayTours[d].forEach(t => {
@@ -1521,7 +1528,13 @@ function showDisponibilidade(dateStr) {
   }).map(f => f.guia);
   const guiasDisponiveis = guiasTotal.filter(g => !guiasOcupados.has(g) && !folgasHoje.includes(g));
   const destinosPrincipais = ['TOKYO TP','MT FUJI','KAMAKURA','HAKONE','OSAKA','KYOTO','NARA','HIROSHIMA'];
-  const destinosOcupados = new Set(toursHoje.map(t => t.destino));
+  const destinoGuias = {};
+  destinosPrincipais.forEach(dest => { destinoGuias[dest] = []; });
+  guiasDisponiveis.forEach(g => {
+    (GUIA_DESTINOS[g] || []).forEach(dest => {
+      if (destinoGuias[dest]) destinoGuias[dest].push(g);
+    });
+  });
   let html = '<h3 style="margin:0 0 12px">📅 ' + label + '</h3>';
   html += '<p style="margin:0 0 8px;font-size:0.85rem;color:var(--ink-muted)">' + toursHoje.length + ' tour(s) agendado(s) · ' + guiasDisponiveis.length + ' guia(s) disponível(eis)</p>';
   if (guiasDisponiveis.length === 0) {
@@ -1529,11 +1542,11 @@ function showDisponibilidade(dateStr) {
   } else {
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0">';
     destinosPrincipais.forEach(dest => {
-      const ocupado = destinosOcupados.has(dest);
-      if (ocupado) {
-        html += '<div style="background:#fee2e2;color:#991b1b;padding:10px 12px;border-radius:8px;font-size:0.85rem">❌ ' + dest + ' — Ocupado</div>';
+      const guias = destinoGuias[dest];
+      if (guias.length === 0) {
+        html += '<div style="background:#fee2e2;color:#991b1b;padding:10px 12px;border-radius:8px;font-size:0.85rem">❌ ' + dest + '<br><span style="font-size:0.75rem">Sem guia disponível</span></div>';
       } else {
-        html += '<div style="background:#dcfce7;color:#166534;padding:10px 12px;border-radius:8px;font-size:0.85rem;font-weight:600">✅ Livre ' + dest + '</div>';
+        html += '<div style="background:#dcfce7;color:#166534;padding:10px 12px;border-radius:8px;font-size:0.85rem;font-weight:600">✅ Livre ' + dest + '<br><span style="font-size:0.75rem;font-weight:400">' + guias.join(', ') + '</span></div>';
       }
     });
     html += '</div>';
