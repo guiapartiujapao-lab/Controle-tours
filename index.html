@@ -288,6 +288,7 @@ body.role-vendedor .guia-tours-section{display:none!important}
         <div class="form-group"><label>Duracao</label><select id="f-duracao"><option value="">Selecione</option><option value="3h">3 horas</option><option value="4h">4 horas</option><option value="5h">5 horas</option><option value="6h">6 horas</option><option value="7h">7 horas</option><option value="8h">8 horas</option><option value="10h">10 horas</option><option value="11h">11 horas</option><option value="DIA">Dia inteiro</option></select></div>
         <div class="form-group grp-direto"><label>Extensao</label><select id="f-extensao"><option value="NAO">NAO</option><option value="SIM">SIM</option></select></div>
         <div class="form-group grp-direto" id="grpValorExtensao" style="display:none"><label>Valor Extensao (USD)</label><input type="number" id="f-valorExtensao" step="0.01" placeholder="0.00"></div>
+        <div class="form-group grp-direto" id="grpValorExtensaoBrl" style="display:none"><label>Valor Extensao (BRL)</label><input type="number" id="f-valorExtensaoBrl" step="0.01" placeholder="0.00"></div>
         <div class="form-group"><label>Guia</label><select id="f-guia"><option value="">Selecione</option></select></div>
         <div class="form-group"><label>Data do Tour</label><input type="date" id="f-dataTour"></div>
         <div class="form-group"><label>Pessoas</label><input type="number" id="f-pessoas" min="1" max="50" placeholder="0"></div>
@@ -912,7 +913,8 @@ document.getElementById('btnRemAgenciaForm').addEventListener('click', () => {
 document.getElementById('f-extensao').addEventListener('change', () => {
   const show = document.getElementById('f-extensao').value === 'SIM';
   document.getElementById('grpValorExtensao').style.display = show ? '' : 'none';
-  if (!show) { document.getElementById('f-valorExtensao').value = ''; }
+  document.getElementById('grpValorExtensaoBrl').style.display = show ? '' : 'none';
+  if (!show) { document.getElementById('f-valorExtensao').value = ''; document.getElementById('f-valorExtensaoBrl').value = ''; }
   recalcForm();
 });
 document.getElementById('f-valorExtensao').addEventListener('input', recalcForm);
@@ -961,7 +963,9 @@ function clearForm() {
   ['f-destino','f-guia','f-pagamento','f-duracao'].forEach(id => document.getElementById(id).value = '');
   ['f-extensao','f-sinalPago','f-restantePago'].forEach(id => document.getElementById(id).value = 'NAO');
   document.getElementById('f-valorExtensao').value = '';
+  document.getElementById('f-valorExtensaoBrl').value = '';
   document.getElementById('grpValorExtensao').style.display = 'none';
+  document.getElementById('grpValorExtensaoBrl').style.display = 'none';
   document.getElementById('f-status').value = 'CONFIRMADO';
   document.getElementById('f-estorno').value = 'NAO';
   document.getElementById('grpEstorno').style.display = 'none';
@@ -1024,6 +1028,7 @@ function getFormData() {
     data.telefone = '';
     data.extensao = document.getElementById('f-extensao').value;
     data.valorExtensao = parseFloat(document.getElementById('f-valorExtensao').value) || 0;
+    data.valorExtensaoBrl = parseFloat(document.getElementById('f-valorExtensaoBrl').value) || 0;
     data.valorUsd = usd; data.cambio = cambio;
     data.formaPagamento = document.getElementById('f-pagamento').value;
     data.sinal20 = parseFloat(document.getElementById('f-sinal').value) || (brl * 0.2);
@@ -1070,7 +1075,9 @@ function fillForm(t) {
     document.getElementById('f-dataVenda').value = t.dataVenda || '';
     document.getElementById('f-extensao').value = t.extensao || 'NAO';
     document.getElementById('grpValorExtensao').style.display = (t.extensao === 'SIM') ? '' : 'none';
+    document.getElementById('grpValorExtensaoBrl').style.display = (t.extensao === 'SIM') ? '' : 'none';
     document.getElementById('f-valorExtensao').value = t.valorExtensao || '';
+    document.getElementById('f-valorExtensaoBrl').value = t.valorExtensaoBrl || '';
     document.getElementById('f-valorUsd').value = t.valorUsd || '';
     document.getElementById('f-cambio').value = t.cambio || '';
     document.getElementById('f-pagamento').value = t.formaPagamento || '';
@@ -1442,6 +1449,7 @@ function showTourDetail(t) {
   if (!loggedGuiaNome) {
     body += `<br><b>Valor USD:</b> ${fmtUsd(t.valorUsd)}`;
     if (t.extensao === 'SIM' && t.valorExtensao) body += `<br><b>Extensao USD:</b> ${fmtUsd(t.valorExtensao)}`;
+    if (t.extensao === 'SIM' && t.valorExtensaoBrl) body += `<br><b>Extensao BRL:</b> ${fmtBrl(t.valorExtensaoBrl)}`;
     body += `<br><b>Valor BRL:</b> ${fmtBrl(t.valorBrl)}<br><b>Pagamento:</b> ${t.formaPagamento||'-'}`;
   }
   if (t.obs) body += `<br><b>Obs:</b> ${t.obs}`;
