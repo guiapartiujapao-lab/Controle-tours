@@ -258,6 +258,14 @@ body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
 .cs-task.task-done .cs-task-desc{text-decoration:line-through;color:var(--ink-muted)}
 .cs-section-title{font-size:0.82rem;font-weight:600;color:var(--ink-muted);margin:0.75rem 0 0.35rem;text-transform:uppercase;letter-spacing:0.3px}
 .cs-empty{text-align:center;padding:3rem 1rem;color:var(--ink-muted);font-size:0.9rem}
+.cs-daily-counters{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem}
+.cs-daily-counter{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0.75rem 1rem;text-align:center;border-left:4px solid var(--accent)}
+.cs-daily-counter .cs-dc-num{font-size:1.6rem;font-weight:700}
+.cs-daily-counter .cs-dc-label{font-size:0.72rem;color:var(--ink-muted);margin-top:2px}
+.cs-daily-counter .cs-dc-icon{font-size:1.1rem;margin-bottom:2px}
+.cs-agencia-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem 1.2rem;margin-bottom:10px;opacity:0.7}
+.cs-agencia-badge{display:inline-block;font-size:0.68rem;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--blue);color:#fff;margin-left:6px}
+.cs-agencia-msg{font-size:0.82rem;color:var(--ink-muted);margin-top:0.5rem;font-style:italic}
 .cs-toggle-tours{font-size:0.78rem;color:var(--accent);cursor:pointer;border:none;background:none;font-family:inherit;font-weight:600;padding:0}
 .cs-toggle-tours:hover{text-decoration:underline}
 </style>
@@ -663,6 +671,7 @@ body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
       </select>
       <select id="csFilterMes"></select>
     </div>
+    <div class="cs-daily-counters" id="csDailyCounters"></div>
     <div class="stats" id="csStats"></div>
     <div id="csCards"></div>
   </div>
@@ -2920,16 +2929,20 @@ function renderCS() {
   const mesF = mesSelect.value;
 
   const clientMap = {};
+  const agenciaMap = {};
   allTours.forEach(t => {
     const nome = (t.cliente||'').toUpperCase().trim();
     if (!nome) return;
-    if (!clientMap[nome]) clientMap[nome] = { tours: [], telefone: '', totalUsd: 0, totalBrl: 0, sinal: 0, confirmacao: 0 };
-    clientMap[nome].tours.push(t);
-    if (t.telefone && !clientMap[nome].telefone) clientMap[nome].telefone = t.telefone;
-    clientMap[nome].totalUsd += (t.valorUsd||0) + (t.valorExtensao||0);
-    clientMap[nome].totalBrl += (t.valorBrl||0);
-    clientMap[nome].sinal += (t.sinal20||0);
-    clientMap[nome].confirmacao += (t.restante80||0);
+    const isAg = t.tipoTour === 'AGENCIA';
+    const map = isAg ? agenciaMap : clientMap;
+    if (!map[nome]) map[nome] = { tours: [], telefone: '', totalUsd: 0, totalBrl: 0, sinal: 0, confirmacao: 0, agencia: isAg ? (t.agencia||'') : '' };
+    map[nome].tours.push(t);
+    if (t.telefone && !map[nome].telefone) map[nome].telefone = t.telefone;
+    map[nome].totalUsd += (t.valorUsd||0) + (t.valorExtensao||0);
+    map[nome].totalBrl += (t.valorBrl||0);
+    map[nome].sinal += (t.sinal20||0);
+    map[nome].confirmacao += (t.restante80||0);
+    if (isAg && t.agencia) map[nome].agencia = t.agencia;
   });
 
   const meses = new Set();
@@ -2940,6 +2953,7 @@ function renderCS() {
   mesSelect.value = prevMes || '';
 
   let totalClientes = 0, totalPendentes = 0, totalAtrasadas = 0, totalHoje = 0;
+  let dcGrupo = 0, dcCobranca = 0, dcApresentacao = 0;
   let html = '';
 
   const clientesSorted = Object.keys(clientMap).sort();
@@ -2965,7 +2979,12 @@ function renderCS() {
     tasks.forEach(t => {
       if (t.status === 'pending') totalPendentes++;
       if (t.status === 'overdue') totalAtrasadas++;
-      if (t.status === 'today') totalHoje++;
+      if (t.status === 'today') {
+        totalHoje++;
+        if (t.tipo === 'GRUPO_WHATSAPP') dcGrupo++;
+        if (t.tipo === 'COBRANCA') dcCobranca++;
+        if (t.tipo === 'APRESENTACAO') dcApresentacao++;
+      }
     });
 
     const toursSorted = [...c.tours].sort((a,b) => (a.dataTour||'').localeCompare(b.dataTour||''));
@@ -3010,8 +3029,31 @@ function renderCS() {
     html += `</div>`;
   });
 
+  if (statusF !== 'done' && statusF !== 'pending' && statusF !== 'overdue' && statusF !== 'today') {
+    const agSorted = Object.keys(agenciaMap).sort();
+    agSorted.forEach(nome => {
+      if (searchF && !nome.includes(searchF)) return;
+      const c = agenciaMap[nome];
+      if (mesF && !c.tours.some(t => monthKey(t.dataTour) === mesF)) return;
+      html += `<div class="cs-agencia-card">`;
+      html += `<div class="cs-client-header">`;
+      html += `<span class="cs-client-name">${nome}</span>`;
+      const agNome = c.agencia && c.agencia.toUpperCase() !== nome ? ' - '+c.agencia : '';
+      html += `<span class="cs-agencia-badge">AGENCIA${agNome}</span>`;
+      html += `<span class="cs-badge" style="background:#f0fdf4;color:#166534">${c.tours.length} tour${c.tours.length>1?'s':''}</span>`;
+      html += `</div>`;
+      html += `<p class="cs-agencia-msg">Tour de agencia - sem tarefas de CS.</p>`;
+      html += `</div>`;
+    });
+  }
+
   if (!html) html = '<div class="cs-empty">Nenhum cliente encontrado.</div>';
   container.innerHTML = html;
+
+  document.getElementById('csDailyCounters').innerHTML = `
+    <div class="cs-daily-counter" style="border-left-color:#25d366"><div class="cs-dc-icon">💬</div><div class="cs-dc-num" style="color:#25d366">${dcGrupo}</div><div class="cs-dc-label">Criar Grupo Hoje</div></div>
+    <div class="cs-daily-counter" style="border-left-color:#f59e0b"><div class="cs-dc-icon">💰</div><div class="cs-dc-num" style="color:#f59e0b">${dcCobranca}</div><div class="cs-dc-label">Cobranca Hoje</div></div>
+    <div class="cs-daily-counter" style="border-left-color:#3b82f6"><div class="cs-dc-icon">📋</div><div class="cs-dc-num" style="color:#3b82f6">${dcApresentacao}</div><div class="cs-dc-label">Apresentacao Hoje</div></div>`;
 
   statsEl.innerHTML = `
     <div class="stat-card"><div style="font-size:1.4rem;font-weight:700;color:var(--accent)">${totalClientes}</div><div style="font-size:0.75rem;color:var(--ink-muted)">Clientes</div></div>
