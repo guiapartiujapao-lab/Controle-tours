@@ -227,6 +227,17 @@ body.role-roteiro .cal-servico{display:none!important}
 .cal-dispo-cheio{background:#fee2e2;color:#991b1b}
 body.role-roteiro .cal-day.cal-past{opacity:0.35;pointer-events:none}
 body.role-vendedor .guia-tours-section{display:none!important}
+body.role-cs .tab-admin{display:none!important}
+body.role-cs .tab-cadastro{display:none!important}
+body.role-cs #p-cadastro{display:none!important}
+body.role-cs .tab[data-tab="cs"]{display:flex!important}
+body.role-cs .fin-only{display:none!important}
+body.role-cs .manage-folga-table{display:none!important}
+body.role-cs .guia-tours-section{display:none!important}
+body.role-cs .vendedor-confirm-section{display:none!important}
+body.role-cs .cal-legend{display:none!important}
+body.role-cs #btnFolga{display:none!important}
+body.role-cs #btnServico{display:none!important}
 body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
 .btn-logout{background:none;border:1px solid var(--rule);color:var(--ink-muted);padding:0.3rem 0.8rem;border-radius:6px;font-size:0.78rem;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .15s}
 .btn-logout:hover{border-color:var(--accent);color:var(--accent)}
@@ -2768,7 +2779,8 @@ const USERS = {
   'clinte': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'CLINTE' },
   'lorran': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'LORRAN' },
   'ketlin': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'KETLIN' },
-  'roteiro': { hash: 'bb153023b1434c39bfc175029120769e9758c0007b02929c5cc30fd9ecf47dac', role: 'roteiro' }
+  'roteiro': { hash: 'bb153023b1434c39bfc175029120769e9758c0007b02929c5cc30fd9ecf47dac', role: 'roteiro' },
+  'vinicius': { hash: '31b8c81b6ecf97202ae03f3359947937e45757b00d11461bf36eafa051d7783d', role: 'cs' }
 };
 
 async function sha256(str) {
@@ -2804,6 +2816,14 @@ function showApp(user) {
     document.querySelector('[data-tab="calendario"]').classList.add('active');
     document.getElementById('p-calendario').classList.add('active');
     renderCalendario();
+  }
+  if (role === 'cs') {
+    document.body.classList.add('role-cs');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-tab="cs"]').classList.add('active');
+    document.getElementById('p-cs').classList.add('active');
+    renderCS();
   }
   if (loggedGuiaNome === 'CLINTE' || role === 'vendedor') {
     document.getElementById('btnServico').style.display = '';
