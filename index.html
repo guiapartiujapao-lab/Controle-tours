@@ -266,6 +266,15 @@ body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
 .cs-agencia-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem 1.2rem;margin-bottom:10px;opacity:0.7}
 .cs-agencia-badge{display:inline-block;font-size:0.68rem;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--blue);color:#fff;margin-left:6px}
 .cs-agencia-msg{font-size:0.82rem;color:var(--ink-muted);margin-top:0.5rem;font-style:italic}
+.cs-countdown{display:inline-block;font-size:0.68rem;font-weight:600;padding:1px 6px;border-radius:4px;margin-left:auto;white-space:nowrap}
+.cs-countdown.soon{background:#fef3c7;color:#92400e}
+.cs-countdown.far{background:#f0fdf4;color:#166534}
+.cs-countdown.past{background:#fee2e2;color:#991b1b}
+.cs-prazos{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:0.5rem}
+.cs-prazo-chip{font-size:0.72rem;padding:3px 8px;border-radius:6px;font-weight:500}
+.cs-prazo-chip.urgente{background:#fee2e2;color:#991b1b}
+.cs-prazo-chip.proximo{background:#fef3c7;color:#92400e}
+.cs-prazo-chip.tranquilo{background:#f0fdf4;color:#166534}
 .cs-toggle-tours{font-size:0.78rem;color:var(--accent);cursor:pointer;border:none;background:none;font-family:inherit;font-weight:600;padding:0}
 .cs-toggle-tours:hover{text-decoration:underline}
 </style>
@@ -2886,6 +2895,23 @@ function csTaskStatus(dateStr, key) {
 }
 
 const CS_STATUS_LABEL = {pending:'Pendente',today:'Hoje',overdue:'Atrasada',done:'Concluida'};
+function csDaysLeft(dateStr) {
+  if (!dateStr) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dateStr + 'T00:00:00');
+  return Math.round((d - today) / 86400000);
+}
+function csDaysLabel(days) {
+  if (days === null) return '';
+  if (days === 0) return '<span class="cs-countdown soon">Hoje</span>';
+  if (days === 1) return '<span class="cs-countdown soon">Amanha</span>';
+  if (days < 0) return `<span class="cs-countdown past">${Math.abs(days)}d atrasada</span>`;
+  if (days <= 3) return `<span class="cs-countdown soon">Falta${days>1?'m':''} ${days}d</span>`;
+  if (days <= 7) return `<span class="cs-countdown soon">Falta${days>1?'m':''} ${days}d</span>`;
+  return `<span class="cs-countdown far">Falta${days>1?'m':''} ${days}d</span>`;
+}
+
+const CS_TASK_LABELS = {OPORTUNIDADE:'Oportunidade',GRUPO_WHATSAPP:'Criar Grupo',COBRANCA:'Cobranca',APRESENTACAO:'Apresentacao',FEEDBACK:'Feedback',AVALIACAO:'Avaliacao'};
 
 function buildCsTasks(cliente, tours) {
   const tasks = [];
@@ -3004,6 +3030,19 @@ function renderCS() {
     if (c.confirmacao) html += `<span><b>Confirmacao:</b> ${fmtBrl(c.confirmacao)}</span>`;
     html += `</div>`;
 
+    const upcoming = tasks.filter(t => t.status !== 'done').map(t => ({...t, days: csDaysLeft(t.date)})).filter(t => t.days !== null).sort((a,b) => a.days - b.days);
+    if (upcoming.length) {
+      html += `<div class="cs-prazos">`;
+      const shown = upcoming.slice(0, 4);
+      shown.forEach(t => {
+        const cls = t.days < 0 ? 'urgente' : t.days <= 3 ? 'proximo' : 'tranquilo';
+        const label = CS_TASK_LABELS[t.tipo] || t.tipo;
+        const dTxt = t.days === 0 ? 'Hoje' : t.days < 0 ? `${Math.abs(t.days)}d atrasada` : t.days === 1 ? 'Amanha' : `${t.days}d`;
+        html += `<span class="cs-prazo-chip ${cls}">${label}: ${dTxt}</span>`;
+      });
+      html += `</div>`;
+    }
+
     html += `<button class="cs-toggle-tours" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.textContent=this.nextElementSibling.style.display==='none'?'▸ Ver tours':'▾ Ocultar tours'">▸ Ver tours</button>`;
     html += `<div style="display:none">`;
     html += `<table class="cs-tours-mini"><thead><tr><th>Destino</th><th>Data</th><th>Guia</th><th>Status</th><th>Pessoas</th></tr></thead><tbody>`;
@@ -3022,7 +3061,8 @@ function renderCS() {
       html += `<input type="checkbox" ${checked} data-cskey="${t.key}" data-cliente="${nome}" data-tipo="${t.tipo}" data-tourid="${t.tourId||''}">`;
       html += `<span class="cs-task-badge ${t.status}">${CS_STATUS_LABEL[t.status]}</span>`;
       html += `<span class="cs-task-desc">${t.desc}</span>`;
-      html += `<span class="cs-task-date">${fmtDate(t.date)}</span>`;
+      const dl = t.status !== 'done' ? csDaysLabel(csDaysLeft(t.date)) : '';
+      html += `<span class="cs-task-date">${fmtDate(t.date)} ${dl}</span>`;
       html += `</div>`;
     });
 
