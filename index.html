@@ -227,8 +227,39 @@ body.role-roteiro .cal-servico{display:none!important}
 .cal-dispo-cheio{background:#fee2e2;color:#991b1b}
 body.role-roteiro .cal-day.cal-past{opacity:0.35;pointer-events:none}
 body.role-vendedor .guia-tours-section{display:none!important}
+body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
 .btn-logout{background:none;border:1px solid var(--rule);color:var(--ink-muted);padding:0.3rem 0.8rem;border-radius:6px;font-size:0.78rem;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .15s}
 .btn-logout:hover{border-color:var(--accent);color:var(--accent)}
+.cs-filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
+.cs-filters input,.cs-filters select{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;background:var(--surface);color:var(--ink);font-family:inherit}
+.cs-filters input[type="text"]{min-width:200px}
+.cs-client-card{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:1.25rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.cs-client-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:0.75rem}
+.cs-client-name{font-size:1.05rem;font-weight:700;color:var(--ink)}
+.cs-client-phone{font-size:0.8rem;color:var(--ink-muted)}
+.cs-badge{font-size:0.68rem;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.cs-badge-pacote{background:#dbeafe;color:#1e40af}
+.cs-badge-individual{background:#f3f4f6;color:#6b7280}
+.cs-client-financeiro{display:flex;gap:16px;flex-wrap:wrap;font-size:0.82rem;color:var(--ink-soft);margin-bottom:0.75rem}
+.cs-client-financeiro b{color:var(--ink)}
+.cs-tours-mini{width:100%;border-collapse:collapse;font-size:0.78rem;margin-bottom:0.75rem}
+.cs-tours-mini th{text-align:left;padding:4px 8px;font-weight:600;color:var(--ink-muted);border-bottom:1px solid var(--rule);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.3px}
+.cs-tours-mini td{padding:4px 8px;border-bottom:1px solid var(--rule-light,var(--rule))}
+.cs-task{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--rule-light,var(--rule))}
+.cs-task:last-child{border-bottom:none}
+.cs-task input[type="checkbox"]{width:16px;height:16px;cursor:pointer;accent-color:var(--accent)}
+.cs-task-desc{flex:1;font-size:0.82rem;color:var(--ink)}
+.cs-task-date{font-size:0.75rem;color:var(--ink-muted);white-space:nowrap}
+.cs-task-badge{font-size:0.65rem;font-weight:600;padding:2px 6px;border-radius:8px;white-space:nowrap}
+.cs-task-badge.pending{background:#fef3c7;color:#92400e}
+.cs-task-badge.today{background:#dbeafe;color:#1e40af}
+.cs-task-badge.overdue{background:#fee2e2;color:#991b1b}
+.cs-task-badge.done{background:#dcfce7;color:#166534}
+.cs-task.task-done .cs-task-desc{text-decoration:line-through;color:var(--ink-muted)}
+.cs-section-title{font-size:0.82rem;font-weight:600;color:var(--ink-muted);margin:0.75rem 0 0.35rem;text-transform:uppercase;letter-spacing:0.3px}
+.cs-empty{text-align:center;padding:3rem 1rem;color:var(--ink-muted);font-size:0.9rem}
+.cs-toggle-tours{font-size:0.78rem;color:var(--accent);cursor:pointer;border:none;background:none;font-family:inherit;font-weight:600;padding:0}
+.cs-toggle-tours:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -263,6 +294,7 @@ body.role-vendedor .guia-tours-section{display:none!important}
       <div class="tab tab-admin" data-tab="servicos">Outros Servicos</div>
       <div class="tab tab-admin" data-tab="dashboard">Dashboard</div>
       <div class="tab tab-admin" data-tab="controle">Controle</div>
+      <div class="tab tab-admin" data-tab="cs">CS</div>
       <div class="tab tab-admin" data-tab="backup">Backup</div>
     </div>
     <button class="btn-logout" id="btnSenha" title="Redefinir Senha" style="margin-right:4px">Senha</button>
@@ -617,6 +649,24 @@ body.role-vendedor .guia-tours-section{display:none!important}
     <div class="report-box" id="reportVendas">Selecione um mes acima e clique em "Gerar Relatorio de Vendas".</div>
   </div>
 
+  <div class="panel" id="p-cs">
+    <h2 class="section-title">Customer Success</h2>
+    <p class="section-sub">Pipeline de tarefas pos-venda por cliente.</p>
+    <div class="cs-filters">
+      <input type="text" id="csSearch" placeholder="Buscar cliente...">
+      <select id="csFilterStatus">
+        <option value="">Todas as tarefas</option>
+        <option value="pending">Pendentes</option>
+        <option value="today">Hoje</option>
+        <option value="overdue">Atrasadas</option>
+        <option value="done">Concluidas</option>
+      </select>
+      <select id="csFilterMes"></select>
+    </div>
+    <div class="stats" id="csStats"></div>
+    <div id="csCards"></div>
+  </div>
+
   <div class="panel" id="p-backup">
     <h2 class="section-title">Backup e Importacao</h2>
     <p class="section-sub">Exporte dados ou importe tours de planilha Excel.</p>
@@ -728,7 +778,7 @@ const SOCIOS = ['MAYRA','TOTTI'];
 const PAGS = ['PIX','CARTAO DE CREDITO','DOLAR CASH','WISE','NOMAD','PAYPAL'];
 const MESES_NOME = {1:'Janeiro',2:'Fevereiro',3:'Marco',4:'Abril',5:'Maio',6:'Junho',7:'Julho',8:'Agosto',9:'Setembro',10:'Outubro',11:'Novembro',12:'Dezembro'};
 
-let allTours = [], allFolgas = [], allServicos = [], allTransfers = [], allPShoppers = [], allFechamentos = {}, allDespesas = [], allModelos = [], editingId = null, editingTransferId = null, editingPShopperId = null, editingDespesaId = null, editingModeloId = null;
+let allTours = [], allFolgas = [], allServicos = [], allTransfers = [], allPShoppers = [], allFechamentos = {}, allDespesas = [], allModelos = [], allCsTasks = {}, editingId = null, editingTransferId = null, editingPShopperId = null, editingDespesaId = null, editingModeloId = null;
 let calYear, calMon;
 { const now = new Date(); calYear = now.getFullYear(); calMon = now.getMonth(); }
 
@@ -751,6 +801,7 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
   document.getElementById('tabs').classList.remove('menu-open');
   if (t.dataset.tab === 'calendario') renderCalendario();
   if (t.dataset.tab === 'dashboard') renderMetricas();
+  if (t.dataset.tab === 'cs') renderCS();
 }));
 
 function toast(msg, ok=true) {
@@ -1575,7 +1626,7 @@ function showDisponibilidade(dateStr) {
 }
 
 // RENDER
-function renderAll() { renderTourTable(); renderSocios(); renderGuias(); renderFechamento(); renderDespesas(); renderDashboard(); renderCalendario(); renderFolgaTable(); renderGuiaTours(); renderVendedorConfirm(); updateMonthFilters(); renderMetricas(); renderControle(); }
+function renderAll() { renderTourTable(); renderSocios(); renderGuias(); renderFechamento(); renderDespesas(); renderDashboard(); renderCalendario(); renderFolgaTable(); renderGuiaTours(); renderVendedorConfirm(); updateMonthFilters(); renderMetricas(); renderControle(); renderCS(); }
 function getConfirmed() { return allTours.filter(t => t.status === 'CONFIRMADO'); }
 
 function renderTourTable() {
@@ -2531,6 +2582,12 @@ db.collection('tours').onSnapshot(snap => {
   document.getElementById('connStatus').className = 'status-bar offline';
 });
 
+db.collection('csTasks').onSnapshot(snap => {
+  allCsTasks = {};
+  snap.docs.forEach(d => { allCsTasks[d.id] = d.data(); });
+  renderCS();
+}, err => { console.error('Firestore csTasks error', err); });
+
 db.collection('folgas').onSnapshot(snap => {
   allFolgas = snap.docs.map(d => ({id: d.id, ...d.data()}));
   renderCalendario(); renderFolgaTable();
@@ -2794,6 +2851,200 @@ document.getElementById('btnSalvarSenha').addEventListener('click', async () => 
     toast('Senha alterada com sucesso!');
   } catch(e) {
     toast('Erro ao salvar senha. Tente novamente.', false);
+  }
+});
+
+// CS (Customer Success) =========
+function csTaskKey(cliente, tipo, tourId) {
+  const norm = (cliente||'').replace(/\s+/g,'_').replace(/[^A-Z0-9_]/gi,'');
+  return norm + '_' + tipo + '_' + (tourId || 'global');
+}
+
+function addDays(dateStr, days) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0,10);
+}
+
+function csTaskStatus(dateStr, key) {
+  if (allCsTasks[key]) return 'done';
+  if (!dateStr) return 'pending';
+  const today = new Date().toISOString().slice(0,10);
+  if (dateStr === today) return 'today';
+  if (dateStr < today) return 'overdue';
+  return 'pending';
+}
+
+const CS_STATUS_LABEL = {pending:'Pendente',today:'Hoje',overdue:'Atrasada',done:'Concluida'};
+
+function buildCsTasks(cliente, tours) {
+  const tasks = [];
+  const sorted = [...tours].sort((a,b) => (a.dataTour||'').localeCompare(b.dataTour||''));
+  const firstTour = sorted[0];
+  const lastTour = sorted[sorted.length - 1];
+  const firstVenda = [...tours].sort((a,b) => (a.dataVenda||'').localeCompare(b.dataVenda||''))[0];
+
+  const k1 = csTaskKey(cliente, 'OPORTUNIDADE', null);
+  tasks.push({ key: k1, tipo: 'OPORTUNIDADE', desc: 'Verificar oportunidade de acordo com roteiro do cliente', date: addDays(firstVenda?.dataVenda, 3), tourId: null });
+
+  const k2 = csTaskKey(cliente, 'GRUPO_WHATSAPP', null);
+  tasks.push({ key: k2, tipo: 'GRUPO_WHATSAPP', desc: 'Criacao do grupo no WhatsApp', date: addDays(firstTour?.dataTour, -10), tourId: null });
+
+  sorted.forEach(t => {
+    const k3 = csTaskKey(cliente, 'COBRANCA', t.id);
+    tasks.push({ key: k3, tipo: 'COBRANCA', desc: 'Cobranca do valor de confirmacao - ' + (t.destino||''), date: addDays(t.dataTour, -7), tourId: t.id });
+
+    const k4 = csTaskKey(cliente, 'APRESENTACAO', t.id);
+    tasks.push({ key: k4, tipo: 'APRESENTACAO', desc: 'Apresentacao do grupo e PDF de orientacao - ' + (t.destino||''), date: addDays(t.dataTour, -3), tourId: t.id });
+
+    const k5 = csTaskKey(cliente, 'FEEDBACK', t.id);
+    tasks.push({ key: k5, tipo: 'FEEDBACK', desc: 'Mensagem de feedback e identificar oportunidade - ' + (t.destino||''), date: addDays(t.dataTour, 1), tourId: t.id });
+  });
+
+  const k6 = csTaskKey(cliente, 'AVALIACAO', null);
+  tasks.push({ key: k6, tipo: 'AVALIACAO', desc: 'Agradecimento e formulario de avaliacao', date: addDays(lastTour?.dataTour, 1), tourId: null });
+
+  tasks.forEach(t => { t.status = csTaskStatus(t.date, t.key); });
+  return tasks;
+}
+
+function renderCS() {
+  const container = document.getElementById('csCards');
+  const statsEl = document.getElementById('csStats');
+  const mesSelect = document.getElementById('csFilterMes');
+  if (!container) return;
+
+  const searchF = (document.getElementById('csSearch').value || '').trim().toUpperCase();
+  const statusF = document.getElementById('csFilterStatus').value;
+  const mesF = mesSelect.value;
+
+  const clientMap = {};
+  allTours.forEach(t => {
+    const nome = (t.cliente||'').toUpperCase().trim();
+    if (!nome) return;
+    if (!clientMap[nome]) clientMap[nome] = { tours: [], telefone: '', totalUsd: 0, totalBrl: 0, sinal: 0, confirmacao: 0 };
+    clientMap[nome].tours.push(t);
+    if (t.telefone && !clientMap[nome].telefone) clientMap[nome].telefone = t.telefone;
+    clientMap[nome].totalUsd += (t.valorUsd||0) + (t.valorExtensao||0);
+    clientMap[nome].totalBrl += (t.valorBrl||0);
+    clientMap[nome].sinal += (t.sinal20||0);
+    clientMap[nome].confirmacao += (t.restante80||0);
+  });
+
+  const meses = new Set();
+  allTours.forEach(t => { if (t.dataTour) meses.add(monthKey(t.dataTour)); });
+  const mesesArr = [...meses].sort().reverse();
+  const prevMes = mesSelect.value;
+  mesSelect.innerHTML = '<option value="">Todos os meses</option>' + mesesArr.map(m => `<option value="${m}">${monthLabel(m)}</option>`).join('');
+  mesSelect.value = prevMes || '';
+
+  let totalClientes = 0, totalPendentes = 0, totalAtrasadas = 0, totalHoje = 0;
+  let html = '';
+
+  const clientesSorted = Object.keys(clientMap).sort();
+
+  clientesSorted.forEach(nome => {
+    if (searchF && !nome.includes(searchF)) return;
+    const c = clientMap[nome];
+
+    if (mesF) {
+      const hasTourInMonth = c.tours.some(t => monthKey(t.dataTour) === mesF);
+      if (!hasTourInMonth) return;
+    }
+
+    const tasks = buildCsTasks(nome, c.tours);
+    const isPacote = c.tours.length >= 3;
+
+    if (statusF) {
+      const hasMatchingTask = tasks.some(t => t.status === statusF);
+      if (!hasMatchingTask) return;
+    }
+
+    totalClientes++;
+    tasks.forEach(t => {
+      if (t.status === 'pending') totalPendentes++;
+      if (t.status === 'overdue') totalAtrasadas++;
+      if (t.status === 'today') totalHoje++;
+    });
+
+    const toursSorted = [...c.tours].sort((a,b) => (a.dataTour||'').localeCompare(b.dataTour||''));
+
+    html += `<div class="cs-client-card">`;
+    html += `<div class="cs-client-header">`;
+    html += `<span class="cs-client-name">${nome}</span>`;
+    if (c.telefone) html += `<span class="cs-client-phone">${c.telefone}</span>`;
+    html += `<span class="cs-badge ${isPacote?'cs-badge-pacote':'cs-badge-individual'}">${isPacote?'PACOTE':'INDIVIDUAL'}</span>`;
+    html += `<span class="cs-badge" style="background:#f0fdf4;color:#166534">${c.tours.length} tour${c.tours.length>1?'s':''}</span>`;
+    html += `</div>`;
+
+    html += `<div class="cs-client-financeiro">`;
+    html += `<span><b>Total USD:</b> ${fmtUsd(c.totalUsd)}</span>`;
+    html += `<span><b>Total BRL:</b> ${fmtBrl(c.totalBrl)}</span>`;
+    if (c.sinal) html += `<span><b>Sinal:</b> ${fmtBrl(c.sinal)}</span>`;
+    if (c.confirmacao) html += `<span><b>Confirmacao:</b> ${fmtBrl(c.confirmacao)}</span>`;
+    html += `</div>`;
+
+    html += `<button class="cs-toggle-tours" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.textContent=this.nextElementSibling.style.display==='none'?'▸ Ver tours':'▾ Ocultar tours'">▸ Ver tours</button>`;
+    html += `<div style="display:none">`;
+    html += `<table class="cs-tours-mini"><thead><tr><th>Destino</th><th>Data</th><th>Guia</th><th>Status</th><th>Pessoas</th></tr></thead><tbody>`;
+    toursSorted.forEach(t => {
+      html += `<tr><td>${t.destino||'-'}</td><td>${fmtDate(t.dataTour)}</td><td>${t.guia||'-'}</td><td>${t.status||'-'}</td><td>${t.pessoas||0}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+
+    html += `<div class="cs-section-title">Tarefas</div>`;
+    tasks.forEach(t => {
+      const filteredOut = statusF && t.status !== statusF;
+      if (filteredOut) return;
+      const checked = t.status === 'done' ? 'checked' : '';
+      const doneClass = t.status === 'done' ? ' task-done' : '';
+      html += `<div class="cs-task${doneClass}">`;
+      html += `<input type="checkbox" ${checked} data-cskey="${t.key}" data-cliente="${nome}" data-tipo="${t.tipo}" data-tourid="${t.tourId||''}">`;
+      html += `<span class="cs-task-badge ${t.status}">${CS_STATUS_LABEL[t.status]}</span>`;
+      html += `<span class="cs-task-desc">${t.desc}</span>`;
+      html += `<span class="cs-task-date">${fmtDate(t.date)}</span>`;
+      html += `</div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  if (!html) html = '<div class="cs-empty">Nenhum cliente encontrado.</div>';
+  container.innerHTML = html;
+
+  statsEl.innerHTML = `
+    <div class="stat-card"><div style="font-size:1.4rem;font-weight:700;color:var(--accent)">${totalClientes}</div><div style="font-size:0.75rem;color:var(--ink-muted)">Clientes</div></div>
+    <div class="stat-card"><div style="font-size:1.4rem;font-weight:700;color:#f59e0b">${totalPendentes}</div><div style="font-size:0.75rem;color:var(--ink-muted)">Pendentes</div></div>
+    <div class="stat-card"><div style="font-size:1.4rem;font-weight:700;color:#ef4444">${totalAtrasadas}</div><div style="font-size:0.75rem;color:var(--ink-muted)">Atrasadas</div></div>
+    <div class="stat-card"><div style="font-size:1.4rem;font-weight:700;color:#3b82f6">${totalHoje}</div><div style="font-size:0.75rem;color:var(--ink-muted)">Hoje</div></div>`;
+}
+
+document.getElementById('csSearch').addEventListener('input', renderCS);
+document.getElementById('csFilterStatus').addEventListener('change', renderCS);
+document.getElementById('csFilterMes').addEventListener('change', renderCS);
+
+document.getElementById('p-cs').addEventListener('change', async (e) => {
+  if (e.target.type !== 'checkbox' || !e.target.dataset.cskey) return;
+  const key = e.target.dataset.cskey;
+  const cliente = e.target.dataset.cliente;
+  const tipo = e.target.dataset.tipo;
+  const tourId = e.target.dataset.tourid || null;
+  try {
+    if (e.target.checked) {
+      await db.collection('csTasks').doc(key).set({
+        cliente, tipo, tourId,
+        concluido: true,
+        concluidoEm: firebase.firestore.FieldValue.serverTimestamp(),
+        concluidoPor: loggedUser
+      });
+    } else {
+      await db.collection('csTasks').doc(key).delete();
+    }
+  } catch(err) {
+    console.error('CS task error', err);
+    toast('Erro ao salvar tarefa CS', false);
+    e.target.checked = !e.target.checked;
   }
 });
 
