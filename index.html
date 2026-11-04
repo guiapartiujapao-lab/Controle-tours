@@ -282,6 +282,7 @@ body.role-vendedor .guia-tours-section{display:none!important}
       <div class="form-grid" id="tourForm">
         <div class="form-group grp-direto"><label>Data da Venda</label><input type="date" id="f-dataVenda"></div>
         <div class="form-group"><label>Cliente</label><input type="text" id="f-cliente" placeholder="Nome completo"></div>
+        <div class="form-group grp-direto"><label>Telefone</label><input type="tel" id="f-telefone" placeholder="(11) 99999-9999"></div>
         <div class="form-group grp-agencia" style="display:none"><label>Agencia</label><input type="text" id="f-agencia" placeholder="Nome da agencia"></div>
 
         <div class="form-group"><label>Destino</label><select id="f-destino"><option value="">Selecione</option></select></div>
@@ -959,7 +960,7 @@ document.getElementById('f-restantePago').addEventListener('change', () => {
 });
 
 function clearForm() {
-  ['f-dataVenda','f-cliente','f-pessoas','f-valorUsd','f-cambio','f-despesa','f-obs','f-agencia','f-horario','f-hotel'].forEach(id => document.getElementById(id).value = '');
+  ['f-dataVenda','f-cliente','f-telefone','f-pessoas','f-valorUsd','f-cambio','f-despesa','f-obs','f-agencia','f-horario','f-hotel'].forEach(id => document.getElementById(id).value = '');
   ['f-destino','f-guia','f-pagamento','f-duracao'].forEach(id => document.getElementById(id).value = '');
   ['f-extensao','f-sinalPago','f-restantePago'].forEach(id => document.getElementById(id).value = 'NAO');
   document.getElementById('f-valorExtensao').value = '';
@@ -999,6 +1000,7 @@ function getFormData() {
   const data = {
     tipoTour: tipoTourAtual,
     cliente: document.getElementById('f-cliente').value.toUpperCase().trim(),
+    telefone: document.getElementById('f-telefone').value.trim(),
     destino: document.getElementById('f-destino').value,
     duracao: document.getElementById('f-duracao').value,
     guia, dataTour: document.getElementById('f-dataTour').value,
@@ -1025,7 +1027,6 @@ function getFormData() {
     }
   } else {
     data.dataVenda = document.getElementById('f-dataVenda').value;
-    data.telefone = '';
     data.extensao = document.getElementById('f-extensao').value;
     data.valorExtensao = parseFloat(document.getElementById('f-valorExtensao').value) || 0;
     data.valorExtensaoBrl = parseFloat(document.getElementById('f-valorExtensaoBrl').value) || 0;
@@ -1050,6 +1051,7 @@ function getFormData() {
 function fillForm(t) {
   setTipoTour(t.tipoTour || 'DIRETO');
   document.getElementById('f-cliente').value = t.cliente || '';
+  document.getElementById('f-telefone').value = t.telefone || '';
   document.getElementById('f-destino').value = t.destino || '';
   document.getElementById('f-duracao').value = t.duracao || '';
   document.getElementById('f-guia').value = t.guia || '';
@@ -1438,7 +1440,9 @@ function showTourDetail(t) {
   const dur = t.duracao || '-';
   const ext = t.extensao === 'SIM' ? 'Sim' : 'Nao';
   const pess = t.pessoas || 0;
-  let body = `<b>Cliente:</b> ${t.cliente||'-'}<br><b>Destino:</b> ${t.destino||'-'}<br><b>Duracao:</b> ${dur}<br><b>Extensao:</b> ${ext}<br><b>Pessoas:</b> ${pess}<br><b>Data:</b> ${fmtDate(t.dataTour)}<br><b>Status:</b> ${t.status||'-'}`;
+  let body = `<b>Cliente:</b> ${t.cliente||'-'}`;
+  if (t.telefone) body += `<br><b>Telefone:</b> ${t.telefone}`;
+  body += `<br><b>Destino:</b> ${t.destino||'-'}<br><b>Duracao:</b> ${dur}<br><b>Extensao:</b> ${ext}<br><b>Pessoas:</b> ${pess}<br><b>Data:</b> ${fmtDate(t.dataTour)}<br><b>Status:</b> ${t.status||'-'}`;
   if (!loggedGuiaNome && t.guia === 'A DEFINIR') {
     const opts = GUIAS.filter(g => g !== 'A DEFINIR').map(g => `<option value="${g}">${g}</option>`).join('');
     body += `<br><b>Guia:</b> <select id="selGuiaDetail" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:0.85rem"><option value="A DEFINIR">A DEFINIR</option>${opts}</select>`;
