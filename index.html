@@ -1746,7 +1746,7 @@ function renderTourTable() {
     const agBadge = t.tipoTour === 'AGENCIA' ? '<span style="font-size:0.6rem;background:var(--blue);color:#fff;padding:1px 5px;border-radius:6px;margin-left:4px">AG</span>' : '';
     const extBadge = (t.extensao === 'SIM' && t.valorExtensao) ? '<span style="font-size:0.6rem;background:var(--accent);color:#fff;padding:1px 5px;border-radius:6px;margin-left:4px" title="Inclui extensao">+EXT</span>' : '';
     const kommoTag = t.kommoLeadId ? `<span class="kommo-sync-icon kommo-synced" data-kommo="${t.id}" title="Enviar para Kommo">K</span><span class="kommo-sync-icon kommo-pull" data-kommo-pull="${t.id}" title="Puxar do Kommo" style="background:#1976d2;color:#fff;margin-left:2px">&#8595;</span>` : `<span class="kommo-sync-icon kommo-unsynced" data-kommo="${t.id}" title="Vincular ao Kommo">K</span>`;
-    tr.innerHTML = `<td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente||'-'}${agBadge}</td><td style="text-align:left">${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${guiaCell}</td><td>${t.pessoas||0}</td><td class="fin-only">${fmtBrl(t.valorBrl)}${extBadge}${despAlert}</td><td>${sinalTag}</td><td>${confTag}</td><td><span class="tag ${sc}">${t.status}</span>${estornoTag}</td><td>${vistoTag}</td><td>${kommoTag}</td><td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" data-edit="${t.id}">editar</span> <span style="cursor:pointer;color:var(--red);font-size:0.78rem;margin-left:6px" data-del="${t.id}">x</span></td>`;
+    tr.innerHTML = `<td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente||'-'}${agBadge}</td><td style="text-align:left">${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${guiaCell}</td><td>${t.pessoas||0}</td><td class="fin-only">${fmtBrl(t.valorBrl)}${extBadge}${despAlert}</td><td>${sinalTag}</td><td>${confTag}</td><td><span class="tag ${sc}">${t.status}</span>${estornoTag}</td><td>${vistoTag}</td><td>${kommoTag}</td><td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" data-edit="${t.id}">editar</span> <span style="cursor:pointer;color:#7c3aed;font-size:0.78rem;margin-left:6px" data-dup="${t.id}" title="Duplicar tour">dup</span> <span style="cursor:pointer;color:var(--red);font-size:0.78rem;margin-left:6px" data-del="${t.id}">x</span></td>`;
     tbody.appendChild(tr);
   });
   tbody.querySelectorAll('[data-edit]').forEach(el => el.addEventListener('click', () => {
@@ -1754,6 +1754,10 @@ function renderTourTable() {
     if (t) { editingId = t.id; fillForm(t); document.getElementById('btnSalvar').textContent = 'Atualizar Tour'; window.scrollTo({top:0,behavior:'smooth'}); }
   }));
   tbody.querySelectorAll('[data-del]').forEach(el => el.addEventListener('click', () => deleteTour(el.dataset.del)));
+  tbody.querySelectorAll('[data-dup]').forEach(el => el.addEventListener('click', () => {
+    const t = allTours.find(x => x.id === el.dataset.dup);
+    if (t) { editingId = null; fillForm(t); document.getElementById('btnSalvar').textContent = 'Salvar Tour'; toast('Tour duplicado - modifique e salve como novo.'); window.scrollTo({top:0,behavior:'smooth'}); }
+  }));
   tbody.querySelectorAll('[data-compsinal]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); const t = allTours.find(x => x.id === el.dataset.compsinal); if (t) verComprovante(t.comprovanteSinal, t.comprovanteSinalNome); }));
   tbody.querySelectorAll('[data-compconf]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); const t = allTours.find(x => x.id === el.dataset.compconf); if (t) verComprovante(t.comprovanteConf, t.comprovanteConfNome); }));
   tbody.querySelectorAll('[data-kommo]').forEach(el => el.addEventListener('click', () => kommoSync(el.dataset.kommo)));
