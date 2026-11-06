@@ -228,8 +228,7 @@ body.role-roteiro .cal-servico{display:none!important}
 body.role-roteiro .cal-day.cal-past{opacity:0.35;pointer-events:none}
 body.role-vendedor .guia-tours-section{display:none!important}
 body.role-cs .tab-admin{display:none!important}
-body.role-cs .tab-cadastro{display:none!important}
-body.role-cs #p-cadastro{display:none!important}
+body.role-cs .tab-cadastro{display:flex!important}
 body.role-cs .tab[data-tab="cs"]{display:flex!important}
 body.role-cs .fin-only{display:none!important}
 body.role-cs .manage-folga-table{display:none!important}
@@ -238,6 +237,7 @@ body.role-cs .vendedor-confirm-section{display:none!important}
 body.role-cs .cal-legend{display:none!important}
 body.role-cs #btnFolga{display:none!important}
 body.role-cs #btnServico{display:none!important}
+body.role-cs .cs-hide{display:none!important}
 body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
 .btn-logout{background:none;border:1px solid var(--rule);color:var(--ink-muted);padding:0.3rem 0.8rem;border-radius:6px;font-size:0.78rem;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .15s}
 .btn-logout:hover{border-color:var(--accent);color:var(--accent)}
@@ -376,13 +376,13 @@ body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
 
 <div class="page">
   <div class="panel active" id="p-cadastro">
-    <h2 class="section-title">Cadastro de Tour</h2>
-    <p class="section-sub">Preencha os dados do tour. Valores calculados aparecem automaticamente.</p>
-    <div style="display:flex;gap:8px;margin-bottom:1rem">
+    <h2 class="section-title" id="cadastroTitle">Cadastro de Tour</h2>
+    <p class="section-sub cs-hide">Preencha os dados do tour. Valores calculados aparecem automaticamente.</p>
+    <div class="cs-hide" style="display:flex;gap:8px;margin-bottom:1rem">
       <button class="btn btn-primary" id="btnTipoDireto" style="flex:1">Tour Direto</button>
       <button class="btn btn-secondary" id="btnTipoAgencia" style="flex:1">Tour Agencia</button>
     </div>
-    <div class="card">
+    <div class="card cs-hide">
       <div class="form-grid" id="tourForm">
         <div class="form-group grp-direto"><label>Data da Venda</label><input type="date" id="f-dataVenda"></div>
         <div class="form-group"><label>Cliente</label><input type="text" id="f-cliente" placeholder="Nome completo"></div>
@@ -418,7 +418,7 @@ body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
         <div class="form-group grp-agencia" style="display:none"><label>Comprovante</label><div style="display:flex;align-items:center;gap:8px"><button type="button" id="btnUpAgenciaForm" style="padding:4px 12px;border-radius:4px;border:1px dashed var(--blue);background:transparent;color:var(--blue);font-size:0.78rem;cursor:pointer">Anexar Comprovante</button><span id="agenciaFormNome" style="font-size:0.75rem;color:var(--green);display:none"></span><button type="button" id="btnRemAgenciaForm" style="padding:3px 8px;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:0.72rem;cursor:pointer;display:none">X</button></div></div>
         <div class="form-group"><label>Observacoes</label><input type="text" id="f-obs" placeholder="Opcional"></div>
       </div>
-      <div class="form-row">
+      <div class="form-row cs-hide">
         <button class="btn btn-primary" id="btnSalvar">Salvar Tour</button>
         <button class="btn btn-secondary" id="btnLimpar">Limpar</button>
       </div>
@@ -431,11 +431,11 @@ body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
       <select id="filterMes"><option value="">Todos os meses</option></select>
       <select id="filterStatus"><option value="">Todos status</option><option value="CONFIRMADO">Confirmado</option><option value="PENDENTE">Pendente</option><option value="CANCELADO">Cancelado</option></select>
       <select id="filterGuia"><option value="">Todos guias</option></select>
-      <select id="filterDespesa"><option value="">Despesa</option><option value="SEM">Sem despesa</option><option value="COM">Com despesa</option></select>
-      <button class="btn btn-primary" id="btnPendDesp" style="font-size:0.78rem;white-space:nowrap">Pendentes de Despesa</button>
+      <select id="filterDespesa" class="cs-hide"><option value="">Despesa</option><option value="SEM">Sem despesa</option><option value="COM">Com despesa</option></select>
+      <button class="btn btn-primary cs-hide" id="btnPendDesp" style="font-size:0.78rem;white-space:nowrap">Pendentes de Despesa</button>
     </div>
     <div class="table-wrap"><table id="tblAll"><thead><tr>
-      <th>Data Tour</th><th>Cliente</th><th>Destino</th><th>Dur.</th><th>Guia</th><th>Pess.</th><th class="fin-only">BRL</th><th>Sinal</th><th>Confirmacao</th><th>Status</th><th>Guia Visto</th><th>K</th><th></th>
+      <th>Data Tour</th><th>Cliente</th><th>Destino</th><th>Dur.</th><th>Guia</th><th>Pess.</th><th class="fin-only">BRL</th><th>Sinal</th><th>Confirmacao</th><th>Status</th><th>Guia Visto</th><th class="cs-hide">K</th><th class="cs-hide"></th>
     </tr></thead><tbody></tbody></table></div>
     <div class="empty" id="emptyAll">Nenhum tour cadastrado ainda.</div>
   </div>
@@ -1720,6 +1720,11 @@ function renderTourTable() {
   const despF = document.getElementById('filterDespesa').value;
   const searchF = document.getElementById('searchCliente').value.trim().toLowerCase();
   let tours = [...allTours].sort((a,b) => (b.dataTour||'').localeCompare(a.dataTour||''));
+  if (loggedRole === 'cs') {
+    const now = new Date();
+    const csMin = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+    tours = tours.filter(t => (t.dataTour||'') >= csMin);
+  }
   if (searchF) tours = tours.filter(t => (t.cliente||'').toLowerCase().includes(searchF));
   if (mesF) tours = tours.filter(t => monthKey(t.dataTour) === mesF);
   if (statusF) tours = tours.filter(t => t.status === statusF);
@@ -1747,7 +1752,11 @@ function renderTourTable() {
     const extBadge = (t.extensao === 'SIM' && t.valorExtensao) ? '<span style="font-size:0.6rem;background:var(--accent);color:#fff;padding:1px 5px;border-radius:6px;margin-left:4px" title="Inclui extensao">+EXT</span>' : '';
     const canKommo = loggedRole === 'vendedor' || loggedUser === 'eididiego';
     const kommoTag = canKommo ? (t.kommoLeadId ? `<span class="kommo-sync-icon kommo-synced" data-kommo="${t.id}" title="Enviar para Kommo">K</span><span class="kommo-sync-icon kommo-pull" data-kommo-pull="${t.id}" title="Puxar do Kommo" style="background:#1976d2;color:#fff;margin-left:2px">&#8595;</span>` : `<span class="kommo-sync-icon kommo-unsynced" data-kommo="${t.id}" title="Vincular ao Kommo">K</span>`) : '';
-    tr.innerHTML = `<td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente||'-'}${agBadge}</td><td style="text-align:left">${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${guiaCell}</td><td>${t.pessoas||0}</td><td class="fin-only">${fmtBrl(t.valorBrl)}${extBadge}${despAlert}</td><td>${sinalTag}</td><td>${confTag}</td><td><span class="tag ${sc}">${t.status}</span>${estornoTag}</td><td>${vistoTag}</td><td>${kommoTag}</td><td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" data-edit="${t.id}">editar</span>${canKommo ? ` <span style="cursor:pointer;color:#7c3aed;font-size:0.78rem;margin-left:6px" data-dup="${t.id}" title="Duplicar tour">dup</span>` : ''} <span style="cursor:pointer;color:var(--red);font-size:0.78rem;margin-left:6px" data-del="${t.id}">x</span></td>`;
+    const isCs = loggedRole === 'cs';
+    const actionsCol = isCs ? '' : `<td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" data-edit="${t.id}">editar</span>${canKommo ? ` <span style="cursor:pointer;color:#7c3aed;font-size:0.78rem;margin-left:6px" data-dup="${t.id}" title="Duplicar tour">dup</span>` : ''} <span style="cursor:pointer;color:var(--red);font-size:0.78rem;margin-left:6px" data-del="${t.id}">x</span></td>`;
+    const kommoCol = isCs ? '' : `<td>${kommoTag}</td>`;
+    const clienteCell = isCs && t.cliente ? `<span style="cursor:pointer;color:var(--accent);text-decoration:underline" data-csopen="${t.cliente}">${t.cliente}</span>` : (t.cliente||'-');
+    tr.innerHTML = `<td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${clienteCell}${agBadge}</td><td style="text-align:left">${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${guiaCell}</td><td>${t.pessoas||0}</td><td class="fin-only">${fmtBrl(t.valorBrl)}${extBadge}${despAlert}</td><td>${sinalTag}</td><td>${confTag}</td><td><span class="tag ${sc}">${t.status}</span>${estornoTag}</td><td>${vistoTag}</td>${kommoCol}${actionsCol}`;
     tbody.appendChild(tr);
   });
   tbody.querySelectorAll('[data-edit]').forEach(el => el.addEventListener('click', () => {
@@ -1763,6 +1772,7 @@ function renderTourTable() {
   tbody.querySelectorAll('[data-compconf]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); const t = allTours.find(x => x.id === el.dataset.compconf); if (t) verComprovante(t.comprovanteConf, t.comprovanteConfNome); }));
   tbody.querySelectorAll('[data-kommo]').forEach(el => el.addEventListener('click', () => kommoSync(el.dataset.kommo)));
   tbody.querySelectorAll('[data-kommo-pull]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); kommoPull(el.dataset.kommoPull); }));
+  tbody.querySelectorAll('[data-csopen]').forEach(el => el.addEventListener('click', () => openCsDetail(el.dataset.csopen)));
 }
 document.getElementById('searchCliente').addEventListener('input', renderTourTable);
 document.getElementById('filterMes').addEventListener('change', renderTourTable);
@@ -2883,10 +2893,13 @@ function showApp(user) {
   }
   if (role === 'cs') {
     document.body.classList.add('role-cs');
+    document.querySelector('.tab-cadastro').textContent = 'Acompanhamento';
+    document.getElementById('cadastroTitle').textContent = 'Acompanhamento de Tours';
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.querySelector('[data-tab="cs"]').classList.add('active');
-    document.getElementById('p-cs').classList.add('active');
+    document.querySelector('.tab-cadastro').classList.add('active');
+    document.getElementById('p-cadastro').classList.add('active');
+    renderTourTable();
     renderCS();
   }
   if (loggedGuiaNome === 'CLINTE' || role === 'vendedor') {
