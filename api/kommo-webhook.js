@@ -32,7 +32,8 @@ const KOMMO_FIELDS_REVERSE = {
   552582: { key: 'sinalPago', type: 'select', enums: {457096:'SIM',457098:'NAO'} },
   552584: { key: 'restantePago', type: 'select', enums: {457100:'SIM',457102:'NAO'} },
   552586: { key: 'status', type: 'select', enums: {457104:'PENDENTE',457106:'ATIVO',457108:'CONCLUIDO',457110:'CANCELADO',457112:'ESTORNO'} },
-  552588: { key: 'contratouRoteiro', type: 'select', enums: {457114:'SIM',457116:'NAO'} }
+  552588: { key: 'contratouRoteiro', type: 'select', enums: {457114:'SIM',457116:'NAO'} },
+  552590: { key: 'periodoViagem', type: 'text' }
 };
 
 function parseCustomFields(cfv) {

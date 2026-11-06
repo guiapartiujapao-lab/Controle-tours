@@ -3170,13 +3170,18 @@ function openCsDetail(nome) {
   html += `</div>`;
 
   const roteiroVal = c.tours[0] && c.tours[0].contratouRoteiro || 'NAO';
-  html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:0.75rem;padding:8px 10px;background:${roteiroVal==='SIM'?'#dcfce7':'#fef3c7'};border-radius:8px">`;
+  const periodoVal = c.tours[0] && c.tours[0].periodoViagem || '';
+  html += `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:0.75rem;padding:8px 10px;background:${roteiroVal==='SIM'?'#dcfce7':'#fef3c7'};border-radius:8px">`;
   html += `<label style="font-size:0.8rem;font-weight:600;white-space:nowrap">Contratou Roteiro?</label>`;
   html += `<select id="csRoteiroSelect" data-client="${nome}" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:0.8rem;background:var(--surface)">`;
   html += `<option value="NAO" ${roteiroVal!=='SIM'?'selected':''}>NAO</option>`;
   html += `<option value="SIM" ${roteiroVal==='SIM'?'selected':''}>SIM</option>`;
   html += `</select>`;
+  if (periodoVal) html += `<span style="font-size:0.78rem;color:var(--ink-muted);margin-left:auto">Viagem: <b>${periodoVal}</b></span>`;
   html += `</div>`;
+  if (!periodoVal) {
+    html += `<div style="font-size:0.75rem;color:var(--ink-muted);margin:-0.5rem 0 0.5rem 0;padding-left:10px">Período de viagem não preenchido no Kommo</div>`;
+  }
 
   html += `<div class="cs-client-financeiro">`;
   html += `<span><b>Total USD:</b> ${fmtUsd(c.totalUsd)}</span>`;
@@ -3327,7 +3332,8 @@ const KOMMO_FIELDS = {
   sinalPago: { id:552582, type:'select', enums:{'SIM':457096,'NAO':457098}},
   restantePago: { id:552584, type:'select', enums:{'SIM':457100,'NAO':457102}},
   statusTour: { id:552586, type:'select', enums:{'PENDENTE':457104,'ATIVO':457106,'CONCLUIDO':457108,'CANCELADO':457110,'ESTORNO':457112}},
-  contratouRoteiro: { id:552588, type:'select', enums:{'SIM':457114,'NAO':457116}}
+  contratouRoteiro: { id:552588, type:'select', enums:{'SIM':457114,'NAO':457116}},
+  periodoViagem: { id:552590, type:'text' }
 };
 
 function buildKommoPayload(tour) {
