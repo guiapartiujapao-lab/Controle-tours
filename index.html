@@ -244,7 +244,38 @@ body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
 .cs-filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
 .cs-filters input,.cs-filters select{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;background:var(--surface);color:var(--ink);font-family:inherit}
 .cs-filters input[type="text"]{min-width:200px}
-.cs-client-card{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:1.25rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.cs-daily-counters{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem}
+.cs-daily-counter{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0.75rem 1rem;text-align:center;border-left:4px solid var(--accent)}
+.cs-daily-counter .cs-dc-num{font-size:1.6rem;font-weight:700}
+.cs-daily-counter .cs-dc-label{font-size:0.72rem;color:var(--ink-muted);margin-top:2px}
+.cs-daily-counter .cs-dc-icon{font-size:1.1rem;margin-bottom:2px}
+.cs-kanban{display:flex;gap:12px;overflow-x:auto;padding-bottom:12px;min-height:60vh}
+.cs-kanban-col{flex:0 0 240px;background:#f7f7f8;border-radius:10px;padding:10px;display:flex;flex-direction:column;max-height:72vh}
+.cs-kanban-col-header{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;padding:8px 10px;margin-bottom:8px;border-radius:8px;display:flex;align-items:center;justify-content:space-between}
+.cs-kanban-col-header .col-count{font-size:0.7rem;font-weight:600;background:rgba(0,0,0,0.1);padding:2px 7px;border-radius:10px}
+.cs-kanban-col-sub{font-size:0.68rem;color:var(--ink-muted);margin:-4px 0 8px 10px}
+.cs-kanban-cards{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.cs-kanban-card{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:10px 12px;cursor:pointer;transition:box-shadow .15s,transform .1s}
+.cs-kanban-card:hover{box-shadow:0 3px 10px rgba(0,0,0,0.1);transform:translateY(-1px)}
+.cs-kc-name{font-size:0.82rem;font-weight:600;color:var(--ink);margin-bottom:3px}
+.cs-kc-meta{font-size:0.7rem;color:var(--ink-muted);line-height:1.4}
+.cs-kc-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.cs-kc-badge{font-size:0.62rem;font-weight:600;padding:2px 6px;border-radius:6px;white-space:nowrap}
+.cs-kc-countdown{font-size:0.66rem;font-weight:600;padding:2px 6px;border-radius:4px;margin-top:5px;display:inline-block}
+.cs-kc-countdown.soon{background:#fef3c7;color:#92400e}
+.cs-kc-countdown.far{background:#f0fdf4;color:#166534}
+.cs-kc-countdown.past{background:#fee2e2;color:#991b1b}
+.cs-kc-countdown.is-today{background:#dbeafe;color:#1e40af}
+.cs-col-1 .cs-kanban-col-header{background:#dcfce7;color:#166534}
+.cs-col-2 .cs-kanban-col-header{background:#fef3c7;color:#92400e}
+.cs-col-3 .cs-kanban-col-header{background:#dbeafe;color:#1e40af}
+.cs-col-4 .cs-kanban-col-header{background:#ede9fe;color:#5b21b6}
+.cs-col-5 .cs-kanban-col-header{background:#fce7f3;color:#9d174d}
+.cs-detail-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:1000;display:flex;justify-content:flex-end}
+.cs-detail-panel{width:440px;max-width:92vw;background:var(--surface);height:100%;overflow-y:auto;padding:1.5rem;box-shadow:-4px 0 20px rgba(0,0,0,0.15);position:relative}
+.cs-detail-close{position:absolute;top:12px;right:14px;background:none;border:none;font-size:1.6rem;cursor:pointer;color:var(--ink-muted);line-height:1;z-index:1}
+.cs-detail-close:hover{color:var(--ink)}
+.cs-detail-stage{font-size:0.7rem;font-weight:600;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:0.75rem}
 .cs-client-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:0.75rem}
 .cs-client-name{font-size:1.05rem;font-weight:700;color:var(--ink)}
 .cs-client-phone{font-size:0.8rem;color:var(--ink-muted)}
@@ -268,24 +299,11 @@ body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
 .cs-task-badge.done{background:#dcfce7;color:#166534}
 .cs-task.task-done .cs-task-desc{text-decoration:line-through;color:var(--ink-muted)}
 .cs-section-title{font-size:0.82rem;font-weight:600;color:var(--ink-muted);margin:0.75rem 0 0.35rem;text-transform:uppercase;letter-spacing:0.3px}
-.cs-empty{text-align:center;padding:3rem 1rem;color:var(--ink-muted);font-size:0.9rem}
-.cs-daily-counters{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem}
-.cs-daily-counter{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0.75rem 1rem;text-align:center;border-left:4px solid var(--accent)}
-.cs-daily-counter .cs-dc-num{font-size:1.6rem;font-weight:700}
-.cs-daily-counter .cs-dc-label{font-size:0.72rem;color:var(--ink-muted);margin-top:2px}
-.cs-daily-counter .cs-dc-icon{font-size:1.1rem;margin-bottom:2px}
-.cs-agencia-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem 1.2rem;margin-bottom:10px;opacity:0.7}
-.cs-agencia-badge{display:inline-block;font-size:0.68rem;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--blue);color:#fff;margin-left:6px}
-.cs-agencia-msg{font-size:0.82rem;color:var(--ink-muted);margin-top:0.5rem;font-style:italic}
+.cs-empty{text-align:center;padding:2rem 1rem;color:var(--ink-muted);font-size:0.8rem}
 .cs-countdown{display:inline-block;font-size:0.68rem;font-weight:600;padding:1px 6px;border-radius:4px;margin-left:auto;white-space:nowrap}
 .cs-countdown.soon{background:#fef3c7;color:#92400e}
 .cs-countdown.far{background:#f0fdf4;color:#166534}
 .cs-countdown.past{background:#fee2e2;color:#991b1b}
-.cs-prazos{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:0.5rem}
-.cs-prazo-chip{font-size:0.72rem;padding:3px 8px;border-radius:6px;font-weight:500}
-.cs-prazo-chip.urgente{background:#fee2e2;color:#991b1b}
-.cs-prazo-chip.proximo{background:#fef3c7;color:#92400e}
-.cs-prazo-chip.tranquilo{background:#f0fdf4;color:#166534}
 .cs-toggle-tours{font-size:0.78rem;color:var(--accent);cursor:pointer;border:none;background:none;font-family:inherit;font-weight:600;padding:0}
 .cs-toggle-tours:hover{text-decoration:underline}
 </style>
@@ -682,18 +700,16 @@ body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
     <p class="section-sub">Pipeline de tarefas pos-venda por cliente.</p>
     <div class="cs-filters">
       <input type="text" id="csSearch" placeholder="Buscar cliente...">
-      <select id="csFilterStatus">
-        <option value="">Todas as tarefas</option>
-        <option value="pending">Pendentes</option>
-        <option value="today">Hoje</option>
-        <option value="overdue">Atrasadas</option>
-        <option value="done">Concluidas</option>
-      </select>
       <select id="csFilterMes"></select>
     </div>
     <div class="cs-daily-counters" id="csDailyCounters"></div>
-    <div class="stats" id="csStats"></div>
-    <div id="csCards"></div>
+    <div class="cs-kanban" id="csKanban"></div>
+    <div id="csDetailOverlay" class="cs-detail-overlay" style="display:none">
+      <div class="cs-detail-panel">
+        <button class="cs-detail-close" id="csDetailClose">&times;</button>
+        <div id="csDetailContent"></div>
+      </div>
+    </div>
   </div>
 
   <div class="panel" id="p-backup">
@@ -2964,31 +2980,49 @@ function buildCsTasks(cliente, tours) {
   return tasks;
 }
 
+const CS_STAGES = [
+  {id:1, label:'Criacao do Grupo', sub:'10 dias antes', types:['OPORTUNIDADE','GRUPO_WHATSAPP']},
+  {id:2, label:'Pagamento 80%', sub:'7 dias antes', types:['COBRANCA']},
+  {id:3, label:'Onboarding', sub:'3 dias antes', types:['APRESENTACAO']},
+  {id:4, label:'Pos Tour', sub:'Apos cada tour', types:['FEEDBACK']},
+  {id:5, label:'Pos Viagem', sub:'Apos ultimo tour', types:['AVALIACAO']}
+];
+const CS_STAGE_COLORS = {1:'#166534',2:'#92400e',3:'#1e40af',4:'#5b21b6',5:'#9d174d'};
+const CS_STAGE_BGS = {1:'#dcfce7',2:'#fef3c7',3:'#dbeafe',4:'#ede9fe',5:'#fce7f3'};
+
+function csClientStage(tasks) {
+  const typeToStage = {OPORTUNIDADE:1,GRUPO_WHATSAPP:1,COBRANCA:2,APRESENTACAO:3,FEEDBACK:4,AVALIACAO:5};
+  let minStage = 99;
+  for (const t of tasks) {
+    if (t.status !== 'done') {
+      const s = typeToStage[t.tipo] || 99;
+      if (s < minStage) minStage = s;
+    }
+  }
+  return minStage <= 5 ? minStage : 0;
+}
+
+let csClientCache = {};
+
 function renderCS() {
-  const container = document.getElementById('csCards');
-  const statsEl = document.getElementById('csStats');
+  const kanban = document.getElementById('csKanban');
   const mesSelect = document.getElementById('csFilterMes');
-  if (!container) return;
+  if (!kanban) return;
 
   const searchF = (document.getElementById('csSearch').value || '').trim().toUpperCase();
-  const statusF = document.getElementById('csFilterStatus').value;
   const mesF = mesSelect.value;
 
   const clientMap = {};
-  const agenciaMap = {};
   allTours.forEach(t => {
     const nome = (t.cliente||'').toUpperCase().trim();
-    if (!nome) return;
-    const isAg = t.tipoTour === 'AGENCIA';
-    const map = isAg ? agenciaMap : clientMap;
-    if (!map[nome]) map[nome] = { tours: [], telefone: '', totalUsd: 0, totalBrl: 0, sinal: 0, confirmacao: 0, agencia: isAg ? (t.agencia||'') : '' };
-    map[nome].tours.push(t);
-    if (t.telefone && !map[nome].telefone) map[nome].telefone = t.telefone;
-    map[nome].totalUsd += (t.valorUsd||0) + (t.valorExtensao||0);
-    map[nome].totalBrl += (t.valorBrl||0);
-    map[nome].sinal += (t.sinal20||0);
-    map[nome].confirmacao += (t.restante80||0);
-    if (isAg && t.agencia) map[nome].agencia = t.agencia;
+    if (!nome || t.tipoTour === 'AGENCIA') return;
+    if (!clientMap[nome]) clientMap[nome] = { tours: [], telefone: '', totalUsd: 0, totalBrl: 0, sinal: 0, confirmacao: 0 };
+    clientMap[nome].tours.push(t);
+    if (t.telefone && !clientMap[nome].telefone) clientMap[nome].telefone = t.telefone;
+    clientMap[nome].totalUsd += (t.valorUsd||0) + (t.valorExtensao||0);
+    clientMap[nome].totalBrl += (t.valorBrl||0);
+    clientMap[nome].sinal += (t.sinal20||0);
+    clientMap[nome].confirmacao += (t.restante80||0);
   });
 
   const meses = new Set();
@@ -2998,83 +3032,116 @@ function renderCS() {
   mesSelect.innerHTML = '<option value="">Todos os meses</option>' + mesesArr.map(m => `<option value="${m}">${monthLabel(m)}</option>`).join('');
   mesSelect.value = prevMes || '';
 
-  let totalClientes = 0, totalPendentes = 0, totalAtrasadas = 0, totalHoje = 0;
+  const stageBuckets = {1:[],2:[],3:[],4:[],5:[]};
   let dcGrupo = 0, dcCobranca = 0, dcApresentacao = 0;
-  let html = '';
+  csClientCache = {};
 
-  const clientesSorted = Object.keys(clientMap).sort();
-
-  clientesSorted.forEach(nome => {
+  Object.keys(clientMap).sort().forEach(nome => {
     if (searchF && !nome.includes(searchF)) return;
     const c = clientMap[nome];
-
-    if (mesF) {
-      const hasTourInMonth = c.tours.some(t => monthKey(t.dataTour) === mesF);
-      if (!hasTourInMonth) return;
-    }
+    if (mesF && !c.tours.some(t => monthKey(t.dataTour) === mesF)) return;
 
     const tasks = buildCsTasks(nome, c.tours);
-    const isPacote = c.tours.length >= 3;
+    const stage = csClientStage(tasks);
+    if (stage === 0) return;
 
-    if (statusF) {
-      const hasMatchingTask = tasks.some(t => t.status === statusF);
-      if (!hasMatchingTask) return;
-    }
-
-    totalClientes++;
     tasks.forEach(t => {
-      if (t.status === 'pending') totalPendentes++;
-      if (t.status === 'overdue') totalAtrasadas++;
       if (t.status === 'today') {
-        totalHoje++;
         if (t.tipo === 'GRUPO_WHATSAPP') dcGrupo++;
         if (t.tipo === 'COBRANCA') dcCobranca++;
         if (t.tipo === 'APRESENTACAO') dcApresentacao++;
       }
     });
 
-    const toursSorted = [...c.tours].sort((a,b) => (a.dataTour||'').localeCompare(b.dataTour||''));
-
-    html += `<div class="cs-client-card">`;
-    html += `<div class="cs-client-header">`;
-    html += `<span class="cs-client-name">${nome}</span>`;
-    if (c.telefone) html += `<span class="cs-client-phone">${c.telefone}</span>`;
-    html += `<span class="cs-badge ${isPacote?'cs-badge-pacote':'cs-badge-individual'}">${isPacote?'PACOTE':'INDIVIDUAL'}</span>`;
-    html += `<span class="cs-badge" style="background:#f0fdf4;color:#166534">${c.tours.length} tour${c.tours.length>1?'s':''}</span>`;
-    html += `</div>`;
-
-    html += `<div class="cs-client-financeiro">`;
-    html += `<span><b>Total USD:</b> ${fmtUsd(c.totalUsd)}</span>`;
-    html += `<span><b>Total BRL:</b> ${fmtBrl(c.totalBrl)}</span>`;
-    if (c.sinal) html += `<span><b>Sinal:</b> ${fmtBrl(c.sinal)}</span>`;
-    if (c.confirmacao) html += `<span><b>Confirmacao:</b> ${fmtBrl(c.confirmacao)}</span>`;
-    html += `</div>`;
-
-    const upcoming = tasks.filter(t => t.status !== 'done').map(t => ({...t, days: csDaysLeft(t.date)})).filter(t => t.days !== null).sort((a,b) => a.days - b.days);
-    if (upcoming.length) {
-      html += `<div class="cs-prazos">`;
-      const shown = upcoming.slice(0, 4);
-      shown.forEach(t => {
-        const cls = t.days < 0 ? 'urgente' : t.days <= 3 ? 'proximo' : 'tranquilo';
-        const label = CS_TASK_LABELS[t.tipo] || t.tipo;
-        const dTxt = t.days === 0 ? 'Hoje' : t.days < 0 ? `${Math.abs(t.days)}d atrasada` : t.days === 1 ? 'Amanha' : `${t.days}d`;
-        html += `<span class="cs-prazo-chip ${cls}">${label}: ${dTxt}</span>`;
-      });
-      html += `</div>`;
-    }
-
-    html += `<button class="cs-toggle-tours" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.textContent=this.nextElementSibling.style.display==='none'?'▸ Ver tours':'▾ Ocultar tours'">▸ Ver tours</button>`;
-    html += `<div style="display:none">`;
-    html += `<table class="cs-tours-mini"><thead><tr><th>Destino</th><th>Data</th><th>Guia</th><th>Status</th><th>Pessoas</th></tr></thead><tbody>`;
-    toursSorted.forEach(t => {
-      html += `<tr><td>${t.destino||'-'}</td><td>${fmtDate(t.dataTour)}</td><td>${t.guia||'-'}</td><td>${t.status||'-'}</td><td>${t.pessoas||0}</td></tr>`;
+    const isPacote = c.tours.length >= 3;
+    const stageTasks = tasks.filter(t => {
+      const stageForType = {OPORTUNIDADE:1,GRUPO_WHATSAPP:1,COBRANCA:2,APRESENTACAO:3,FEEDBACK:4,AVALIACAO:5}[t.tipo];
+      return stageForType === stage;
     });
-    html += `</tbody></table></div>`;
+    const nextTask = stageTasks.filter(t => t.status !== 'done').sort((a,b) => (a.date||'').localeCompare(b.date||''))[0];
+    const dLeft = nextTask ? csDaysLeft(nextTask.date) : null;
 
-    html += `<div class="cs-section-title">Tarefas</div>`;
-    tasks.forEach(t => {
-      const filteredOut = statusF && t.status !== statusF;
-      if (filteredOut) return;
+    csClientCache[nome] = { c, tasks, stage, isPacote };
+    stageBuckets[stage].push({ nome, c, isPacote, dLeft, nextTask });
+  });
+
+  let html = '';
+  CS_STAGES.forEach(stg => {
+    const clients = stageBuckets[stg.id];
+    html += `<div class="cs-kanban-col cs-col-${stg.id}">`;
+    html += `<div class="cs-kanban-col-header">${stg.label} <span class="col-count">${clients.length}</span></div>`;
+    html += `<div class="cs-kanban-col-sub">${stg.sub}</div>`;
+    html += `<div class="cs-kanban-cards">`;
+    if (!clients.length) {
+      html += `<div class="cs-empty">Nenhum cliente</div>`;
+    }
+    clients.forEach(({nome, c, isPacote, dLeft, nextTask}) => {
+      html += `<div class="cs-kanban-card" data-client="${nome}">`;
+      html += `<div class="cs-kc-name">${nome}</div>`;
+      html += `<div class="cs-kc-meta">${c.tours.length} tour${c.tours.length>1?'s':''} · ${fmtBrl(c.totalBrl)}</div>`;
+      html += `<div class="cs-kc-badges">`;
+      html += `<span class="cs-kc-badge" style="background:${isPacote?'#dbeafe':'#f3f4f6'};color:${isPacote?'#1e40af':'#6b7280'}">${isPacote?'PACOTE':'INDIVIDUAL'}</span>`;
+      html += `</div>`;
+      if (dLeft !== null) {
+        let cls = 'far', txt = `Falta${Math.abs(dLeft)>1?'m':''} ${Math.abs(dLeft)}d`;
+        if (dLeft === 0) { cls = 'is-today'; txt = 'Hoje'; }
+        else if (dLeft === 1) { cls = 'soon'; txt = 'Amanha'; }
+        else if (dLeft < 0) { cls = 'past'; txt = `${Math.abs(dLeft)}d atrasada`; }
+        else if (dLeft <= 3) { cls = 'soon'; }
+        html += `<div class="cs-kc-countdown ${cls}">${txt}</div>`;
+      }
+      html += `</div>`;
+    });
+    html += `</div></div>`;
+  });
+  kanban.innerHTML = html;
+
+  document.getElementById('csDailyCounters').innerHTML = `
+    <div class="cs-daily-counter" style="border-left-color:#25d366"><div class="cs-dc-icon">💬</div><div class="cs-dc-num" style="color:#25d366">${dcGrupo}</div><div class="cs-dc-label">Criar Grupo Hoje</div></div>
+    <div class="cs-daily-counter" style="border-left-color:#f59e0b"><div class="cs-dc-icon">💰</div><div class="cs-dc-num" style="color:#f59e0b">${dcCobranca}</div><div class="cs-dc-label">Cobranca Hoje</div></div>
+    <div class="cs-daily-counter" style="border-left-color:#3b82f6"><div class="cs-dc-icon">📋</div><div class="cs-dc-num" style="color:#3b82f6">${dcApresentacao}</div><div class="cs-dc-label">Apresentacao Hoje</div></div>`;
+}
+
+function openCsDetail(nome) {
+  const cached = csClientCache[nome];
+  if (!cached) return;
+  const {c, tasks, stage, isPacote} = cached;
+  const overlay = document.getElementById('csDetailOverlay');
+  const content = document.getElementById('csDetailContent');
+
+  let html = '';
+  html += `<div class="cs-detail-stage" style="background:${CS_STAGE_BGS[stage]};color:${CS_STAGE_COLORS[stage]}">Etapa ${stage} - ${CS_STAGES[stage-1].label}</div>`;
+  html += `<div class="cs-client-header">`;
+  html += `<span class="cs-client-name">${nome}</span>`;
+  if (c.telefone) html += `<span class="cs-client-phone">${c.telefone}</span>`;
+  html += `<span class="cs-badge ${isPacote?'cs-badge-pacote':'cs-badge-individual'}">${isPacote?'PACOTE':'INDIVIDUAL'}</span>`;
+  html += `<span class="cs-badge" style="background:#f0fdf4;color:#166534">${c.tours.length} tour${c.tours.length>1?'s':''}</span>`;
+  html += `</div>`;
+
+  html += `<div class="cs-client-financeiro">`;
+  html += `<span><b>Total USD:</b> ${fmtUsd(c.totalUsd)}</span>`;
+  html += `<span><b>Total BRL:</b> ${fmtBrl(c.totalBrl)}</span>`;
+  if (c.sinal) html += `<span><b>Sinal:</b> ${fmtBrl(c.sinal)}</span>`;
+  if (c.confirmacao) html += `<span><b>Confirmacao:</b> ${fmtBrl(c.confirmacao)}</span>`;
+  html += `</div>`;
+
+  const toursSorted = [...c.tours].sort((a,b) => (a.dataTour||'').localeCompare(b.dataTour||''));
+  html += `<div class="cs-section-title">Tours</div>`;
+  html += `<table class="cs-tours-mini"><thead><tr><th>Destino</th><th>Data</th><th>Guia</th><th>Status</th><th>Pessoas</th></tr></thead><tbody>`;
+  toursSorted.forEach(t => {
+    html += `<tr><td>${t.destino||'-'}</td><td>${fmtDate(t.dataTour)}</td><td>${t.guia||'-'}</td><td>${t.status||'-'}</td><td>${t.pessoas||0}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+
+  CS_STAGES.forEach(stg => {
+    const stageTasks = tasks.filter(t => {
+      const m = {OPORTUNIDADE:1,GRUPO_WHATSAPP:1,COBRANCA:2,APRESENTACAO:3,FEEDBACK:4,AVALIACAO:5}[t.tipo];
+      return m === stg.id;
+    });
+    if (!stageTasks.length) return;
+    const allDone = stageTasks.every(t => t.status === 'done');
+    html += `<div class="cs-section-title" style="color:${CS_STAGE_COLORS[stg.id]}">Etapa ${stg.id} - ${stg.label} ${allDone ? '✓' : ''}</div>`;
+    stageTasks.forEach(t => {
       const checked = t.status === 'done' ? 'checked' : '';
       const doneClass = t.status === 'done' ? ' task-done' : '';
       html += `<div class="cs-task${doneClass}">`;
@@ -3085,46 +3152,28 @@ function renderCS() {
       html += `<span class="cs-task-date">${fmtDate(t.date)} ${dl}</span>`;
       html += `</div>`;
     });
-
-    html += `</div>`;
   });
 
-  if (statusF !== 'done' && statusF !== 'pending' && statusF !== 'overdue' && statusF !== 'today') {
-    const agSorted = Object.keys(agenciaMap).sort();
-    agSorted.forEach(nome => {
-      if (searchF && !nome.includes(searchF)) return;
-      const c = agenciaMap[nome];
-      if (mesF && !c.tours.some(t => monthKey(t.dataTour) === mesF)) return;
-      html += `<div class="cs-agencia-card">`;
-      html += `<div class="cs-client-header">`;
-      html += `<span class="cs-client-name">${nome}</span>`;
-      const agNome = c.agencia && c.agencia.toUpperCase() !== nome ? ' - '+c.agencia : '';
-      html += `<span class="cs-agencia-badge">AGENCIA${agNome}</span>`;
-      html += `<span class="cs-badge" style="background:#f0fdf4;color:#166534">${c.tours.length} tour${c.tours.length>1?'s':''}</span>`;
-      html += `</div>`;
-      html += `<p class="cs-agencia-msg">Tour de agencia - sem tarefas de CS.</p>`;
-      html += `</div>`;
-    });
-  }
+  content.innerHTML = html;
+  overlay.style.display = '';
+}
 
-  if (!html) html = '<div class="cs-empty">Nenhum cliente encontrado.</div>';
-  container.innerHTML = html;
-
-  document.getElementById('csDailyCounters').innerHTML = `
-    <div class="cs-daily-counter" style="border-left-color:#25d366"><div class="cs-dc-icon">💬</div><div class="cs-dc-num" style="color:#25d366">${dcGrupo}</div><div class="cs-dc-label">Criar Grupo Hoje</div></div>
-    <div class="cs-daily-counter" style="border-left-color:#f59e0b"><div class="cs-dc-icon">💰</div><div class="cs-dc-num" style="color:#f59e0b">${dcCobranca}</div><div class="cs-dc-label">Cobranca Hoje</div></div>
-    <div class="cs-daily-counter" style="border-left-color:#3b82f6"><div class="cs-dc-icon">📋</div><div class="cs-dc-num" style="color:#3b82f6">${dcApresentacao}</div><div class="cs-dc-label">Apresentacao Hoje</div></div>`;
-
-  statsEl.innerHTML = `
-    <div class="stat-card"><div style="font-size:1.4rem;font-weight:700;color:var(--accent)">${totalClientes}</div><div style="font-size:0.75rem;color:var(--ink-muted)">Clientes</div></div>
-    <div class="stat-card"><div style="font-size:1.4rem;font-weight:700;color:#f59e0b">${totalPendentes}</div><div style="font-size:0.75rem;color:var(--ink-muted)">Pendentes</div></div>
-    <div class="stat-card"><div style="font-size:1.4rem;font-weight:700;color:#ef4444">${totalAtrasadas}</div><div style="font-size:0.75rem;color:var(--ink-muted)">Atrasadas</div></div>
-    <div class="stat-card"><div style="font-size:1.4rem;font-weight:700;color:#3b82f6">${totalHoje}</div><div style="font-size:0.75rem;color:var(--ink-muted)">Hoje</div></div>`;
+function closeCsDetail() {
+  document.getElementById('csDetailOverlay').style.display = 'none';
 }
 
 document.getElementById('csSearch').addEventListener('input', renderCS);
-document.getElementById('csFilterStatus').addEventListener('change', renderCS);
 document.getElementById('csFilterMes').addEventListener('change', renderCS);
+
+document.getElementById('csKanban').addEventListener('click', (e) => {
+  const card = e.target.closest('.cs-kanban-card');
+  if (card) openCsDetail(card.dataset.client);
+});
+
+document.getElementById('csDetailClose').addEventListener('click', closeCsDetail);
+document.getElementById('csDetailOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeCsDetail();
+});
 
 document.getElementById('p-cs').addEventListener('change', async (e) => {
   if (e.target.type !== 'checkbox' || !e.target.dataset.cskey) return;
