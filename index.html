@@ -3372,9 +3372,13 @@ function buildKommoPayload(tour) {
   add('tipoTour', tour.tipoTour);
   add('agencia', tour.agencia);
   add('obs', tour.obs);
+  add('valorSinal', tour.valorSinal);
+  add('valorConfirmacao', tour.valorConfirmacao);
   add('sinalPago', tour.sinalPago);
   add('restantePago', tour.restantePago);
   add('statusTour', tour.status);
+  add('contratouRoteiro', tour.contratouRoteiro);
+  add('periodoViagem', tour.periodoViagem);
   return fields;
 }
 
@@ -3438,7 +3442,7 @@ async function kommoPull(tourId) {
     const lead = await kommoApi('get_lead', { id: tour.kommoLeadId });
     const parsed = parseKommoLead(lead);
     const updates = {};
-    const fieldsToPull = ['destino','duracao','dataTour','dataVenda','pessoas','guia','horario','hotel','valorUsd','cambio','valorBrl','formaPagamento','extensao','tipoTour','agencia','obs'];
+    const fieldsToPull = ['destino','duracao','dataTour','dataVenda','pessoas','guia','horario','hotel','valorUsd','cambio','valorBrl','formaPagamento','extensao','tipoTour','agencia','obs','valorSinal','valorConfirmacao','sinalPago','restantePago','contratouRoteiro','periodoViagem'];
     for (const key of fieldsToPull) {
       if (parsed[key] !== undefined && parsed[key] !== '') {
         if (key === 'valorExtensaoUsd') updates.valorExtensao = parsed[key];
@@ -3447,6 +3451,7 @@ async function kommoPull(tourId) {
     }
     if (parsed.valorExtensaoUsd !== undefined && parsed.valorExtensaoUsd !== '') updates.valorExtensao = parsed.valorExtensaoUsd;
     if (parsed.valorExtensaoBrl !== undefined && parsed.valorExtensaoBrl !== '') updates.valorExtensaoBrl = parsed.valorExtensaoBrl;
+    if (parsed.statusTour !== undefined && parsed.statusTour !== '') updates.status = parsed.statusTour;
     if (Object.keys(updates).length === 0) {
       toast('Nenhum campo preenchido no Kommo para puxar.', false);
       if (el) el.innerHTML = '&#8595;';
