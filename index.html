@@ -275,6 +275,10 @@ body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
 .cs-detail-panel{width:440px;max-width:92vw;background:var(--surface);height:100%;overflow-y:auto;padding:1.5rem;box-shadow:-4px 0 20px rgba(0,0,0,0.15);position:relative}
 .cs-detail-close{position:absolute;top:12px;right:14px;background:none;border:none;font-size:1.6rem;cursor:pointer;color:var(--ink-muted);line-height:1;z-index:1}
 .cs-detail-close:hover{color:var(--ink)}
+.cs-phone-row{display:flex;align-items:center;gap:8px;margin-bottom:0.75rem;padding:8px 10px;background:var(--bg,#f9fafb);border-radius:8px;border:1px solid var(--rule)}
+.cs-phone-row label{font-size:0.8rem;font-weight:600;color:var(--ink);white-space:nowrap}
+.cs-phone-row input{flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;font-family:inherit;background:var(--surface);color:var(--ink)}
+.cs-phone-row .btn-sm{font-size:0.72rem;padding:4px 12px;white-space:nowrap}
 .cs-detail-stage{font-size:0.7rem;font-weight:600;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:0.75rem}
 .cs-client-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:0.75rem}
 .cs-client-name{font-size:1.05rem;font-weight:700;color:var(--ink)}
@@ -3113,9 +3117,14 @@ function openCsDetail(nome) {
   html += `<div class="cs-detail-stage" style="background:${CS_STAGE_BGS[stage]};color:${CS_STAGE_COLORS[stage]}">Etapa ${stage} - ${CS_STAGES[stage-1].label}</div>`;
   html += `<div class="cs-client-header">`;
   html += `<span class="cs-client-name">${nome}</span>`;
-  if (c.telefone) html += `<span class="cs-client-phone">${c.telefone}</span>`;
   html += `<span class="cs-badge ${isPacote?'cs-badge-pacote':'cs-badge-individual'}">${isPacote?'PACOTE':'INDIVIDUAL'}</span>`;
   html += `<span class="cs-badge" style="background:#f0fdf4;color:#166534">${c.tours.length} tour${c.tours.length>1?'s':''}</span>`;
+  html += `</div>`;
+
+  html += `<div class="cs-phone-row">`;
+  html += `<label>Telefone:</label>`;
+  html += `<input type="tel" id="csPhoneInput" value="${c.telefone||''}" placeholder="(11) 99999-9999" data-client="${nome}">`;
+  html += `<button class="btn btn-primary btn-sm" id="csPhoneSave">Salvar</button>`;
   html += `</div>`;
 
   html += `<div class="cs-client-financeiro">`;
@@ -3171,6 +3180,32 @@ document.getElementById('csKanban').addEventListener('click', (e) => {
 });
 
 document.getElementById('csDetailClose').addEventListener('click', closeCsDetail);
+
+document.getElementById('p-cs').addEventListener('click', async (e) => {
+  if (e.target.id !== 'csPhoneSave') return;
+  const input = document.getElementById('csPhoneInput');
+  if (!input) return;
+  const phone = input.value.trim();
+  const clientName = input.dataset.client;
+  if (!clientName) return;
+  const tours = allTours.filter(t => (t.cliente||'').toUpperCase().trim() === clientName && t.tipoTour !== 'AGENCIA');
+  if (!tours.length) { toast('Nenhum tour encontrado para este cliente', false); return; }
+  try {
+    e.target.disabled = true;
+    e.target.textContent = 'Salvando...';
+    const batch = db.batch();
+    tours.forEach(t => { batch.update(db.collection('tours').doc(t.id), {telefone: phone}); });
+    await batch.commit();
+    toast(`Telefone atualizado em ${tours.length} tour${tours.length>1?'s':''}`, true);
+    e.target.textContent = 'Salvo!';
+    setTimeout(() => { if (e.target) { e.target.disabled = false; e.target.textContent = 'Salvar'; } }, 1500);
+  } catch(err) {
+    console.error('CS phone save error', err);
+    toast('Erro ao salvar telefone', false);
+    e.target.disabled = false;
+    e.target.textContent = 'Salvar';
+  }
+});
 document.getElementById('csDetailOverlay').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) closeCsDetail();
 });
