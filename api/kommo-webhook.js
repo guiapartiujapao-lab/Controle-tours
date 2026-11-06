@@ -14,7 +14,7 @@ const KOMMO_FIELDS_REVERSE = {
   552538: { key: 'dataTour', type: 'date' },
   552540: { key: 'dataVenda', type: 'date' },
   552542: { key: 'pessoas', type: 'numeric' },
-  552544: { key: 'guia', type: 'select', enums: {457018:'DIEGO',457020:'VANESSA',457022:'LUCAS',457024:'SUU',457026:'TATI',457028:'MATSUDA',457030:'FABI',457032:'MASA',457034:'SAYURI',457036:'KATSUKI',457038:'HANAKO',457040:'YUKI',457042:'MISA',457044:'GUIA LOCAL'} },
+  552544: { key: 'guia', type: 'select', enums: {457080:'MAYRA',457082:'TOTTI',457084:'CLINTE',457034:'SAYURI',457086:'KETLIN',457088:'JONAS',457090:'LORRAN',457092:'KAORI',457094:'RESERVA',457018:'DIEGO',457020:'VANESSA',457022:'LUCAS',457024:'SUU',457026:'TATI',457028:'MATSUDA',457030:'FABI',457032:'MASA',457036:'KATSUKI',457038:'HANAKO',457040:'YUKI',457042:'MISA',457044:'GUIA LOCAL'} },
   552546: { key: 'horario', type: 'text' },
   552548: { key: 'hotel', type: 'text' },
   552550: { key: 'valorUsd', type: 'numeric' },
