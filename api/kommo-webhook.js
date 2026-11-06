@@ -94,13 +94,17 @@ module.exports = async (req, res) => {
     if (!leadId) return res.status(400).json({ error: 'No lead ID found in webhook', receivedKeys: Object.keys(body).slice(0, 20) });
     if (statusId !== VENDA_EFETUADA_STATUS) return res.json({ skipped: true, reason: 'Status ' + statusId + ' is not VENDA EFETUADA (' + VENDA_EFETUADA_STATUS + ')' });
 
+    console.log('Status is VENDA EFETUADA, fetching lead', leadId);
     const lead = await fetchLead(leadId, token);
+    console.log('Lead fetched:', lead.name, 'custom_fields:', (lead.custom_fields_values || []).length);
     const fields = parseCustomFields(lead.custom_fields_values);
+    console.log('Parsed fields:', JSON.stringify(fields));
 
     // Get client name from lead or contact
     let cliente = lead.name || '';
     const contacts = (lead._embedded && lead._embedded.contacts) || [];
     if (contacts.length && contacts[0].name) cliente = contacts[0].name;
+    console.log('Cliente:', cliente);
 
     // Get phone from contact (if available)
     let telefone = '';
@@ -114,17 +118,18 @@ module.exports = async (req, res) => {
           const phoneCf = (contact.custom_fields_values || []).find(f => f.field_code === 'PHONE');
           if (phoneCf && phoneCf.values && phoneCf.values[0]) telefone = phoneCf.values[0].value || '';
         }
-      } catch (_) {}
+      } catch (phoneErr) { console.log('Phone fetch error:', phoneErr.message); }
     }
 
     // Check if tour already exists for this lead
+    console.log('Checking Firestore for existing tour with kommoLeadId:', Number(leadId));
     const existing = await firestore.collection('tours').where('kommoLeadId', '==', Number(leadId)).get();
     if (!existing.empty) {
-      // Update existing tour
       const docId = existing.docs[0].id;
       const updates = { ...fields, cliente, kommoLeadId: Number(leadId) };
       if (telefone) updates.telefone = telefone;
       await firestore.collection('tours').doc(docId).update(updates);
+      console.log('Tour UPDATED:', docId);
       return res.json({ success: true, action: 'updated', tourId: docId });
     }
 
@@ -148,11 +153,13 @@ module.exports = async (req, res) => {
       tour.liquido = Number(tour.valorBrl) - Number(tour.despesaGuia);
     }
 
+    console.log('Creating new tour for', cliente);
     const doc = await firestore.collection('tours').add(tour);
+    console.log('Tour CREATED:', doc.id);
     return res.json({ success: true, action: 'created', tourId: doc.id });
 
   } catch (err) {
-    console.error('Webhook error:', err);
+    console.error('Webhook error:', err.message, err.stack);
     return res.status(500).json({ error: err.message });
   }
 };
