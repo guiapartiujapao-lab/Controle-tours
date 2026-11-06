@@ -3295,7 +3295,12 @@ const KOMMO_FIELDS = {
   valorExtensaoBrl: { id:552562, type:'numeric' },
   tipoTour: { id:552564, type:'select', enums:{'PRIVATIVO':457062,'AGENCIA':457064,'AGÊNCIA':457064,'SEMI-PRIVATIVO':457066}},
   agencia: { id:552566, type:'text' },
-  obs: { id:552568, type:'textarea' }
+  obs: { id:552568, type:'textarea' },
+  valorSinal: { id:552578, type:'numeric' },
+  valorConfirmacao: { id:552580, type:'numeric' },
+  sinalPago: { id:552582, type:'select', enums:{'SIM':457096,'NAO':457098}},
+  restantePago: { id:552584, type:'select', enums:{'SIM':457100,'NAO':457102}},
+  statusTour: { id:552586, type:'select', enums:{'PENDENTE':457104,'ATIVO':457106,'CONCLUIDO':457108,'CANCELADO':457110,'ESTORNO':457112}}
 };
 
 function buildKommoPayload(tour) {
@@ -3334,6 +3339,9 @@ function buildKommoPayload(tour) {
   add('tipoTour', tour.tipoTour);
   add('agencia', tour.agencia);
   add('obs', tour.obs);
+  add('sinalPago', tour.sinalPago);
+  add('restantePago', tour.restantePago);
+  add('statusTour', tour.status);
   return fields;
 }
 

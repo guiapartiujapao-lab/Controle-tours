@@ -26,7 +26,12 @@ const KOMMO_FIELDS_REVERSE = {
   552562: { key: 'valorExtensaoBrl', type: 'numeric' },
   552564: { key: 'tipoTour', type: 'select', enums: {457062:'PRIVATIVO',457064:'AGENCIA',457066:'SEMI-PRIVATIVO'} },
   552566: { key: 'agencia', type: 'text' },
-  552568: { key: 'obs', type: 'textarea' }
+  552568: { key: 'obs', type: 'textarea' },
+  552578: { key: 'valorSinal', type: 'numeric' },
+  552580: { key: 'valorConfirmacao', type: 'numeric' },
+  552582: { key: 'sinalPago', type: 'select', enums: {457096:'SIM',457098:'NAO'} },
+  552584: { key: 'restantePago', type: 'select', enums: {457100:'SIM',457102:'NAO'} },
+  552586: { key: 'status', type: 'select', enums: {457104:'PENDENTE',457106:'ATIVO',457108:'CONCLUIDO',457110:'CANCELADO',457112:'ESTORNO'} }
 };
 
 function parseCustomFields(cfv) {
@@ -138,7 +143,7 @@ module.exports = async (req, res) => {
       cliente,
       telefone,
       kommoLeadId: Number(leadId),
-      status: 'ATIVO',
+      status: 'PENDENTE',
       sinalPago: 'NAO',
       restantePago: 'NAO',
       guiaConfirmou: 'NAO',
