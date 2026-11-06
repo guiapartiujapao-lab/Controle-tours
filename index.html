@@ -331,6 +331,7 @@ body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
 .kommo-sync-icon:hover{opacity:0.8}
 .kommo-synced{background:#dcfce7;color:#166534}
 .kommo-unsynced{background:#fef3c7;color:#92400e}
+.kommo-pull{background:#1976d2;color:#fff;font-weight:bold}
 </style>
 </head>
 <body>
@@ -1744,7 +1745,7 @@ function renderTourTable() {
     const vistoTag = t.guia === 'A DEFINIR' ? '-' : (t.guiaConfirmou === 'SIM' ? '<span class="tag tag-green">VISTO</span>' : '<span class="tag tag-gold">NAO VISTO</span>');
     const agBadge = t.tipoTour === 'AGENCIA' ? '<span style="font-size:0.6rem;background:var(--blue);color:#fff;padding:1px 5px;border-radius:6px;margin-left:4px">AG</span>' : '';
     const extBadge = (t.extensao === 'SIM' && t.valorExtensao) ? '<span style="font-size:0.6rem;background:var(--accent);color:#fff;padding:1px 5px;border-radius:6px;margin-left:4px" title="Inclui extensao">+EXT</span>' : '';
-    const kommoTag = t.kommoLeadId ? `<span class="kommo-sync-icon kommo-synced" data-kommo="${t.id}" title="Vinculado ao Kommo - clique para re-sincronizar">K</span>` : `<span class="kommo-sync-icon kommo-unsynced" data-kommo="${t.id}" title="Vincular ao Kommo">K</span>`;
+    const kommoTag = t.kommoLeadId ? `<span class="kommo-sync-icon kommo-synced" data-kommo="${t.id}" title="Enviar para Kommo">K</span><span class="kommo-sync-icon kommo-pull" data-kommo-pull="${t.id}" title="Puxar do Kommo" style="background:#1976d2;color:#fff;margin-left:2px">&#8595;</span>` : `<span class="kommo-sync-icon kommo-unsynced" data-kommo="${t.id}" title="Vincular ao Kommo">K</span>`;
     tr.innerHTML = `<td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente||'-'}${agBadge}</td><td style="text-align:left">${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${guiaCell}</td><td>${t.pessoas||0}</td><td class="fin-only">${fmtBrl(t.valorBrl)}${extBadge}${despAlert}</td><td>${sinalTag}</td><td>${confTag}</td><td><span class="tag ${sc}">${t.status}</span>${estornoTag}</td><td>${vistoTag}</td><td>${kommoTag}</td><td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" data-edit="${t.id}">editar</span> <span style="cursor:pointer;color:var(--red);font-size:0.78rem;margin-left:6px" data-del="${t.id}">x</span></td>`;
     tbody.appendChild(tr);
   });
@@ -1756,6 +1757,7 @@ function renderTourTable() {
   tbody.querySelectorAll('[data-compsinal]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); const t = allTours.find(x => x.id === el.dataset.compsinal); if (t) verComprovante(t.comprovanteSinal, t.comprovanteSinalNome); }));
   tbody.querySelectorAll('[data-compconf]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); const t = allTours.find(x => x.id === el.dataset.compconf); if (t) verComprovante(t.comprovanteConf, t.comprovanteConfNome); }));
   tbody.querySelectorAll('[data-kommo]').forEach(el => el.addEventListener('click', () => kommoSync(el.dataset.kommo)));
+  tbody.querySelectorAll('[data-kommo-pull]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); kommoPull(el.dataset.kommoPull); }));
 }
 document.getElementById('searchCliente').addEventListener('input', renderTourTable);
 document.getElementById('filterMes').addEventListener('change', renderTourTable);
@@ -3346,6 +3348,77 @@ async function kommoApi(action, data) {
     throw new Error(err.error || 'Erro ' + r.status);
   }
   return r.json();
+}
+
+function parseKommoLead(lead) {
+  const cfv = lead.custom_fields_values || [];
+  const fieldMap = {};
+  for (const [key, def] of Object.entries(KOMMO_FIELDS)) {
+    fieldMap[def.id] = { key, def };
+  }
+  const reverseEnums = {};
+  for (const [key, def] of Object.entries(KOMMO_FIELDS)) {
+    if (def.type === 'select') {
+      reverseEnums[key] = {};
+      for (const [label, eid] of Object.entries(def.enums)) {
+        reverseEnums[key][eid] = label;
+      }
+    }
+  }
+  const result = {};
+  for (const cf of cfv) {
+    const m = fieldMap[cf.field_id];
+    if (!m || !cf.values || !cf.values.length) continue;
+    const v = cf.values[0];
+    if (m.def.type === 'select') {
+      const re = reverseEnums[m.key];
+      result[m.key] = re && v.enum_id ? (re[v.enum_id] || '') : '';
+    } else if (m.def.type === 'date') {
+      if (v.value) {
+        const d = new Date(v.value * 1000);
+        const yy = d.getFullYear(), mm = String(d.getMonth()+1).padStart(2,'0'), dd = String(d.getDate()).padStart(2,'0');
+        result[m.key] = `${yy}-${mm}-${dd}`;
+      }
+    } else if (m.def.type === 'numeric') {
+      result[m.key] = v.value != null ? v.value : '';
+    } else {
+      result[m.key] = v.value || '';
+    }
+  }
+  return result;
+}
+
+async function kommoPull(tourId) {
+  const tour = allTours.find(t => t.id === tourId);
+  if (!tour || !tour.kommoLeadId) { toast('Tour não vinculado ao Kommo.', false); return; }
+  const el = document.querySelector(`[data-kommo-pull="${tourId}"]`);
+  if (el) el.innerHTML = '...';
+  try {
+    const lead = await kommoApi('get_lead', { id: tour.kommoLeadId });
+    const parsed = parseKommoLead(lead);
+    const updates = {};
+    const fieldsToPull = ['destino','duracao','dataTour','dataVenda','pessoas','guia','horario','hotel','valorUsd','cambio','valorBrl','formaPagamento','extensao','tipoTour','agencia','obs'];
+    for (const key of fieldsToPull) {
+      if (parsed[key] !== undefined && parsed[key] !== '') {
+        if (key === 'valorExtensaoUsd') updates.valorExtensao = parsed[key];
+        else updates[key] = parsed[key];
+      }
+    }
+    if (parsed.valorExtensaoUsd !== undefined && parsed.valorExtensaoUsd !== '') updates.valorExtensao = parsed.valorExtensaoUsd;
+    if (parsed.valorExtensaoBrl !== undefined && parsed.valorExtensaoBrl !== '') updates.valorExtensaoBrl = parsed.valorExtensaoBrl;
+    if (Object.keys(updates).length === 0) {
+      toast('Nenhum campo preenchido no Kommo para puxar.', false);
+      if (el) el.innerHTML = '&#8595;';
+      return;
+    }
+    await db.collection('tours').doc(tourId).update(updates);
+    Object.assign(tour, updates);
+    toast('Dados puxados do Kommo! ' + Object.keys(updates).length + ' campo(s) atualizado(s).');
+    renderTourTable();
+  } catch (e) {
+    toast('Erro ao puxar do Kommo: ' + e.message, false);
+    if (el) el.innerHTML = '&#8595;';
+  }
 }
 
 let kommoSyncingTourId = null;

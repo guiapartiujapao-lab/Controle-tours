@@ -42,6 +42,13 @@ module.exports = async (req, res) => {
         return res.json(await r.json());
       }
 
+      case 'get_lead': {
+        if (!data || !data.id) return res.status(400).json({ error: 'Missing lead id' });
+        const r = await fetch(`${baseUrl}/leads/${data.id}?with=contacts`, { headers });
+        if (!r.ok) return res.status(r.status).json({ error: `Kommo ${r.status}`, detail: await r.text() });
+        return res.json(await r.json());
+      }
+
       case 'get_pipelines': {
         const r = await fetch(`${baseUrl}/leads/pipelines`, { headers });
         if (!r.ok) return res.status(r.status).json({ error: `Kommo ${r.status}`, detail: await r.text() });
@@ -49,7 +56,7 @@ module.exports = async (req, res) => {
       }
 
       default:
-        return res.status(400).json({ error: 'Invalid action. Use: search, update, get_pipelines' });
+        return res.status(400).json({ error: 'Invalid action. Use: search, update, get_lead, get_pipelines' });
     }
   } catch (err) {
     return res.status(500).json({ error: err.message });
