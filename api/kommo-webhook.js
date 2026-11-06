@@ -69,19 +69,30 @@ module.exports = async (req, res) => {
 
   try {
     const body = req.body || {};
+    console.log('Webhook received:', JSON.stringify(body).substring(0, 2000));
 
-    // Kommo webhooks send leads[status][0][id] and leads[status][0][status_id]
+    // Kommo webhooks may send nested or flat form-encoded data
     const VENDA_EFETUADA_STATUS = 142;
     let leadId = null;
     let statusId = null;
+
+    // Try nested format: body.leads.status[0].id
     const leads = body.leads || {};
     if (leads.status && leads.status[0]) {
       leadId = leads.status[0].id;
       statusId = Number(leads.status[0].status_id);
     }
 
-    if (!leadId) return res.status(400).json({ error: 'No lead ID found in webhook' });
-    if (statusId !== VENDA_EFETUADA_STATUS) return res.json({ skipped: true, reason: 'Status is not VENDA EFETUADA' });
+    // Try flat form-encoded: body['leads[status][0][id]']
+    if (!leadId && body['leads[status][0][id]']) {
+      leadId = body['leads[status][0][id]'];
+      statusId = Number(body['leads[status][0][status_id]']);
+    }
+
+    console.log('Parsed leadId:', leadId, 'statusId:', statusId);
+
+    if (!leadId) return res.status(400).json({ error: 'No lead ID found in webhook', receivedKeys: Object.keys(body).slice(0, 20) });
+    if (statusId !== VENDA_EFETUADA_STATUS) return res.json({ skipped: true, reason: 'Status ' + statusId + ' is not VENDA EFETUADA (' + VENDA_EFETUADA_STATUS + ')' });
 
     const lead = await fetchLead(leadId, token);
     const fields = parseCustomFields(lead.custom_fields_values);
