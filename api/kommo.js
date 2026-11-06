@@ -1,0 +1,54 @@
+const SUBDOMAIN = 'contatopartiujapaocombr';
+
+module.exports = async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const token = process.env.KOMMO_ACCESS_TOKEN;
+  if (!token) return res.status(500).json({ error: 'KOMMO_ACCESS_TOKEN not configured' });
+
+  const baseUrl = `https://${SUBDOMAIN}.kommo.com/api/v4`;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+
+  const { action, data } = req.body || {};
+
+  try {
+    switch (action) {
+      case 'search': {
+        const query = encodeURIComponent((data && data.query) || '');
+        const r = await fetch(`${baseUrl}/leads?query=${query}&limit=10&with=contacts`, { headers });
+        if (!r.ok) return res.status(r.status).json({ error: `Kommo ${r.status}`, detail: await r.text() });
+        return res.json(await r.json());
+      }
+
+      case 'update': {
+        if (!data || !data.id) return res.status(400).json({ error: 'Missing lead id' });
+        const r = await fetch(`${baseUrl}/leads`, {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify([{ id: data.id, custom_fields_values: data.custom_fields_values }]),
+        });
+        if (!r.ok) return res.status(r.status).json({ error: `Kommo ${r.status}`, detail: await r.text() });
+        return res.json(await r.json());
+      }
+
+      case 'get_pipelines': {
+        const r = await fetch(`${baseUrl}/leads/pipelines`, { headers });
+        if (!r.ok) return res.status(r.status).json({ error: `Kommo ${r.status}`, detail: await r.text() });
+        return res.json(await r.json());
+      }
+
+      default:
+        return res.status(400).json({ error: 'Invalid action. Use: search, update, get_pipelines' });
+    }
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};
