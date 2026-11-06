@@ -55,6 +55,13 @@ module.exports = async (req, res) => {
         return res.json(await r.json());
       }
 
+      case 'get_field': {
+        if (!data || !data.id) return res.status(400).json({ error: 'Missing field id' });
+        const r = await fetch(`${baseUrl}/leads/custom_fields/${data.id}`, { headers });
+        if (!r.ok) return res.status(r.status).json({ error: `Kommo ${r.status}`, detail: await r.text() });
+        return res.json(await r.json());
+      }
+
       case 'subscribe_webhook': {
         if (!data || !data.destination) return res.status(400).json({ error: 'Missing destination URL' });
         const r = await fetch(`${baseUrl}/webhooks`, {
