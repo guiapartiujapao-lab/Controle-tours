@@ -70,17 +70,18 @@ module.exports = async (req, res) => {
   try {
     const body = req.body || {};
 
-    // Kommo webhooks send leads[status][0][id] or leads[add][0][id] or leads[update][0][id]
+    // Kommo webhooks send leads[status][0][id] and leads[status][0][status_id]
+    const VENDA_EFETUADA_STATUS = 142;
     let leadId = null;
+    let statusId = null;
     const leads = body.leads || {};
-    for (const action of ['status', 'update', 'add']) {
-      if (leads[action] && leads[action][0] && leads[action][0].id) {
-        leadId = leads[action][0].id;
-        break;
-      }
+    if (leads.status && leads.status[0]) {
+      leadId = leads.status[0].id;
+      statusId = Number(leads.status[0].status_id);
     }
 
     if (!leadId) return res.status(400).json({ error: 'No lead ID found in webhook' });
+    if (statusId !== VENDA_EFETUADA_STATUS) return res.json({ skipped: true, reason: 'Status is not VENDA EFETUADA' });
 
     const lead = await fetchLead(leadId, token);
     const fields = parseCustomFields(lead.custom_fields_values);
