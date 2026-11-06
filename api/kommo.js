@@ -24,8 +24,11 @@ module.exports = async (req, res) => {
       case 'search': {
         const query = encodeURIComponent((data && data.query) || '');
         const r = await fetch(`${baseUrl}/leads?query=${query}&limit=10&with=contacts`, { headers });
+        if (r.status === 204) return res.json({ _embedded: { leads: [] } });
         if (!r.ok) return res.status(r.status).json({ error: `Kommo ${r.status}`, detail: await r.text() });
-        return res.json(await r.json());
+        const text = await r.text();
+        if (!text) return res.json({ _embedded: { leads: [] } });
+        return res.json(JSON.parse(text));
       }
 
       case 'update': {
