@@ -62,6 +62,17 @@ module.exports = async (req, res) => {
         return res.json(await r.json());
       }
 
+      case 'create_fields': {
+        if (!data || !data.fields) return res.status(400).json({ error: 'Missing fields array' });
+        const r = await fetch(`${baseUrl}/leads/custom_fields`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(data.fields),
+        });
+        if (!r.ok) return res.status(r.status).json({ error: `Kommo ${r.status}`, detail: await r.text() });
+        return res.json(await r.json());
+      }
+
       case 'update_field': {
         if (!data || !data.id) return res.status(400).json({ error: 'Missing field id' });
         const r = await fetch(`${baseUrl}/leads/custom_fields/${data.id}`, {
