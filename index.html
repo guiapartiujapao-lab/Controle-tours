@@ -3151,7 +3151,8 @@ function renderCS() {
   const clientMap = {};
   allTours.forEach(t => {
     const nome = (t.cliente||'').toUpperCase().trim();
-    if (!nome || t.tipoTour === 'AGENCIA') return;
+    // Tour cancelado não gera tarefa nem card no CS.
+    if (!nome || t.tipoTour === 'AGENCIA' || t.status === 'CANCELADO') return;
     if (!clientMap[nome]) clientMap[nome] = { tours: [], telefone: '', totalUsd: 0, totalBrl: 0, sinal: 0, confirmacao: 0 };
     clientMap[nome].tours.push(t);
     if (t.telefone && !clientMap[nome].telefone) clientMap[nome].telefone = t.telefone;
