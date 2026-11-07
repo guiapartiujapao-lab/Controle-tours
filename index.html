@@ -3218,6 +3218,24 @@ function openCsDetail(nome) {
   });
   html += `</tbody></table>`;
 
+  const firstName = nome.split(' ')[0];
+  const firstNameCap = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+  html += `<div class="cs-section-title" style="cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">📋 Templates de Mensagem <span style="font-size:0.7rem;color:var(--ink-muted)">(clique para expandir)</span></div>`;
+  html += `<div class="cs-templates" style="display:none;margin-bottom:1rem">`;
+  const templates = [
+    { label: 'Boas-vindas ao Grupo', text: `Olá, pessoal! Tudo bem? 😊🇯🇵\n\nSejam muito bem-vindos ao grupo oficial do tour da Partiu Japão! ❤️\n\nCriamos este grupo para facilitar nossa comunicação e alinhar todos os detalhes do passeio, garantindo que vocês tenham uma experiência tranquila, organizada e inesquecível!\n\nPor aqui, vamos compartilhar informações importantes sobre o tour, como horário de encontro, ponto de partida, recomendações e orientações gerais.\n\nMais próximo da data, também apresentaremos o guia responsável por acompanhar vocês nessa experiência!\n\nEstamos muito felizes em fazer parte dessa viagem e seguimos à disposição para qualquer dúvida! 🥰🇯🇵\n\nEquipe Partiu Japão ❤️` },
+  ];
+  templates.forEach((tpl, i) => {
+    html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">`;
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">`;
+    html += `<span style="font-weight:600;font-size:0.8rem">${tpl.label}</span>`;
+    html += `<button class="btn btn-primary btn-sm cs-copy-tpl" data-tpl-idx="${i}" style="font-size:0.72rem;padding:3px 10px">Copiar</button>`;
+    html += `</div>`;
+    html += `<div style="font-size:0.78rem;color:var(--ink-soft);white-space:pre-wrap;max-height:120px;overflow-y:auto;line-height:1.4">${tpl.text}</div>`;
+    html += `</div>`;
+  });
+  html += `</div>`;
+
   CS_STAGES.forEach(stg => {
     const stageTasks = tasks.filter(t => {
       const m = {OPORTUNIDADE:1,GRUPO_WHATSAPP:1,COBRANCA:2,APRESENTACAO:3,FEEDBACK:4,AVALIACAO:5}[t.tipo];
@@ -3301,6 +3319,15 @@ document.getElementById('p-cs').addEventListener('click', async (e) => {
 });
 document.getElementById('csDetailOverlay').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) closeCsDetail();
+  if (e.target.classList.contains('cs-copy-tpl')) {
+    const tplEl = e.target.closest('div').nextElementSibling;
+    if (tplEl) {
+      navigator.clipboard.writeText(tplEl.textContent).then(() => {
+        e.target.textContent = 'Copiado!';
+        setTimeout(() => { e.target.textContent = 'Copiar'; }, 1500);
+      });
+    }
+  }
 });
 
 document.getElementById('p-cs').addEventListener('change', async (e) => {
