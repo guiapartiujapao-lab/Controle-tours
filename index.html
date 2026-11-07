@@ -3201,6 +3201,13 @@ function renderCS() {
     stageBuckets[stage].push({ nome, c, isPacote, dLeft, nextTask });
   });
 
+  // Prioridade: mais atrasado no topo, depois hoje e os mais próximos; sem tarefa pendente vai para o fim.
+  Object.values(stageBuckets).forEach(lista => lista.sort((a, b) => {
+    const da = a.dLeft === null ? Infinity : a.dLeft;
+    const db_ = b.dLeft === null ? Infinity : b.dLeft;
+    return da - db_ || a.nome.localeCompare(b.nome);
+  }));
+
   let html = '';
   CS_STAGES.forEach(stg => {
     const clients = stageBuckets[stg.id];
