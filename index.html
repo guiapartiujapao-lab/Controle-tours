@@ -1800,7 +1800,7 @@ function renderCsPagamentos(tours) {
 
   const clientes = {};
   tours.filter(t => t.status !== 'CANCELADO' && t.cliente).forEach(t => {
-    const nome = t.cliente.trim();
+    const nome = t.cliente.toUpperCase().trim();
     (clientes[nome] = clientes[nome] || []).push(t);
   });
   const colunas = { sinal: [], pago: [] };
@@ -3239,6 +3239,7 @@ function renderCS() {
 }
 
 function openCsDetail(nome) {
+  nome = (nome || '').toUpperCase().trim();
   const cached = csClientCache[nome];
   if (!cached) return;
   const {c, tasks, stage, isPacote} = cached;
@@ -3286,9 +3287,16 @@ function openCsDetail(nome) {
 
   const toursSorted = [...c.tours].sort((a,b) => (a.dataTour||'').localeCompare(b.dataTour||''));
   html += `<div class="cs-section-title">Tours</div>`;
-  html += `<table class="cs-tours-mini"><thead><tr><th>Destino</th><th>Data</th><th>Guia</th><th>Status</th><th>Pessoas</th></tr></thead><tbody>`;
+  html += `<table class="cs-tours-mini"><thead><tr><th>Destino</th><th>Data</th><th>Guia</th><th>Status</th><th>Pessoas</th><th>Pagamento 80%</th></tr></thead><tbody>`;
   toursSorted.forEach(t => {
-    html += `<tr><td>${t.destino||'-'}</td><td>${fmtDate(t.dataTour)}</td><td>${t.guia||'-'}</td><td>${t.status||'-'}</td><td>${t.pessoas||0}</td></tr>`;
+    let pag = '-';
+    if (t.status !== 'CANCELADO') {
+      const anexo = t.comprovanteConf ? `<span data-csconfver="${t.id}" title="Ver comprovante" style="cursor:pointer;margin-left:4px">📎</span>` : `<span data-csconfanexo="${t.id}" style="cursor:pointer;color:var(--blue);font-size:0.7rem;margin-left:6px;text-decoration:underline">anexar</span>`;
+      pag = t.restantePago === 'SIM'
+        ? `<span class="tag tag-green">CONFIRMADO</span>${anexo}<span data-csconf="${t.id}" data-novo="NAO" style="cursor:pointer;color:var(--ink-muted);font-size:0.7rem;margin-left:6px;text-decoration:underline">desfazer</span>`
+        : `<button class="btn btn-primary btn-sm" data-csconf="${t.id}" data-novo="SIM" style="font-size:0.7rem;padding:2px 8px">Confirmar${t.restante80 ? ' ' + fmtBrl(t.restante80) : ''}</button>${anexo}`;
+    }
+    html += `<tr><td>${t.destino||'-'}</td><td>${fmtDate(t.dataTour)}</td><td>${t.guia||'-'}</td><td>${t.status||'-'}</td><td>${t.pessoas||0}</td><td style="white-space:nowrap">${pag}</td></tr>`;
   });
   html += `</tbody></table>`;
 
@@ -3359,6 +3367,37 @@ document.getElementById('csKanban').addEventListener('click', (e) => {
 });
 
 document.getElementById('csDetailClose').addEventListener('click', closeCsDetail);
+
+// Confirmação dos 80% feita pelo CS: atualiza o mesmo tour que o painel principal lê.
+document.getElementById('csDetailOverlay').addEventListener('click', async (e) => {
+  const ver = e.target.closest('[data-csconfver]');
+  if (ver) { const t = allTours.find(x => x.id === ver.dataset.csconfver); if (t) verComprovante(t.comprovanteConf, t.comprovanteConfNome); return; }
+  const anexar = e.target.closest('[data-csconfanexo]');
+  if (anexar) { uploadComprovante(anexar.dataset.csconfanexo, 'conf'); return; }
+  const btn = e.target.closest('[data-csconf]');
+  if (!btn) return;
+  const t = allTours.find(x => x.id === btn.dataset.csconf);
+  if (!t) return;
+  const novo = btn.dataset.novo;
+  const pergunta = novo === 'SIM'
+    ? `Confirmar o pagamento dos 80% de ${t.cliente} (${t.destino || ''} em ${fmtDate(t.dataTour)})?`
+    : `Desfazer a confirmação de ${t.cliente} (${t.destino || ''} em ${fmtDate(t.dataTour)})?`;
+  if (!confirm(pergunta)) return;
+  const dados = { restantePago: novo, status: novo === 'SIM' ? 'CONFIRMADO' : 'PENDENTE' };
+  if (novo === 'SIM') { dados.confirmadoPor = loggedUser || 'desconhecido'; dados.confirmadoEm = new Date().toISOString().slice(0, 10); }
+  try {
+    btn.style.pointerEvents = 'none';
+    await db.collection('tours').doc(t.id).update(dados);
+    Object.assign(t, dados);
+    toast(novo === 'SIM' ? 'Pagamento CONFIRMADO' : 'Confirmação desfeita', true);
+    renderCS();
+    renderTourTable();
+    openCsDetail(t.cliente);
+  } catch (err) {
+    btn.style.pointerEvents = '';
+    toast('Erro ao salvar: ' + err.message, false);
+  }
+});
 
 document.getElementById('p-cs').addEventListener('change', async (e) => {
   if (e.target.id === 'csRoteiroSelect') {
