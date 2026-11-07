@@ -3246,6 +3246,66 @@ function renderCS() {
     <div class="cs-daily-counter" style="border-left-color:#3b82f6"><div class="cs-dc-icon">📋</div><div class="cs-dc-num" style="color:#3b82f6">${dcApresentacao}</div><div class="cs-dc-label">Apresentacao Hoje</div></div>`;
 }
 
+// Descrição do grupo de WhatsApp, montada com os tours ativos do cliente.
+// As observações do cadastro misturam informação interna: só vai para o cliente o que não fala de dinheiro.
+const CS_DESTINO_TXT = {'TOKYO TP':'Tokyo (transporte público)','TOKYO CARRO':'Tokyo (carro privativo)','MT FUJI':'Monte Fuji (carro privativo)','HAKONE':'Hakone (carro privativo)','KAMAKURA':'Kamakura (carro privativo)','NIKKO':'Nikko','OSAKA':'Osaka','KYOTO':'Kyoto','NARA':'Nara','KOBE':'Kobe','HIROSHIMA':'Hiroshima + Miyajima','TOUR GASTRONOMICO':'Tour gastronômico','PERSONALIZADO':'Tour personalizado'};
+// Nome da extensão só com o código (EXT GOT...), para não confundir com hotel em Gotemba.
+const CS_EXTENSOES = [[/\bEXT\.?\s*GOT/i, 'Gotemba Outlets'], [/\bEXT\.?\s*FUJI[\s-]?Q/i, 'Fuji-Q Highland'], [/\bEXT\.?\s*SUL\b|FUJI\s*\+\s*SUL/i, 'lado sul do Fuji']];
+const CS_LUGARES = ['Tokyo','Fuji','Hakone','Gotemba','Kamakura','Yokohama','Kyoto','Osaka','Nara','Kobe','Hiroshima','Miyajima','Nikko','Shinjuku','Shibuya','Asakusa','Ginza'];
+function csFrase(txt) {
+  let s = txt.toLowerCase().replace(/\s+/g, ' ').trim();
+  CS_LUGARES.forEach(l => { s = s.replace(new RegExp('\\b' + l.toLowerCase() + '\\b', 'g'), l); });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function csLerObs(obs) {
+  const res = { criancas: null, extensao: null, notas: [] };
+  if (!obs) return res;
+  const m = obs.match(/(\d+)\s*X?\s*CRIAN[ÇC]AS?(?:\s*DE\s*([\d\s,E]+?)\s*ANOS?)?/i);
+  if (m) res.criancas = { qtd: parseInt(m[1], 10), idades: m[2] ? (m[2].match(/\d+/g) || []) : [] };
+  if (/\bEXT/i.test(obs)) res.extensao = true;
+  for (const [re, nome] of CS_EXTENSOES) if (re.test(obs)) { res.extensao = nome; break; }
+  const dinheiro = /R\$|US\$|USD|EURO|D[OÓ]LAR|VALOR|PAG|COBRAD|\d{3,}|\bEXT\b|EXTENS[AÃ]O|ANEXAD|PIX|CART[AÃ]O|^RIYO$/i;
+  obs.split(/\s+-\s+|[.;\n]+/).map(x => x.trim()).filter(Boolean).forEach(parte => {
+    if (/CRIAN[ÇC]/i.test(parte) || /^\d{1,2}:\d{2}/.test(parte) || dinheiro.test(parte)) return;
+    res.notas.push(csFrase(parte));
+  });
+  return res;
+}
+function csDescricaoGrupo(nome, tours) {
+  const ativos = tours.filter(t => t.status !== 'CANCELADO').sort((a, b) => (a.dataTour || '').localeCompare(b.dataTour || ''));
+  const semana = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const pessoas = Math.max(0, ...ativos.map(t => t.pessoas || 0));
+  let criancas = null;
+  const linhas = [];
+  const notas = [];
+  ativos.forEach(t => {
+    const o = csLerObs(t.obs);
+    if (o.criancas && (!criancas || o.criancas.qtd > criancas.qtd || o.criancas.idades.length > criancas.idades.length)) criancas = o.criancas;
+    const d = t.dataTour ? new Date(t.dataTour + 'T12:00:00') : null;
+    const data = d ? `${semana[d.getDay()]}, ${fmtDate(t.dataTour)}` : 'Data a confirmar';
+    const temExt = t.extensao === 'SIM' || !!o.extensao;
+    const ext = temExt ? ` + extensão${typeof o.extensao === 'string' ? ' (' + o.extensao + ')' : ''}` : '';
+    linhas.push(`• ${data} · ${CS_DESTINO_TXT[t.destino] || csFrase(t.destino || 'Tour')} · ${t.duracao || '-'}${ext}`);
+    if (t.horario) linhas.push(`   🕘 Início: ${t.horario}`);
+    if (t.hotel) linhas.push(`   🏨 Encontro: ${t.hotel}`);
+    o.notas.forEach(n => { if (!notas.includes(n)) notas.push(n); });
+  });
+  let txtCriancas = 'não informado';
+  if (criancas) {
+    const id = criancas.idades;
+    const idades = id.length ? ` (${id.length > 1 ? id.slice(0, -1).join(', ') + ' e ' + id[id.length - 1] : id[0]} ${id.length === 1 && id[0] === '1' ? 'ano' : 'anos'})` : '';
+    txtCriancas = `${criancas.qtd}${idades}`;
+  }
+  const nomeBonito = nome.toLowerCase().replace(/(^|\s)\S/g, x => x.toUpperCase());
+  let s = `🇯🇵 Tour Partiu Japão · ${nomeBonito}\n\n`;
+  s += `👥 ${pessoas} pessoa${pessoas === 1 ? '' : 's'}\n👶 Crianças: ${txtCriancas}\n\n`;
+  s += `📅 Tours de vocês\n${linhas.join('\n')}\n`;
+  if (!ativos.some(t => t.horario) || !ativos.some(t => t.hotel)) s += `\n🕘 Horário e ponto de encontro: a confirmar\n`;
+  if (notas.length) s += `\n📝 Observações\n${notas.map(n => '• ' + n).join('\n')}\n`;
+  s += `\nQualquer dúvida, é só chamar aqui no grupo! ❤️\nEquipe Partiu Japão`;
+  return s;
+}
+
 function openCsDetail(nome) {
   nome = (nome || '').toUpperCase().trim();
   const cached = csClientCache[nome];
@@ -3317,6 +3377,7 @@ function openCsDetail(nome) {
   const saldoTxt = saldo80 ? fmtBrl(saldo80) : '[Valor]';
   const templates = [
     { etapa: 1, label: 'Boas-vindas ao Grupo', text: `Olá, pessoal! Tudo bem? 😊🇯🇵\n\nSejam muito bem-vindos ao grupo oficial do tour da Partiu Japão! ❤️\n\nCriamos este grupo para facilitar nossa comunicação e alinhar todos os detalhes do passeio, garantindo que vocês tenham uma experiência tranquila, organizada e inesquecível!\n\nPor aqui, vamos compartilhar informações importantes sobre o tour, como horário de encontro, ponto de partida, recomendações e orientações gerais.\n\nMais próximo da data, também apresentaremos o guia responsável por acompanhar vocês nessa experiência!\n\nEstamos muito felizes em fazer parte dessa viagem e seguimos à disposição para qualquer dúvida! 🥰🇯🇵\n\nEquipe Partiu Japão ❤️` },
+    { etapa: 1, label: 'Descrição do grupo', text: csDescricaoGrupo(nome, c.tours) },
     { etapa: 2, label: 'Cobrança dos 80% (7 dias antes)', text: `Olá, ${firstNameCap}! Tudo bem? 😊❤️\n\nMe chamo ${atendente} e faço parte do Time de Experiência da Partiu Japão! 🇯🇵\n\nSeu tour está chegando e estou passando para lembrar sobre o pagamento dos 80% restantes, conforme combinado na reserva.\n\n💰 Valor restante para confirmação do tour: ${saldoTxt}\n\nGostaria de confirmar com você a forma de pagamento. Caso prefira realizar via Pix, nossa chave é:\n\n🔑 CNPJ: 54.027.741/0001-95\n\nAssim que realizar o pagamento, pode me enviar o comprovante por aqui? ❤️` },
     { etapa: 3, label: 'Onboarding (3 dias antes)', text: `Olá, ${firstNameCap}! Tudo bem? 😊🇯🇵\n\nMe chamo ${atendente} e faço parte da equipe de experiência da Partiu Japão! ❤️\n\nPrimeiramente, queremos agradecer pela confiança em nossa equipe! Vai ser um prazer fazer parte dessa experiência tão especial no Japão! 🇯🇵✨\n\nA partir de agora, vou acompanhar vocês em toda a preparação para o tour, auxiliando com informações, orientações e tudo o que for necessário para que tenham uma experiência tranquila e inesquecível.\n\nPara que vocês saibam exatamente como tudo vai funcionar, vou enviar um PDF explicando o passo a passo do nosso acompanhamento, desde a criação do grupo com os guias até os últimos alinhamentos antes do passeio.` },
     { etapa: 4, label: 'Feedback pós-tour', text: `Olá, ${firstNameCap}! Tudo bem? 😊\n\nMe chamo ${atendente} e faço parte do Time de Experiência da Partiu Japão! 🇯🇵\n\nEstou passando para saber como foi a experiência de vocês no tour! ❤️\n\nMe conta, o que acharam do passeio e do nosso guia? Foi tudo como esperavam? 🥰` },
