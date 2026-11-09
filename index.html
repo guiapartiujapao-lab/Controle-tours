@@ -1272,11 +1272,24 @@ document.getElementById('btnSalvar').addEventListener('click', async () => {
     }
   }
   try {
-    if (editingId) { await db.collection('tours').doc(editingId).set(data); toast('Tour atualizado!'); }
+    if (editingId) {
+      await db.collection('tours').doc(editingId).set(data);
+      const csKey = csTaskKey((data.cliente||'').toUpperCase().trim(), 'COBRANCA', editingId);
+      if (data.restantePago === 'SIM') {
+        await db.collection('csTasks').doc(csKey).set({ cliente: (data.cliente||'').toUpperCase().trim(), tipo: 'COBRANCA', tourId: editingId, concluido: true, concluidoEm: firebase.firestore.FieldValue.serverTimestamp(), concluidoPor: loggedUser || 'vendedor' });
+      } else {
+        await db.collection('csTasks').doc(csKey).delete().catch(() => {});
+      }
+      toast('Tour atualizado!');
+    }
     else {
       data.criadoPor = loggedUser || 'desconhecido';
       data.criadoEm = new Date().toISOString().slice(0, 10);
-      await db.collection('tours').add(data);
+      const ref = await db.collection('tours').add(data);
+      if (data.restantePago === 'SIM') {
+        const csKey = csTaskKey((data.cliente||'').toUpperCase().trim(), 'COBRANCA', ref.id);
+        await db.collection('csTasks').doc(csKey).set({ cliente: (data.cliente||'').toUpperCase().trim(), tipo: 'COBRANCA', tourId: ref.id, concluido: true, concluidoEm: firebase.firestore.FieldValue.serverTimestamp(), concluidoPor: loggedUser || 'vendedor' });
+      }
       enviarPlanilha(data);
       toast('Tour salvo!');
     }
