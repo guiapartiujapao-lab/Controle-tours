@@ -1642,7 +1642,13 @@ function showTourDetail(t) {
     if (btnConf) btnConf.addEventListener('click', async () => {
       const novo = t.restantePago === 'SIM' ? 'NAO' : 'SIM';
       const novoStatus = novo === 'SIM' ? 'CONFIRMADO' : 'PENDENTE';
-      await db.collection('tours').doc(t.id).update({ restantePago: novo, status: novoStatus });
+      await db.collection('tours').doc(t.id).update({ restantePago: novo, status: novoStatus, ...(novo === 'SIM' ? { confirmadoPor: loggedUser || 'desconhecido', confirmadoEm: new Date().toISOString().slice(0,10) } : {}) });
+      const csKey = csTaskKey((t.cliente||'').toUpperCase().trim(), 'COBRANCA', t.id);
+      if (novo === 'SIM') {
+        await db.collection('csTasks').doc(csKey).set({ cliente: (t.cliente||'').toUpperCase().trim(), tipo: 'COBRANCA', tourId: t.id, concluido: true, concluidoEm: firebase.firestore.FieldValue.serverTimestamp(), concluidoPor: loggedUser });
+      } else {
+        await db.collection('csTasks').doc(csKey).delete().catch(() => {});
+      }
       document.getElementById('modalDetail').classList.remove('open');
       toast(novo === 'SIM' ? 'Pagamento CONFIRMADO' : 'Pagamento marcado NAO CONFIRMADO', true);
     });
@@ -3458,6 +3464,12 @@ document.getElementById('csDetailOverlay').addEventListener('click', async (e) =
     btn.style.pointerEvents = 'none';
     await db.collection('tours').doc(t.id).update(dados);
     Object.assign(t, dados);
+    const csKey = csTaskKey((t.cliente||'').toUpperCase().trim(), 'COBRANCA', t.id);
+    if (novo === 'SIM') {
+      await db.collection('csTasks').doc(csKey).set({ cliente: (t.cliente||'').toUpperCase().trim(), tipo: 'COBRANCA', tourId: t.id, concluido: true, concluidoEm: firebase.firestore.FieldValue.serverTimestamp(), concluidoPor: loggedUser });
+    } else {
+      await db.collection('csTasks').doc(csKey).delete().catch(() => {});
+    }
     toast(novo === 'SIM' ? 'Pagamento CONFIRMADO' : 'Confirmação desfeita', true);
     renderCS();
     renderTourTable();
@@ -3537,9 +3549,16 @@ document.getElementById('p-cs').addEventListener('change', async (e) => {
         concluidoEm: firebase.firestore.FieldValue.serverTimestamp(),
         concluidoPor: loggedUser
       });
+      if (tipo === 'COBRANCA' && tourId) {
+        await db.collection('tours').doc(tourId).update({ restantePago: 'SIM', status: 'CONFIRMADO', confirmadoPor: loggedUser || 'cs', confirmadoEm: new Date().toISOString().slice(0,10) });
+      }
     } else {
       await db.collection('csTasks').doc(key).delete();
+      if (tipo === 'COBRANCA' && tourId) {
+        await db.collection('tours').doc(tourId).update({ restantePago: 'NAO', status: 'PENDENTE' });
+      }
     }
+    if (tipo === 'COBRANCA') { renderTourTable(); renderCS(); openCsDetail(cliente); }
   } catch(err) {
     console.error('CS task error', err);
     toast('Erro ao salvar tarefa CS', false);
