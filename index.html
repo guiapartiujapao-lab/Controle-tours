@@ -1600,9 +1600,10 @@ function showTourDetail(t) {
   let body = `<b>Cliente:</b> ${t.cliente||'-'}`;
   if (t.telefone) body += `<br><b>Telefone:</b> ${t.telefone}`;
   body += `<br><b>Destino:</b> ${t.destino||'-'}<br><b>Duracao:</b> ${dur}<br><b>Extensao:</b> ${ext}<br><b>Pessoas:</b> ${pess}<br><b>Data:</b> ${fmtDate(t.dataTour)}<br><b>Status:</b> ${t.status||'-'}`;
-  if (!loggedGuiaNome && t.guia === 'A DEFINIR') {
-    const opts = GUIAS.filter(g => g !== 'A DEFINIR').map(g => `<option value="${g}">${g}</option>`).join('');
-    body += `<br><b>Guia:</b> <select id="selGuiaDetail" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:0.85rem"><option value="A DEFINIR">A DEFINIR</option>${opts}</select>`;
+  const canChangeGuia = !loggedGuiaNome && (loggedRole === 'admin' || loggedRole === 'vendedor');
+  if (canChangeGuia) {
+    const opts = GUIAS.filter(g => g !== 'A DEFINIR').map(g => `<option value="${g}"${g === t.guia ? ' selected' : ''}>${g}</option>`).join('');
+    body += `<br><b>Guia:</b> <select id="selGuiaDetail" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:0.85rem"><option value="A DEFINIR"${t.guia === 'A DEFINIR' ? ' selected' : ''}>A DEFINIR</option>${opts}</select>`;
     body += `<button id="btnSalvarGuia" style="margin-left:8px;padding:4px 12px;border-radius:4px;border:none;background:var(--accent);color:#fff;font-size:0.8rem;cursor:pointer">Salvar Guia</button>`;
   } else {
     body += `<br><b>Guia:</b> ${t.guia||'-'}`;
@@ -1678,10 +1679,10 @@ function showTourDetail(t) {
     const buc = document.getElementById('btnUpConf');
     if (buc) buc.addEventListener('click', () => uploadComprovante(t.id, 'conf'));
   }
-  if (!loggedGuiaNome && t.guia === 'A DEFINIR') {
+  if (canChangeGuia) {
     document.getElementById('btnSalvarGuia').addEventListener('click', async () => {
       const novoGuia = document.getElementById('selGuiaDetail').value;
-      if (novoGuia === 'A DEFINIR') return;
+      if (novoGuia === t.guia) { document.getElementById('modalDetail').classList.remove('open'); return; }
       const isSocio = SOCIOS.includes(novoGuia);
       const liq = (t.valorBrl||0) - (t.despesaGuia||0);
       await db.collection('tours').doc(t.id).update({
@@ -1691,6 +1692,7 @@ function showTourDetail(t) {
         parteMT: isSocio ? liq * 0.8 : liq * 0.5
       });
       document.getElementById('modalDetail').classList.remove('open');
+      toast('Guia atualizado para ' + novoGuia);
     });
   }
   document.getElementById('modalDetail').classList.add('open');
