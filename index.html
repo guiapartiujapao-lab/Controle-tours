@@ -401,6 +401,7 @@ body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
         <div class="form-group grp-direto"><label>Extensao</label><select id="f-extensao"><option value="NAO">NAO</option><option value="SIM">SIM</option></select></div>
         <div class="form-group grp-direto" id="grpValorExtensao" style="display:none"><label>Valor Extensao (USD)</label><input type="number" id="f-valorExtensao" step="0.01" placeholder="0.00"></div>
         <div class="form-group grp-direto" id="grpValorExtensaoBrl" style="display:none"><label>Valor Extensao (BRL)</label><input type="number" id="f-valorExtensaoBrl" step="0.01" placeholder="0.00"></div>
+        <div class="form-group grp-direto" id="grpComprovanteExt" style="display:none"><label>Comprovante Extensao</label><div style="display:flex;align-items:center;gap:8px"><button type="button" id="btnUpExtForm" style="padding:4px 12px;border-radius:4px;border:1px dashed var(--blue);background:transparent;color:var(--blue);font-size:0.78rem;cursor:pointer">Anexar Comprovante</button><span id="extFormNome" style="font-size:0.75rem;color:var(--green);display:none"></span><button type="button" id="btnRemExtForm" style="padding:3px 8px;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:0.72rem;cursor:pointer;display:none">X</button></div></div>
         <div class="form-group"><label>Guia</label><select id="f-guia"><option value="">Selecione</option></select></div>
         <div class="form-group"><label>Data do Tour</label><input type="date" id="f-dataTour"></div>
         <div class="form-group"><label>Pessoas</label><input type="number" id="f-pessoas" min="1" max="50" placeholder="0"></div>
@@ -917,8 +918,8 @@ function uploadComprovante(tourId, tipo) {
       const reader = new FileReader();
       reader.onload = async () => {
         const base64 = reader.result;
-        const campo = tipo === 'sinal' ? 'comprovanteSinal' : 'comprovanteConf';
-        const campoNome = tipo === 'sinal' ? 'comprovanteSinalNome' : 'comprovanteConfNome';
+        const campo = tipo === 'sinal' ? 'comprovanteSinal' : tipo === 'ext' ? 'comprovanteExt' : 'comprovanteConf';
+        const campoNome = tipo === 'sinal' ? 'comprovanteSinalNome' : tipo === 'ext' ? 'comprovanteExtNome' : 'comprovanteConfNome';
         await db.collection('tours').doc(tourId).update({ [campo]: base64, [campoNome]: file.name });
         toast('Comprovante anexado!', true);
       };
@@ -943,8 +944,8 @@ function verComprovante(dataUrl, nome) {
 
 function removerComprovante(tourId, tipo) {
   if (!confirm('Remover comprovante?')) return;
-  const campo = tipo === 'sinal' ? 'comprovanteSinal' : 'comprovanteConf';
-  const campoNome = tipo === 'sinal' ? 'comprovanteSinalNome' : 'comprovanteConfNome';
+  const campo = tipo === 'sinal' ? 'comprovanteSinal' : tipo === 'ext' ? 'comprovanteExt' : 'comprovanteConf';
+  const campoNome = tipo === 'sinal' ? 'comprovanteSinalNome' : tipo === 'ext' ? 'comprovanteExtNome' : 'comprovanteConfNome';
   db.collection('tours').doc(tourId).update({ [campo]: firebase.firestore.FieldValue.delete(), [campoNome]: firebase.firestore.FieldValue.delete() }).then(() => toast('Comprovante removido', true));
 }
 
@@ -959,6 +960,7 @@ let brlManual = false, sinalManual = false, restanteManual = false;
 let tipoTourAtual = 'DIRETO';
 let comprovanteSinalTemp = null, comprovanteSinalNomeTemp = null;
 let comprovanteConfTemp = null, comprovanteConfNomeTemp = null;
+let comprovanteExtTemp = null, comprovanteExtNomeTemp = null;
 let comprovanteAgenciaTemp = null, comprovanteAgenciaNomeTemp = null;
 
 function setTipoTour(tipo) {
@@ -1028,6 +1030,32 @@ document.getElementById('btnRemConfForm').addEventListener('click', () => {
   document.getElementById('confFormNome').style.display = 'none';
   document.getElementById('btnRemConfForm').style.display = 'none';
 });
+document.getElementById('btnUpExtForm').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*,application/pdf';
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 800 * 1024) { toast('Arquivo muito grande (max 800KB). Tente uma foto menor.', false); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      comprovanteExtTemp = reader.result;
+      comprovanteExtNomeTemp = file.name;
+      document.getElementById('extFormNome').textContent = file.name;
+      document.getElementById('extFormNome').style.display = '';
+      document.getElementById('btnRemExtForm').style.display = '';
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+});
+document.getElementById('btnRemExtForm').addEventListener('click', () => {
+  comprovanteExtTemp = null;
+  comprovanteExtNomeTemp = null;
+  document.getElementById('extFormNome').style.display = 'none';
+  document.getElementById('btnRemExtForm').style.display = 'none';
+});
 document.getElementById('btnUpAgenciaForm').addEventListener('click', () => {
   const input = document.createElement('input');
   input.type = 'file';
@@ -1059,7 +1087,8 @@ document.getElementById('f-extensao').addEventListener('change', () => {
   const show = document.getElementById('f-extensao').value === 'SIM';
   document.getElementById('grpValorExtensao').style.display = show ? '' : 'none';
   document.getElementById('grpValorExtensaoBrl').style.display = show ? '' : 'none';
-  if (!show) { document.getElementById('f-valorExtensao').value = ''; document.getElementById('f-valorExtensaoBrl').value = ''; }
+  document.getElementById('grpComprovanteExt').style.display = show ? '' : 'none';
+  if (!show) { document.getElementById('f-valorExtensao').value = ''; document.getElementById('f-valorExtensaoBrl').value = ''; comprovanteExtTemp = null; comprovanteExtNomeTemp = null; document.getElementById('extFormNome').style.display = 'none'; document.getElementById('btnRemExtForm').style.display = 'none'; }
   recalcForm();
 });
 document.getElementById('f-valorExtensao').addEventListener('input', recalcForm);
@@ -1111,6 +1140,7 @@ function clearForm() {
   document.getElementById('f-valorExtensaoBrl').value = '';
   document.getElementById('grpValorExtensao').style.display = 'none';
   document.getElementById('grpValorExtensaoBrl').style.display = 'none';
+  document.getElementById('grpComprovanteExt').style.display = 'none';
   document.getElementById('f-status').value = 'CONFIRMADO';
   document.getElementById('f-estorno').value = 'NAO';
   document.getElementById('grpEstorno').style.display = 'none';
@@ -1118,11 +1148,14 @@ function clearForm() {
   brlManual = false; sinalManual = false; restanteManual = false;
   comprovanteSinalTemp = null; comprovanteSinalNomeTemp = null;
   comprovanteConfTemp = null; comprovanteConfNomeTemp = null;
+  comprovanteExtTemp = null; comprovanteExtNomeTemp = null;
   comprovanteAgenciaTemp = null; comprovanteAgenciaNomeTemp = null;
   document.getElementById('sinalFormNome').style.display = 'none';
   document.getElementById('btnRemSinalForm').style.display = 'none';
   document.getElementById('confFormNome').style.display = 'none';
   document.getElementById('btnRemConfForm').style.display = 'none';
+  document.getElementById('extFormNome').style.display = 'none';
+  document.getElementById('btnRemExtForm').style.display = 'none';
   document.getElementById('agenciaFormNome').style.display = 'none';
   document.getElementById('btnRemAgenciaForm').style.display = 'none';
   editingId = null;
@@ -1188,6 +1221,10 @@ function getFormData() {
       data.comprovanteConf = comprovanteConfTemp;
       data.comprovanteConfNome = comprovanteConfNomeTemp;
     }
+    if (comprovanteExtTemp) {
+      data.comprovanteExt = comprovanteExtTemp;
+      data.comprovanteExtNome = comprovanteExtNomeTemp;
+    }
   }
   return data;
 }
@@ -1245,6 +1282,14 @@ function fillForm(t) {
       document.getElementById('confFormNome').style.display = '';
       document.getElementById('btnRemConfForm').style.display = '';
     }
+    if (t.comprovanteExt) {
+      comprovanteExtTemp = t.comprovanteExt;
+      comprovanteExtNomeTemp = t.comprovanteExtNome || 'comprovante';
+      document.getElementById('extFormNome').textContent = comprovanteExtNomeTemp;
+      document.getElementById('extFormNome').style.display = '';
+      document.getElementById('btnRemExtForm').style.display = '';
+    }
+    document.getElementById('grpComprovanteExt').style.display = (t.extensao === 'SIM') ? '' : 'none';
   }
   brlManual = true; sinalManual = true; restanteManual = true;
   document.getElementById('f-valorBrl').value = t.valorBrl || '';
@@ -1612,6 +1657,16 @@ function showTourDetail(t) {
     body += `<br><b>Valor USD:</b> ${fmtUsd(t.valorUsd)}`;
     if (t.extensao === 'SIM' && t.valorExtensao) body += `<br><b>Extensao USD:</b> ${fmtUsd(t.valorExtensao)}`;
     if (t.extensao === 'SIM' && t.valorExtensaoBrl) body += `<br><b>Extensao BRL:</b> ${fmtBrl(t.valorExtensaoBrl)}`;
+    if (t.extensao === 'SIM') {
+      body += `<br><div style="display:flex;align-items:center;gap:6px;margin-top:4px">`;
+      if (t.comprovanteExt) {
+        body += `<button id="btnVerExt" style="padding:3px 8px;border-radius:4px;border:1px solid var(--green);background:var(--green-soft);color:var(--green);font-size:0.72rem;cursor:pointer">Ver Comprovante Ext.</button>`;
+        body += `<button id="btnRemExt" style="padding:3px 8px;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:0.72rem;cursor:pointer">Remover</button>`;
+      } else {
+        body += `<button id="btnUpExt" style="padding:3px 8px;border-radius:4px;border:1px dashed var(--blue);background:transparent;color:var(--blue);font-size:0.72rem;cursor:pointer">Anexar Comprovante Ext.</button>`;
+      }
+      body += `</div>`;
+    }
     body += `<br><b>Valor BRL:</b> ${fmtBrl(t.valorBrl)}<br><b>Pagamento:</b> ${t.formaPagamento||'-'}`;
   }
   if (t.obs) body += `<br><b>Obs:</b> ${t.obs}`;
@@ -1678,6 +1733,12 @@ function showTourDetail(t) {
     if (brc) brc.addEventListener('click', () => removerComprovante(t.id, 'conf'));
     const buc = document.getElementById('btnUpConf');
     if (buc) buc.addEventListener('click', () => uploadComprovante(t.id, 'conf'));
+    const bve = document.getElementById('btnVerExt');
+    if (bve) bve.addEventListener('click', () => verComprovante(t.comprovanteExt, t.comprovanteExtNome));
+    const bre = document.getElementById('btnRemExt');
+    if (bre) bre.addEventListener('click', () => removerComprovante(t.id, 'ext'));
+    const bue = document.getElementById('btnUpExt');
+    if (bue) bue.addEventListener('click', () => uploadComprovante(t.id, 'ext'));
   }
   if (canChangeGuia) {
     document.getElementById('btnSalvarGuia').addEventListener('click', async () => {
