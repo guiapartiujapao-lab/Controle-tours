@@ -769,6 +769,12 @@ body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
       <button class="btn btn-primary" id="btnBackup" style="font-size:1rem;padding:0.75rem 2rem">Exportar Backup (JSON)</button>
       <p id="backupInfo" style="font-size:0.78rem;color:var(--ink-muted);margin-top:1rem"></p>
     </div>
+    <div class="card" style="padding:2rem;margin-top:1rem">
+      <h3 style="font-size:0.95rem;font-weight:600;margin-bottom:0.5rem;text-align:center">Backup Automatico Diario</h3>
+      <p style="font-size:0.85rem;color:var(--ink-soft);margin-bottom:1rem;text-align:center">Backups automaticos rodam todo dia as 00h (horario de Brasilia). Ultimos 30 dias sao mantidos.</p>
+      <button class="btn btn-secondary" id="btnListBackups" style="display:block;margin:0 auto 1rem;font-size:0.85rem;padding:0.5rem 1.5rem">Ver Backups Salvos</button>
+      <div id="backupsList" style="display:none"></div>
+    </div>
     <div class="card" style="text-align:center;padding:2rem;margin-top:1rem">
       <h3 style="font-size:0.95rem;font-weight:600;margin-bottom:0.5rem">Importar Tours de Planilha</h3>
       <p style="font-size:0.85rem;color:var(--ink-soft);margin-bottom:1rem">Selecione o arquivo .xlsx com os tours preenchidos. Use a planilha modelo "Importar-Tours-Partiu-Japao.xlsx".</p>
@@ -2700,6 +2706,53 @@ document.getElementById('btnBackup').addEventListener('click', () => {
   URL.revokeObjectURL(url);
   document.getElementById('backupInfo').textContent = `Ultimo backup: ${new Date().toLocaleString('pt-BR')} - ${allTours.length} tours, ${allFolgas.length} folgas`;
   toast('Backup exportado!');
+});
+
+document.getElementById('btnListBackups').addEventListener('click', async () => {
+  const container = document.getElementById('backupsList');
+  container.style.display = '';
+  container.innerHTML = '<p style="text-align:center;color:var(--ink-muted);font-size:0.85rem">Carregando backups...</p>';
+  try {
+    const snap = await db.collection('backups').orderBy('date', 'desc').limit(30).get();
+    if (snap.empty) {
+      container.innerHTML = '<p style="text-align:center;color:var(--ink-muted);font-size:0.85rem">Nenhum backup automatico encontrado ainda. O primeiro sera gerado amanha.</p>';
+      return;
+    }
+    let html = '<div class="table-wrap" style="max-height:300px;overflow-y:auto"><table><thead><tr><th>Data</th><th>Tours</th><th>Folgas</th><th>CS Tasks</th><th>Servicos</th><th>Acao</th></tr></thead><tbody>';
+    snap.docs.forEach(doc => {
+      const b = doc.data();
+      const c = b.counts || {};
+      html += `<tr>
+        <td>${fmtDate(b.date)}</td>
+        <td>${c.tours||0}</td>
+        <td>${c.folgas||0}</td>
+        <td>${c.csTasks||0}</td>
+        <td>${c.servicos||0}</td>
+        <td><button class="btn btn-secondary" style="font-size:0.72rem;padding:2px 8px" data-dlbackup="${doc.id}">Baixar</button></td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+    container.querySelectorAll('[data-dlbackup]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const docId = btn.dataset.dlbackup;
+        btn.textContent = '...';
+        const snap = await db.collection('backups').doc(docId).get();
+        const data = snap.data();
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `${docId}.json`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        btn.textContent = 'Baixar';
+        toast('Backup baixado!');
+      });
+    });
+  } catch(e) {
+    container.innerHTML = `<p style="text-align:center;color:var(--red);font-size:0.85rem">Erro ao carregar backups: ${e.message}</p>`;
+  }
 });
 
 // IMPORTAR PLANILHA
