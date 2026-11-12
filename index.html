@@ -876,6 +876,10 @@ const GUIA_DESTINOS = {
 };
 const SOCIOS = ['MAYRA','TOTTI'];
 const PAGS = ['PIX','CARTAO DE CREDITO','DOLAR CASH','WISE','NOMAD','PAYPAL'];
+function fat(t) { return (t.valorBrl||0) + (t.valorExtensaoBrl||0); }
+function liqCalc(t) { return fat(t) - (t.despesaGuia||0); }
+function diegoCalc(t) { const l = liqCalc(t); return SOCIOS.includes(t.guia) ? l * 0.2 : l * 0.5; }
+function mtCalc(t) { const l = liqCalc(t); return SOCIOS.includes(t.guia) ? l * 0.8 : l * 0.5; }
 const MESES_NOME = {1:'Janeiro',2:'Fevereiro',3:'Marco',4:'Abril',5:'Maio',6:'Junho',7:'Julho',8:'Agosto',9:'Setembro',10:'Outubro',11:'Novembro',12:'Dezembro'};
 
 let allTours = [], allFolgas = [], allServicos = [], allTransfers = [], allPShoppers = [], allFechamentos = {}, allDespesas = [], allModelos = [], allCsTasks = {}, editingId = null, editingTransferId = null, editingPShopperId = null, editingDespesaId = null, editingModeloId = null;
@@ -1098,6 +1102,7 @@ document.getElementById('f-extensao').addEventListener('change', () => {
   recalcForm();
 });
 document.getElementById('f-valorExtensao').addEventListener('input', recalcForm);
+document.getElementById('f-valorExtensaoBrl').addEventListener('input', recalcDependents);
 document.getElementById('f-status').addEventListener('change', () => {
   document.getElementById('grpEstorno').style.display = document.getElementById('f-status').value === 'CANCELADO' ? '' : 'none';
   if (document.getElementById('f-status').value !== 'CANCELADO') document.getElementById('f-estorno').value = 'NAO';
@@ -1112,9 +1117,10 @@ function getBrl() {
 }
 function recalcDependents() {
   const brl = getBrl();
+  const extBrl = parseFloat(document.getElementById('f-valorExtensaoBrl').value) || 0;
   const desp = parseFloat(document.getElementById('f-despesa').value) || 0;
   const guia = document.getElementById('f-guia').value;
-  const liq = brl - desp;
+  const liq = (brl + extBrl) - desp;
   const isSocio = SOCIOS.includes(guia);
   const diego = isSocio ? liq * 0.2 : liq * 0.5;
   const mt = isSocio ? liq * 0.8 : liq * 0.5;
@@ -1175,10 +1181,11 @@ function getFormData() {
   const usd = isAgencia ? 0 : (parseFloat(document.getElementById('f-valorUsd').value) || 0);
   const ext = isAgencia ? 0 : (parseFloat(document.getElementById('f-valorExtensao').value) || 0);
   const cambio = isAgencia ? 0 : (parseFloat(document.getElementById('f-cambio').value) || 0);
+  const extBrl = isAgencia ? 0 : (parseFloat(document.getElementById('f-valorExtensaoBrl').value) || 0);
   const brl = parseFloat(document.getElementById('f-valorBrl').value) || (isAgencia ? 0 : ((usd + ext) * cambio));
   const desp = parseFloat(document.getElementById('f-despesa').value) || 0;
   const guia = document.getElementById('f-guia').value;
-  const liq = brl - desp;
+  const liq = (brl + extBrl) - desp;
   const isSocio = SOCIOS.includes(guia);
   const data = {
     tipoTour: tipoTourAtual,
@@ -1673,7 +1680,7 @@ function showTourDetail(t) {
       }
       body += `</div>`;
     }
-    body += `<br><b>Valor BRL:</b> ${fmtBrl(t.valorBrl)}<br><b>Pagamento:</b> ${t.formaPagamento||'-'}`;
+    body += `<br><b>Valor BRL:</b> ${fmtBrl(fat(t))}<br><b>Pagamento:</b> ${t.formaPagamento||'-'}`;
   }
   if (t.obs) body += `<br><b>Obs:</b> ${t.obs}`;
   if (loggedRole === 'admin' && t.criadoPor) {
@@ -1751,10 +1758,11 @@ function showTourDetail(t) {
       const novoGuia = document.getElementById('selGuiaDetail').value;
       if (novoGuia === t.guia) { document.getElementById('modalDetail').classList.remove('open'); return; }
       const isSocio = SOCIOS.includes(novoGuia);
-      const liq = (t.valorBrl||0) - (t.despesaGuia||0);
+      const liq = fat(t) - (t.despesaGuia||0);
       await db.collection('tours').doc(t.id).update({
         guia: novoGuia,
         tipoGuia: isSocio ? 'SOCIO' : 'EXTERNO',
+        liquido: liq,
         parteDiego: isSocio ? liq * 0.2 : liq * 0.5,
         parteMT: isSocio ? liq * 0.8 : liq * 0.5
       });
@@ -1853,7 +1861,7 @@ function renderTourTable() {
     const actionsCol = isCs ? '' : `<td><span style="cursor:pointer;color:var(--blue);font-size:0.78rem" data-edit="${t.id}">editar</span>${canKommo ? ` <span style="cursor:pointer;color:#7c3aed;font-size:0.78rem;margin-left:6px" data-dup="${t.id}" title="Duplicar tour">dup</span>` : ''} <span style="cursor:pointer;color:var(--red);font-size:0.78rem;margin-left:6px" data-del="${t.id}">x</span></td>`;
     const kommoCol = isCs ? '' : `<td>${kommoTag}</td>`;
     const clienteCell = isCs && t.cliente ? `<span style="cursor:pointer;color:var(--accent);text-decoration:underline" data-csopen="${t.cliente}">${t.cliente}</span>` : (t.cliente||'-');
-    tr.innerHTML = `<td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${clienteCell}${agBadge}</td><td style="text-align:left">${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${guiaCell}</td><td>${t.pessoas||0}</td><td class="fin-only">${fmtBrl(t.valorBrl)}${extBadge}${despAlert}</td><td>${sinalTag}</td><td>${confTag}</td><td><span class="tag ${sc}">${t.status}</span>${estornoTag}</td><td>${vistoTag}</td>${kommoCol}${actionsCol}`;
+    tr.innerHTML = `<td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${clienteCell}${agBadge}</td><td style="text-align:left">${t.destino||'-'}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${guiaCell}</td><td>${t.pessoas||0}</td><td class="fin-only">${fmtBrl(fat(t))}${extBadge}${despAlert}</td><td>${sinalTag}</td><td>${confTag}</td><td><span class="tag ${sc}">${t.status}</span>${estornoTag}</td><td>${vistoTag}</td>${kommoCol}${actionsCol}`;
     tbody.appendChild(tr);
   });
   tbody.querySelectorAll('[data-edit]').forEach(el => el.addEventListener('click', () => {
@@ -1960,7 +1968,7 @@ function renderPendDesp() {
   }
   let html = '<div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Destino</th><th>Guia</th><th>Valor BRL</th><th>Despesa Guia (BRL)</th><th></th></tr></thead><tbody>';
   pend.forEach(t => {
-    html += `<tr><td style="white-space:nowrap">${fmtDate(t.dataTour)}</td><td>${t.cliente||'-'}</td><td>${t.destino||'-'}</td><td>${t.guia||'-'}</td><td>${fmtBrl(t.valorBrl)}</td><td><input type="number" step="0.01" placeholder="0.00" data-pendid="${t.id}" style="width:100px;padding:4px 8px;border:1px solid var(--rule);border-radius:6px;font-size:0.85rem"></td><td><button class="btn btn-primary" style="padding:3px 12px;font-size:0.75rem" data-savepend="${t.id}">Salvar</button></td></tr>`;
+    html += `<tr><td style="white-space:nowrap">${fmtDate(t.dataTour)}</td><td>${t.cliente||'-'}</td><td>${t.destino||'-'}</td><td>${t.guia||'-'}</td><td>${fmtBrl(fat(t))}</td><td><input type="number" step="0.01" placeholder="0.00" data-pendid="${t.id}" style="width:100px;padding:4px 8px;border:1px solid var(--rule);border-radius:6px;font-size:0.85rem"></td><td><button class="btn btn-primary" style="padding:3px 12px;font-size:0.75rem" data-savepend="${t.id}">Salvar</button></td></tr>`;
   });
   html += '</tbody></table></div>';
   html += `<div style="margin-top:0.75rem;font-size:0.8rem;color:var(--ink-muted)">${pend.length} tour(s) pendente(s)</div>`;
@@ -1975,7 +1983,7 @@ function renderPendDesp() {
       btn.disabled = true;
       try {
         const tour = allTours.find(x => x.id === id);
-        const liq = (tour.valorBrl||0) - valor;
+        const liq = fat(tour) - valor;
         const isSocio = SOCIOS.includes(tour.guia);
         await db.collection('tours').doc(id).update({
           despesaGuia: valor,
@@ -2007,22 +2015,22 @@ function renderStats(containerId, items) {
 
 function renderSocios() {
   const tours = getConfirmed().filter(t => SOCIOS.includes(t.guia));
-  const totalBrl = tours.reduce((s,t) => s + (t.valorBrl||0), 0);
+  const totalBrl = tours.reduce((s,t) => s + fat(t), 0);
   const totalDesp = tours.reduce((s,t) => s + (t.despesaGuia||0), 0);
-  const totalLiq = tours.reduce((s,t) => s + (t.liquido||0), 0);
-  const totalDiego = tours.reduce((s,t) => s + (t.parteDiego||0), 0);
-  const totalMT = tours.reduce((s,t) => s + (t.parteMT||0), 0);
+  const totalLiq = tours.reduce((s,t) => s + liqCalc(t), 0);
+  const totalDiego = tours.reduce((s,t) => s + diegoCalc(t), 0);
+  const totalMT = tours.reduce((s,t) => s + mtCalc(t), 0);
   renderStats('statsSocios', [['Tours', tours.length, ''],['Faturamento', fmtBrl(totalBrl), ''],['Despesa', fmtBrl(totalDesp), 'accent'],['Liquido', fmtBrl(totalLiq), 'green'],['Diego (20%)', fmtBrl(totalDiego), 'blue'],['Mayra+Totti (80%)', fmtBrl(totalMT), 'accent']]);
   const months = groupByMonth(tours);
   document.getElementById('monthsSocios').innerHTML = months.map(([mk, mt]) => {
     const mDesp = mt.reduce((s,t) => s + (t.despesaGuia||0), 0);
-    const mD = mt.reduce((s,t) => s + (t.parteDiego||0), 0);
-    const mMT = mt.reduce((s,t) => s + (t.parteMT||0), 0);
+    const mD = mt.reduce((s,t) => s + diegoCalc(t), 0);
+    const mMT = mt.reduce((s,t) => s + mtCalc(t), 0);
     return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)} (${mt.length} tours)</span><span class="total">Despesa: ${fmtBrl(mDesp)} | Diego: ${fmtBrl(mD)} | MT: ${fmtBrl(mMT)}</span></div>
     <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Destino</th><th>Dur.</th><th>Guia</th><th>Pess.</th><th>BRL</th><th>Desp.</th><th>Liq.</th><th>Diego</th><th>M+T</th></tr></thead><tbody>${
       mt.sort((a,b)=>(a.dataTour||'').localeCompare(b.dataTour||'')).map(t => {
         const da = (!t.despesaGuia || t.despesaGuia === 0) ? '<span class="alert-chip alert-desp" title="Sem despesa">$ ?</span>' : '';
-        return `<tr><td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.destino}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${t.guia}</td><td>${t.pessoas}</td><td>${fmtBrl(t.valorBrl)}</td><td>${fmtBrl(t.despesaGuia)}${da}</td><td>${fmtBrl(t.liquido)}</td><td>${fmtBrl(t.parteDiego)}</td><td>${fmtBrl(t.parteMT)}</td></tr>`;
+        return `<tr><td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.destino}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${t.guia}</td><td>${t.pessoas}</td><td>${fmtBrl(fat(t))}</td><td>${fmtBrl(t.despesaGuia)}${da}</td><td>${fmtBrl(liqCalc(t))}</td><td>${fmtBrl(diegoCalc(t))}</td><td>${fmtBrl(mtCalc(t))}</td></tr>`;
       }).join('')
     }</tbody></table></div></div>`;
   }).join('') || '<div class="empty">Nenhum tour com socios ainda.</div>';
@@ -2030,21 +2038,21 @@ function renderSocios() {
 
 function renderGuias() {
   const tours = getConfirmed().filter(t => !SOCIOS.includes(t.guia) && t.guia !== 'A DEFINIR');
-  const totalBrl = tours.reduce((s,t) => s + (t.valorBrl||0), 0);
+  const totalBrl = tours.reduce((s,t) => s + fat(t), 0);
   const totalDesp = tours.reduce((s,t) => s + (t.despesaGuia||0), 0);
-  const totalLiq = tours.reduce((s,t) => s + (t.liquido||0), 0);
-  const totalDiego = tours.reduce((s,t) => s + (t.parteDiego||0), 0);
-  const totalMT = tours.reduce((s,t) => s + (t.parteMT||0), 0);
+  const totalLiq = tours.reduce((s,t) => s + liqCalc(t), 0);
+  const totalDiego = tours.reduce((s,t) => s + diegoCalc(t), 0);
+  const totalMT = tours.reduce((s,t) => s + mtCalc(t), 0);
   renderStats('statsGuias', [['Tours', tours.length, ''],['Faturamento', fmtBrl(totalBrl), ''],['Despesa Guias', fmtBrl(totalDesp), 'accent'],['Liquido', fmtBrl(totalLiq), 'green'],['Diego (50%)', fmtBrl(totalDiego), 'blue'],['Mayra+Totti (50%)', fmtBrl(totalMT), 'accent']]);
   const months = groupByMonth(tours);
   document.getElementById('monthsGuias').innerHTML = months.map(([mk, mt]) => {
-    const mD = mt.reduce((s,t) => s + (t.parteDiego||0), 0);
-    const mMT = mt.reduce((s,t) => s + (t.parteMT||0), 0);
+    const mD = mt.reduce((s,t) => s + diegoCalc(t), 0);
+    const mMT = mt.reduce((s,t) => s + mtCalc(t), 0);
     return `<div class="month-block"><div class="month-header"><span>${monthLabel(mk)} (${mt.length} tours)</span><span class="total">Diego: ${fmtBrl(mD)} | MT: ${fmtBrl(mMT)}</span></div>
     <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Destino</th><th>Dur.</th><th>Guia</th><th>Pess.</th><th>BRL</th><th>Desp.</th><th>Liq.</th><th>Diego</th><th>M+T</th></tr></thead><tbody>${
       mt.sort((a,b)=>(a.dataTour||'').localeCompare(b.dataTour||'')).map(t => {
         const da = (!t.despesaGuia || t.despesaGuia === 0) ? '<span class="alert-chip alert-desp" title="Sem despesa">$ ?</span>' : '';
-        return `<tr><td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.destino}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${t.guia}</td><td>${t.pessoas}</td><td>${fmtBrl(t.valorBrl)}</td><td>${fmtBrl(t.despesaGuia)}${da}</td><td>${fmtBrl(t.liquido)}</td><td>${fmtBrl(t.parteDiego)}</td><td>${fmtBrl(t.parteMT)}</td></tr>`;
+        return `<tr><td style="text-align:left">${fmtDate(t.dataTour)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.destino}</td><td>${t.duracao||'-'}</td><td style="text-align:left">${t.guia}</td><td>${t.pessoas}</td><td>${fmtBrl(fat(t))}</td><td>${fmtBrl(t.despesaGuia)}${da}</td><td>${fmtBrl(liqCalc(t))}</td><td>${fmtBrl(diegoCalc(t))}</td><td>${fmtBrl(mtCalc(t))}</td></tr>`;
       }).join('')
     }</tbody></table></div></div>`;
   }).join('') || '<div class="empty">Nenhum tour com guias externos ainda.</div>';
@@ -2297,10 +2305,10 @@ async function toggleFechado(key) {
 
 function renderFechamento() {
   const conf = [...allTours];
-  const totalBrl = conf.reduce((s,t) => s + (t.valorBrl||0), 0);
-  const totalLiq = conf.reduce((s,t) => s + (t.liquido||0), 0);
-  const totalDiego = conf.reduce((s,t) => s + (t.parteDiego||0), 0);
-  const totalMT = conf.reduce((s,t) => s + (t.parteMT||0), 0);
+  const totalBrl = conf.reduce((s,t) => s + fat(t), 0);
+  const totalLiq = conf.reduce((s,t) => s + liqCalc(t), 0);
+  const totalDiego = conf.reduce((s,t) => s + diegoCalc(t), 0);
+  const totalMT = conf.reduce((s,t) => s + mtCalc(t), 0);
   const totalTransferLucro = allTransfers.reduce((s,t) => s + ((t.cobrado||0)-(t.fornecedor||0)), 0);
   const totalPSLucro = allPShoppers.reduce((s,t) => s + ((t.cobrado||0)-(t.custo||0)), 0);
   const totalDespBR = allDespesas.filter(d => d.pais === 'BRASIL').reduce((s,d) => s + (d.valor||0), 0);
@@ -2386,7 +2394,7 @@ function renderFechamento() {
 function renderDashboard() {
   const conf = getConfirmed();
   const totalUsd = conf.reduce((s,t) => s + (t.valorUsd||0), 0);
-  const totalBrl = conf.reduce((s,t) => s + (t.valorBrl||0), 0);
+  const totalBrl = conf.reduce((s,t) => s + fat(t), 0);
   const totalPess = conf.reduce((s,t) => s + (t.pessoas||0), 0);
   const clientes = new Set(conf.map(t => t.cliente)).size;
   const ticketMedio = conf.length ? totalUsd / conf.length : 0;
@@ -2442,13 +2450,13 @@ document.getElementById('btnRelatorio').addEventListener('click', () => {
   if (!conf.length) { document.getElementById('reportContent').textContent = 'Nenhum tour encontrado neste mes.'; return; }
   const socios = conf.filter(t => SOCIOS.includes(t.guia));
   const externos = conf.filter(t => !SOCIOS.includes(t.guia) && t.guia !== 'A DEFINIR');
-  const totalBrl = conf.reduce((s,t) => s + (t.valorBrl||0), 0);
+  const totalBrl = conf.reduce((s,t) => s + fat(t), 0);
   const totalUsd = conf.reduce((s,t) => s + (t.valorUsd||0), 0);
   const totalPess = conf.reduce((s,t) => s + (t.pessoas||0), 0);
   const totalDesp = conf.reduce((s,t) => s + (t.despesaGuia||0), 0);
-  const totalLiq = conf.reduce((s,t) => s + (t.liquido||0), 0);
-  const totalDiego = conf.reduce((s,t) => s + (t.parteDiego||0), 0);
-  const totalMT = conf.reduce((s,t) => s + (t.parteMT||0), 0);
+  const totalLiq = conf.reduce((s,t) => s + liqCalc(t), 0);
+  const totalDiego = conf.reduce((s,t) => s + diegoCalc(t), 0);
+  const totalMT = conf.reduce((s,t) => s + mtCalc(t), 0);
   const clientes = new Set(conf.map(t => t.cliente)).size;
   const destCount = {}; conf.forEach(t => destCount[t.destino] = (destCount[t.destino]||0)+1);
   const guiaCount = {}; conf.forEach(t => guiaCount[t.guia] = (guiaCount[t.guia]||0)+1);
@@ -2473,14 +2481,14 @@ document.getElementById('btnRelatorio').addEventListener('click', () => {
   report += `  Diego: ${fmtBrl(totalDiego)}\n`;
   report += `  Mayra+Totti: ${fmtBrl(totalMT)}\n\n`;
   report += `SOCIOS (${socios.length} tours) - Divisao 80/20\n`;
-  report += `  Faturamento: ${fmtBrl(socios.reduce((s,t)=>s+(t.valorBrl||0),0))}\n`;
-  report += `  Diego: ${fmtBrl(socios.reduce((s,t)=>s+(t.parteDiego||0),0))}\n`;
-  report += `  Mayra+Totti: ${fmtBrl(socios.reduce((s,t)=>s+(t.parteMT||0),0))}\n\n`;
+  report += `  Faturamento: ${fmtBrl(socios.reduce((s,t)=>s+fat(t),0))}\n`;
+  report += `  Diego: ${fmtBrl(socios.reduce((s,t)=>s+diegoCalc(t),0))}\n`;
+  report += `  Mayra+Totti: ${fmtBrl(socios.reduce((s,t)=>s+mtCalc(t),0))}\n\n`;
   report += `GUIAS EXTERNOS (${externos.length} tours) - Divisao 50/50\n`;
-  report += `  Faturamento: ${fmtBrl(externos.reduce((s,t)=>s+(t.valorBrl||0),0))}\n`;
+  report += `  Faturamento: ${fmtBrl(externos.reduce((s,t)=>s+fat(t),0))}\n`;
   report += `  Despesas: ${fmtBrl(externos.reduce((s,t)=>s+(t.despesaGuia||0),0))}\n`;
-  report += `  Diego: ${fmtBrl(externos.reduce((s,t)=>s+(t.parteDiego||0),0))}\n`;
-  report += `  Mayra+Totti: ${fmtBrl(externos.reduce((s,t)=>s+(t.parteMT||0),0))}\n\n`;
+  report += `  Diego: ${fmtBrl(externos.reduce((s,t)=>s+diegoCalc(t),0))}\n`;
+  report += `  Mayra+Totti: ${fmtBrl(externos.reduce((s,t)=>s+mtCalc(t),0))}\n\n`;
   report += `RANKING DESTINOS\n`;
   topDest.forEach(([d,c]) => report += `  ${d}: ${c} tours\n`);
   report += `\nRANKING GUIAS\n`;
@@ -2503,7 +2511,7 @@ function renderMetricas() {
     ['metClienteRank','metTicketDest','metPagamento','metMensal'].forEach(id => document.getElementById(id).innerHTML = '');
     return;
   }
-  const totalBrl = conf.reduce((s,t) => s + (t.valorBrl||0), 0);
+  const totalBrl = conf.reduce((s,t) => s + fat(t), 0);
   const totalUsd = conf.reduce((s,t) => s + (t.valorUsd||0), 0);
   const totalPess = conf.reduce((s,t) => s + (t.pessoas||0), 0);
   const clienteSet = new Set(conf.map(t => t.cliente));
@@ -2580,7 +2588,7 @@ function renderControle() {
   const vendas = allTours.filter(t => t.dataVenda && t.dataVenda.startsWith(ym));
   vendas.sort((a,b) => (a.dataVenda||'').localeCompare(b.dataVenda||''));
   const totalUsd = vendas.reduce((s,t) => s + (t.valorUsd||0), 0);
-  const totalBrl = vendas.reduce((s,t) => s + (t.valorBrl||0), 0);
+  const totalBrl = vendas.reduce((s,t) => s + fat(t), 0);
   const totalPess = vendas.reduce((s,t) => s + (t.pessoas||0), 0);
   const toursMesAtual = vendas.filter(t => monthKey(t.dataTour) === ym).length;
   const toursFuturos = vendas.filter(t => monthKey(t.dataTour) !== ym).length;
@@ -2599,7 +2607,7 @@ function renderControle() {
     const badge = isFuturo ? ' <span style="font-size:0.68rem;background:var(--accent);color:#fff;padding:1px 6px;border-radius:8px">futuro</span>' : '';
     const stCls = t.status === 'CONFIRMADO' ? 'color:var(--green)' : t.status === 'CANCELADO' ? 'color:var(--red)' : 'color:var(--accent)';
     const extTag = (t.extensao === 'SIM' && t.valorExtensao) ? `<br><span style="font-size:0.68rem;color:var(--ink-muted)">+ext ${fmtUsd(t.valorExtensao)}</span>` : '';
-    return `<tr><td>${fmtDate(t.dataVenda)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.destino}</td><td>${t.duracao||'-'}</td><td>${fmtDate(t.dataTour)}${badge}</td><td>${t.pessoas||0}</td><td>${fmtUsd(t.valorUsd)}${extTag}</td><td>${fmtBrl(t.valorBrl)}</td><td style="${stCls};font-weight:600;font-size:0.78rem">${t.status}</td></tr>`;
+    return `<tr><td>${fmtDate(t.dataVenda)}</td><td style="text-align:left">${t.cliente}</td><td style="text-align:left">${t.destino}</td><td>${t.duracao||'-'}</td><td>${fmtDate(t.dataTour)}${badge}</td><td>${t.pessoas||0}</td><td>${fmtUsd(t.valorUsd)}${extTag}</td><td>${fmtBrl(fat(t))}</td><td style="${stCls};font-weight:600;font-size:0.78rem">${t.status}</td></tr>`;
   }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--ink-muted)">Nenhuma venda neste mes.</td></tr>';
 
   const destCount = {};
@@ -2625,7 +2633,7 @@ document.getElementById('btnRelVendas').addEventListener('click', () => {
   const cancelados = vendas.filter(t => t.status === 'CANCELADO');
   const pendentes = vendas.filter(t => t.status !== 'CONFIRMADO' && t.status !== 'CANCELADO');
   const totalUsd = vendas.reduce((s,t) => s + (t.valorUsd||0), 0);
-  const totalBrl = vendas.reduce((s,t) => s + (t.valorBrl||0), 0);
+  const totalBrl = vendas.reduce((s,t) => s + fat(t), 0);
   const totalPess = vendas.reduce((s,t) => s + (t.pessoas||0), 0);
   const clientes = new Set(vendas.map(t => t.cliente)).size;
   const destCount = {}; vendas.forEach(t => destCount[t.destino] = (destCount[t.destino]||0)+1);
@@ -2637,7 +2645,7 @@ document.getElementById('btnRelVendas').addEventListener('click', () => {
   const toursMesAtual = vendas.filter(t => monthKey(t.dataTour) === mes).length;
   const toursFuturos = vendas.filter(t => monthKey(t.dataTour) !== mes).length;
   const confUsd = confirmados.reduce((s,t) => s + (t.valorUsd||0), 0);
-  const confBrl = confirmados.reduce((s,t) => s + (t.valorBrl||0), 0);
+  const confBrl = confirmados.reduce((s,t) => s + fat(t), 0);
 
   let r = `RELATORIO DE VENDAS - ${monthLabel(mes).toUpperCase()}\n${'='.repeat(50)}\n\n`;
   r += `RESUMO DE VENDAS\n`;
@@ -3293,7 +3301,7 @@ function renderCS() {
     clientMap[nome].tours.push(t);
     if (t.telefone && !clientMap[nome].telefone) clientMap[nome].telefone = t.telefone;
     clientMap[nome].totalUsd += (t.valorUsd||0) + (t.valorExtensao||0);
-    clientMap[nome].totalBrl += (t.valorBrl||0);
+    clientMap[nome].totalBrl += fat(t);
     clientMap[nome].sinal += (t.sinal20||0);
     clientMap[nome].confirmacao += (t.restante80||0);
   });
