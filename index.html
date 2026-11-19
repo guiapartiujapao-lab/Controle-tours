@@ -127,6 +127,7 @@ th:not(:first-child),td:not(:first-child){text-align:right}
 .cal-guia-naomi{background:#06b6d4;color:#fff}
 .cal-guia-pedro{background:#ec4899;color:#fff}
 .cal-guia-kaori{background:#39ff14;color:#111}
+.cal-guia-rafael{background:#c0c0c0;color:#111}
 .cal-cancelado{background:#1f1f1f;color:#fff}
 .cal-servico{background:#0ea5e9;color:#fff}
 .cal-legend{display:flex;gap:1rem;margin-top:0.75rem;font-size:0.75rem;color:var(--ink-muted);flex-wrap:wrap}
@@ -478,6 +479,7 @@ body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
       <span><i style="background:#06b6d4"></i> Naomi</span>
       <span><i style="background:#ec4899"></i> Pedro</span>
       <span><i style="background:#39ff14"></i> Kaori</span>
+      <span><i style="background:#c0c0c0"></i> Rafael</span>
       <span><i style="background:#eab308"></i> A Definir</span>
       <span><i style="background:#ef4444"></i> Folga</span>
       <span><i style="background:#1f1f1f"></i> Cancelado</span>
@@ -870,7 +872,7 @@ firebase.initializeApp({
 const db = firebase.firestore();
 
 const DESTINOS = ['MT FUJI','TOKYO TP','TOKYO CARRO','KAMAKURA','HAKONE','NIKKO','OSAKA','KYOTO','NARA','KOBE','HIROSHIMA','TOUR GASTRONOMICO','PERSONALIZADO'];
-const GUIAS = ['A DEFINIR','MAYRA','TOTTI','GABRIELLE','JONAS','CLINTE','LORRAN','KETLIN','NAOMI','PEDRO','KAORI'];
+const GUIAS = ['A DEFINIR','MAYRA','TOTTI','GABRIELLE','JONAS','CLINTE','LORRAN','KETLIN','NAOMI','PEDRO','KAORI','RAFAEL'];
 const GUIA_DESTINOS = {
   'MAYRA': ['TOKYO TP','MT FUJI','KAMAKURA','HAKONE'],
   'TOTTI': ['TOKYO TP','MT FUJI','KAMAKURA','HAKONE'],
@@ -3078,6 +3080,7 @@ const USERS = {
   'kaori': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'KAORI' },
   'naomi': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'NAOMI' },
   'pedro': { hash: '9bdd2e603b462fec11d175dbcb43287d9e3484a429181889059d5f050bfcfa8a', role: 'guia', guiaNome: 'PEDRO' },
+  'rafael': { hash: '9f708342f33a864394cbf65e42c1f2fe088063adc80055a2560fa1927c6d3639', role: 'guia', guiaNome: 'RAFAEL' },
   'roteiro': { hash: 'bb153023b1434c39bfc175029120769e9758c0007b02929c5cc30fd9ecf47dac', role: 'roteiro' },
   'vinicius': { hash: '31b8c81b6ecf97202ae03f3359947937e45757b00d11461bf36eafa051d7783d', role: 'cs' }
 };
