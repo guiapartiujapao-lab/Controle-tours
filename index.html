@@ -595,6 +595,7 @@ body.role-vendedor .tab[data-tab="cs"]{display:flex!important}
     <div class="modal">
       <h3 id="modalDespTitulo">Adicionar Despesa</h3>
       <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="form-group"><label>Categoria</label><select id="md-categoria"></select></div>
         <div class="form-group"><label>Descricao</label><input type="text" id="md-descricao" placeholder="Ex: Imposto, Material..."></div>
         <div class="form-row">
           <div class="form-group"><label>Valor</label><input type="number" id="md-valor" step="0.01" placeholder="0"></div>
@@ -2077,6 +2078,14 @@ document.querySelectorAll('[data-desppais]').forEach(btn => btn.addEventListener
 // DESPESAS - redesign com fixas, anuais e variaveis
 let despModalPais = 'JAPAO';
 let fixasModalPais = 'JAPAO';
+const CATEGORIAS_DESP = {
+  BRASIL: ['TRAFEGO PAGO','COMISSAO VENDEDOR','IMPOSTO','OUTROS'],
+  JAPAO: ['MANUTENCAO CARRO','ETC','TRAFEGO PAGO','COMISSAO VENDEDOR','IMPOSTO','OUTROS']
+};
+function fillCategorias(pais) {
+  const sel = document.getElementById('md-categoria');
+  sel.innerHTML = CATEGORIAS_DESP[pais].map(c => `<option value="${c}">${c}</option>`).join('');
+}
 
 function getCurrentMonth() {
   const d = new Date();
@@ -2107,6 +2116,7 @@ function setupDespesas(pais) {
     despModalPais = pais;
     editingDespesaId = null;
     document.getElementById('modalDespTitulo').textContent = 'Adicionar Despesa — ' + (pais === 'JAPAO' ? 'Japao' : 'Brasil');
+    fillCategorias(pais);
     document.getElementById('md-descricao').value = '';
     document.getElementById('md-valor').value = '';
     document.getElementById('md-pagamento').value = 'PIX';
@@ -2135,6 +2145,7 @@ document.getElementById('mf-tipo').addEventListener('change', () => {
 });
 
 document.getElementById('btnSalvarDespModal').addEventListener('click', async () => {
+  const categoria = document.getElementById('md-categoria').value;
   const descricao = document.getElementById('md-descricao').value.trim();
   const valor = parseFloat(document.getElementById('md-valor').value) || 0;
   const pagamento = document.getElementById('md-pagamento').value;
@@ -2142,7 +2153,7 @@ document.getElementById('btnSalvarDespModal').addEventListener('click', async ()
   const suf = despModalPais === 'JAPAO' ? 'JP' : 'BR';
   const mes = document.getElementById('despMes' + suf).value;
   if (!mes) { alert('Selecione um mes.'); return; }
-  const data = { mes, pais: despModalPais, tipo: 'VARIAVEL', descricao, valor, pagamento };
+  const data = { mes, pais: despModalPais, tipo: 'VARIAVEL', categoria, descricao, valor, pagamento };
   if (editingDespesaId) {
     await db.collection('despesas').doc(editingDespesaId).update(data);
     editingDespesaId = null;
@@ -2216,6 +2227,8 @@ function editDespesa(id) {
   editingDespesaId = id;
   despModalPais = d.pais;
   document.getElementById('modalDespTitulo').textContent = 'Editar Despesa — ' + (d.pais === 'JAPAO' ? 'Japao' : 'Brasil');
+  fillCategorias(d.pais);
+  document.getElementById('md-categoria').value = d.categoria || 'OUTROS';
   document.getElementById('md-descricao').value = d.descricao || '';
   document.getElementById('md-valor').value = d.valor || '';
   document.getElementById('md-pagamento').value = d.pagamento || 'PIX';
@@ -2272,11 +2285,15 @@ function renderDespesas() {
     const totalAnuais = anuais.reduce((s,m) => s + (m.valor||0), 0);
     const totalVar = variaveis.reduce((s,d) => s + (d.valor||0), 0);
     const totalGeral = totalFixas + totalAnuais + totalVar;
+    const catTotals = {};
+    variaveis.forEach(d => { const c = d.categoria || 'OUTROS'; catTotals[c] = (catTotals[c]||0) + (d.valor||0); });
+    const catStats = Object.entries(catTotals).map(([c,v]) => [c, fmt(v), 'gold']);
     renderStats('statsDespesas' + suf, [
       ['Total', fmt(totalGeral), ''],
       ['Fixas', fmt(totalFixas), 'green'],
       ['Anuais', fmt(totalAnuais), 'accent'],
-      ['Variaveis', fmt(totalVar), 'gold']
+      ['Variaveis', fmt(totalVar), 'gold'],
+      ...catStats
     ]);
     let html = '';
     if (fixas.length) {
@@ -2293,8 +2310,8 @@ function renderDespesas() {
     }
     if (variaveis.length) {
       html += `<div class="card" style="margin-bottom:0.75rem;padding:1rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-weight:700;font-size:0.85rem;color:var(--gold,#d97706)">VARIAVEIS</span><span style="font-size:0.8rem;font-weight:600;color:var(--gold,#d97706)">${fmt(totalVar)}</span></div>`;
-      html += '<div class="table-wrap"><table><thead><tr><th>Descricao</th><th>Valor</th><th>Pagamento</th><th></th></tr></thead><tbody>';
-      variaveis.forEach(d => { html += `<tr><td>${d.descricao||'-'}</td><td>${fmt(d.valor)}</td><td>${d.pagamento||'-'}</td><td style="white-space:nowrap"><button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem" onclick="editDespesa('${d.id}')">Editar</button> <button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem;color:var(--red)" onclick="deleteDespesa('${d.id}')">X</button></td></tr>`; });
+      html += '<div class="table-wrap"><table><thead><tr><th>Categoria</th><th>Descricao</th><th>Valor</th><th>Pagamento</th><th></th></tr></thead><tbody>';
+      variaveis.forEach(d => { html += `<tr><td><span class="tag">${d.categoria||'—'}</span></td><td>${d.descricao||'-'}</td><td>${fmt(d.valor)}</td><td>${d.pagamento||'-'}</td><td style="white-space:nowrap"><button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem" onclick="editDespesa('${d.id}')">Editar</button> <button class="btn btn-secondary" style="padding:2px 8px;font-size:0.7rem;color:var(--red)" onclick="deleteDespesa('${d.id}')">X</button></td></tr>`; });
       html += '</tbody></table></div></div>';
     }
     if (!fixas.length && !anuais.length && !variaveis.length) {
