@@ -46,8 +46,16 @@ export async function clearSessionCookie() {
   store.delete(COOKIE_NAME);
 }
 
-export async function loginGuia(email: string, senha: string) {
-  const guia = await prisma.guia.findUnique({ where: { email: email.toLowerCase().trim() } });
+export async function loginGuia(identifier: string, senha: string) {
+  const ident = identifier.trim();
+  if (!ident) return null;
+  const lower = ident.toLowerCase();
+  // Aceita email OU user (username)
+  const guia = await prisma.guia.findFirst({
+    where: {
+      OR: [{ email: lower }, { user: lower }],
+    },
+  });
   if (!guia || !guia.ativo) return null;
   if (guia.senha !== senha) return null;
   return guia;

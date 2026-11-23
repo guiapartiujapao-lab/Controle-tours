@@ -10,7 +10,8 @@ datasource db {
 model Guia {
   id        String   @id @default(uuid())
   nome      String
-  email     String   @unique
+  email     String?  @unique
+  user      String?  @unique
   senha     String
   cor       String   @default("#06b6d4")
   ativo     Boolean  @default(true)
