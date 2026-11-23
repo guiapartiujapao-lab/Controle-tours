@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Guia {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  senha     String
+  cor       String   @default("#06b6d4")
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  eventos   Evento[]
+
+  @@map("guias")
+}
+
+model Evento {
+  id              String    @id @default(uuid())
+  slug            String    @unique
+  titulo          String
+  categoria       String
+  dataInicio      DateTime
+  dataFim         DateTime?
+  cidade          String
+  local           String
+  enderecoCompleto String?
+  descricao       String
+  fotoCapa        String?
+  linkOficial     String?
+  destaque        Boolean   @default(false)
+
+  guiaId          String
+  guia            Guia      @relation(fields: [guiaId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([dataInicio])
+  @@index([categoria])
+  @@index([cidade])
+  @@map("eventos")
+}

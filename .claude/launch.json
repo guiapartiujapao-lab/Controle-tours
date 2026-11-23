@@ -1,0 +1,47 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "landing-latam",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-ExecutionPolicy", "Bypass", "-File", "C:\\Users\\Diego\\Desktop\\PROJETOS CLAUDE\\Partiu Japão Latam\\serve.ps1"],
+      "port": 3000
+    },
+    {
+      "name": "controle",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8080"],
+      "port": 8080
+    },
+    {
+      "name": "criativos",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-ExecutionPolicy", "Bypass", "-Command", "$env:SERVE_DIR='C:\\Users\\Diego\\AppData\\Local\\Temp\\claude\\C--Users-Diego-Desktop-CLAUDE-CODE-2026-PARTIU-JAP-O---PROJETO\\e9985e3d-4df9-4a54-a991-acbf65b096e5\\scratchpad'; & 'C:\\Users\\Diego\\AppData\\Local\\Temp\\claude\\C--Users-Diego-Desktop-CLAUDE-CODE-2026-PARTIU-JAP-O---PROJETO\\e9985e3d-4df9-4a54-a991-acbf65b096e5\\scratchpad\\serve-criativos.ps1'"],
+      "port": 8888
+    },
+    {
+      "name": "membros",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-ExecutionPolicy", "Bypass", "-Command", "Set-Location 'C:\\Users\\Diego\\Desktop\\CLAUDE CODE 2026\\PARTIU JAPÃO - PROJETO\\membros'; $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User'); & npx next dev -p 3001"],
+      "port": 3001
+    },
+    {
+      "name": "analytics",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-ExecutionPolicy", "Bypass", "-Command", "Set-Location 'C:\\Users\\Diego\\Desktop\\CLAUDE CODE 2026\\PARTIU JAPÃO - PROJETO\\analytics'; $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User'); & npx next dev -p 3003"],
+      "port": 3003
+    },
+    {
+      "name": "eventos",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-ExecutionPolicy", "Bypass", "-Command", "Set-Location 'C:\\Users\\Diego\\Desktop\\CLAUDE CODE 2026\\PARTIU JAPÃO - PROJETO\\eventos'; $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User'); & npx next dev -p 3004"],
+      "port": 3004
+    },
+    {
+      "name": "remotion-studio",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-ExecutionPolicy", "Bypass", "-Command", "Set-Location 'C:\\Users\\Diego\\Desktop\\CLAUDE CODE 2026\\PARTIU JAPÃO - VIDEOS\\projeto'; $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User'); & npx remotion studio --no-open --port=3002"],
+      "port": 3002
+    }
+  ]
+}
