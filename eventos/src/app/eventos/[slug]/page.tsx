@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { CATEGORIA_MAP, formatarData } from "@/lib/categorias";
+import { WHATSAPP_LINKS, comMensagem } from "@/lib/whatsapp";
+import CtasPrincipais from "@/components/CtasPrincipais";
 
 export const dynamic = "force-dynamic";
 
@@ -95,7 +97,7 @@ export default async function EventoDetalhe({
         <h3 className="text-xl font-bold mb-2 text-slate-900">Quer ir com guia brasileiro?</h3>
         <p className="text-slate-600 mb-5">Fale com a gente no WhatsApp e monte seu roteiro.</p>
         <a
-          href={`https://wa.me/5511999999999?text=${whatsappMsg}`}
+          href={comMensagem(WHATSAPP_LINKS.atendimentoGeral, decodeURIComponent(whatsappMsg))}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block font-bold py-3 px-8 rounded-lg text-white"
@@ -107,6 +109,11 @@ export default async function EventoDetalhe({
         >
           Falar no WhatsApp
         </a>
+      </div>
+
+      <div className="mt-6">
+        <p className="text-sm text-slate-500 mb-3 text-center">Ou escolha uma das opções:</p>
+        <CtasPrincipais variant="evento" contextoEvento={evento.titulo} />
       </div>
 
       <p className="text-xs text-slate-500 mt-6 flex items-center gap-2">

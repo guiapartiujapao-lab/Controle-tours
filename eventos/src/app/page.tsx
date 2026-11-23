@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { CATEGORIAS, CATEGORIA_MAP, formatarData } from "@/lib/categorias";
 import Calendario from "@/components/Calendario";
+import CtasPrincipais from "@/components/CtasPrincipais";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,8 @@ export default async function Home({
           brasileiros no Japão. Encontre, planeje e vá junto.
         </p>
       </section>
+
+      <CtasPrincipais variant="home" />
 
       <Calendario
         eventos={todosParaCalendario.map((e) => ({

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
+import { WHATSAPP_LINKS } from "@/lib/whatsapp";
 
 export const metadata: Metadata = {
   title: "Eventos no Japão | Partiu Japão",
@@ -41,7 +42,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="border-t border-slate-200 mt-20 py-8 text-center text-sm text-slate-500">
           <p>Partiu Japão · Eventos cadastrados pelos guias no Japão</p>
           <p className="mt-2">
-            <a href="https://wa.me/5511999999999" className="text-pink-600 hover:text-pink-700 font-medium">
+            <a
+              href={WHATSAPP_LINKS.atendimentoGeral}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-pink-600 hover:text-pink-700 font-medium"
+            >
               Fale no WhatsApp
             </a>
           </p>
