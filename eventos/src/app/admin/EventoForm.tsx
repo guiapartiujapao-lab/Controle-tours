@@ -73,7 +73,7 @@ export default function EventoForm({ evento }: Props) {
 
   const upd = (k: keyof typeof form, v: unknown) => setForm({ ...form, [k]: v });
   const inputCls =
-    "w-full bg-[#141420] border border-[#262636] rounded-lg px-3 py-2 focus:border-[#ec4899] outline-none";
+    "w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-slate-900 focus:border-pink-500 focus:ring-2 focus:ring-pink-100 outline-none shadow-sm";
 
   return (
     <form onSubmit={submit} className="space-y-4 max-w-2xl">
@@ -132,21 +132,19 @@ export default function EventoForm({ evento }: Props) {
         <input className={inputCls} value={form.linkOficial} onChange={(e) => upd("linkOficial", e.target.value)} />
       </Field>
 
-      <label className="flex items-center gap-2 text-sm">
+      <label className="flex items-center gap-2 text-sm text-slate-700">
         <input type="checkbox" checked={form.destaque} onChange={(e) => upd("destaque", e.target.checked)} />
         Marcar como destaque (aparece no topo da home)
       </label>
 
-      {erro && <p className="text-sm text-red-400">{erro}</p>}
+      {erro && <p className="text-sm text-red-600">{erro}</p>}
 
-      <div className="flex items-center gap-2 pt-2">
-        <button type="submit" disabled={salvando}
-          className="bg-[#ec4899] hover:bg-[#db2777] disabled:opacity-50 text-white font-bold py-2 px-6 rounded-lg">
+      <div className="flex items-center gap-3 pt-2">
+        <button type="submit" disabled={salvando} className="btn-3d font-bold py-2.5 px-6 disabled:opacity-50">
           {salvando ? "Salvando..." : evento ? "Atualizar" : "Publicar"}
         </button>
         {evento && (
-          <button type="button" onClick={excluir}
-            className="text-red-400 hover:text-red-300 px-4 py-2">
+          <button type="button" onClick={excluir} className="text-red-600 hover:text-red-700 px-4 py-2 font-medium">
             Excluir
           </button>
         )}
@@ -158,7 +156,7 @@ export default function EventoForm({ evento }: Props) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm mb-1 text-[#e5e5ea]">{label}</label>
+      <label className="block text-sm font-medium mb-1 text-slate-700">{label}</label>
       {children}
     </div>
   );

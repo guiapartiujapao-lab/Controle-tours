@@ -9,7 +9,7 @@ export default function LogoutButton() {
         await fetch("/api/auth/logout", { method: "POST" });
         router.refresh();
       }}
-      className="text-sm text-[#8b8b9a] hover:text-[#ec4899] px-3 py-2"
+      className="text-sm text-slate-500 hover:text-pink-600 px-3 py-2 font-medium"
     >
       Sair
     </button>

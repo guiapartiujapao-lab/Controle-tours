@@ -11,30 +11,37 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body className="min-h-screen">
-        <header className="border-b border-[#262636] bg-[#0b0b0f]/80 backdrop-blur sticky top-0 z-50">
+      <body className="min-h-screen bg-white text-slate-900">
+        <header className="border-b border-slate-200 bg-white/90 backdrop-blur sticky top-0 z-50">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
               <span className="text-2xl">🎌</span>
-              <span className="font-bold text-lg">
+              <span className="font-bold text-lg text-slate-900">
                 Eventos no Japão
-                <span className="text-[#8b8b9a] font-normal text-sm ml-2">· Partiu Japão</span>
+                <span className="text-slate-500 font-normal text-sm ml-2">· Partiu Japão</span>
               </span>
             </Link>
             <nav className="flex items-center gap-4 text-sm">
-              <Link href="/" className="hover:text-[#ec4899]">Calendário</Link>
-              <Link href="/categorias" className="hover:text-[#ec4899]">Categorias</Link>
-              <Link href="/admin" className="px-3 py-1.5 rounded-lg border border-[#262636] hover:border-[#ec4899]">
+              <Link href="/" className="text-slate-700 hover:text-pink-600 font-medium">
+                Calendário
+              </Link>
+              <Link href="/categorias" className="text-slate-700 hover:text-pink-600 font-medium">
+                Categorias
+              </Link>
+              <Link
+                href="/admin"
+                className="px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-800 font-medium hover:border-pink-500 hover:text-pink-600 shadow-sm"
+              >
                 Área do guia
               </Link>
             </nav>
           </div>
         </header>
         <main className="max-w-6xl mx-auto px-4 py-8">{children}</main>
-        <footer className="border-t border-[#262636] mt-20 py-8 text-center text-sm text-[#8b8b9a]">
+        <footer className="border-t border-slate-200 mt-20 py-8 text-center text-sm text-slate-500">
           <p>Partiu Japão · Eventos cadastrados pelos guias no Japão</p>
           <p className="mt-2">
-            <a href="https://wa.me/5511999999999" className="hover:text-[#ec4899]">
+            <a href="https://wa.me/5511999999999" className="text-pink-600 hover:text-pink-700 font-medium">
               Fale no WhatsApp
             </a>
           </p>

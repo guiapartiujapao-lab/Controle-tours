@@ -17,11 +17,12 @@ export default async function Editar({ params }: { params: Promise<{ id: string 
 
   return (
     <div>
-      <Link href="/admin" className="text-sm text-[#8b8b9a] hover:text-[#ec4899]">
+      <Link href="/admin" className="text-sm text-slate-500 hover:text-pink-600 font-medium">
         ← Voltar
       </Link>
-      <h1 className="text-2xl font-bold my-4">Editar evento</h1>
-      <EventoForm
+      <h1 className="text-2xl font-bold my-4 text-slate-900">Editar evento</h1>
+      <div className="card-3d p-6">
+        <EventoForm
         evento={{
           id: evento.id,
           titulo: evento.titulo,
@@ -36,7 +37,8 @@ export default async function Editar({ params }: { params: Promise<{ id: string 
           linkOficial: evento.linkOficial,
           destaque: evento.destaque,
         }}
-      />
+        />
+      </div>
     </div>
   );
 }

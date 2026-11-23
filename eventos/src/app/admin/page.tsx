@@ -13,11 +13,11 @@ export default async function Admin() {
   if (!session) {
     return (
       <div className="max-w-md mx-auto">
-        <h1 className="text-2xl font-bold mb-2">Área do guia</h1>
-        <p className="text-[#8b8b9a] mb-6 text-sm">
-          Entre com o e-mail e senha cadastrados.
-        </p>
-        <LoginForm />
+        <h1 className="text-2xl font-bold mb-2 text-slate-900">Área do guia</h1>
+        <p className="text-slate-600 mb-6 text-sm">Entre com o e-mail e senha cadastrados.</p>
+        <div className="card-3d p-6">
+          <LoginForm />
+        </div>
       </div>
     );
   }
@@ -34,17 +34,17 @@ export default async function Admin() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full" style={{ background: guia.cor }} />
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-900">
+            <span
+              className="w-3 h-3 rounded-full ring-2 ring-white shadow"
+              style={{ background: guia.cor }}
+            />
             Olá, {guia.nome}
           </h1>
-          <p className="text-sm text-[#8b8b9a]">{meusEventos.length} evento(s) cadastrado(s)</p>
+          <p className="text-sm text-slate-500">{meusEventos.length} evento(s) cadastrado(s)</p>
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href="/admin/novo"
-            className="bg-[#ec4899] hover:bg-[#db2777] text-white font-bold py-2 px-4 rounded-lg"
-          >
+          <Link href="/admin/novo" className="btn-3d font-bold py-2.5 px-5">
             + Novo evento
           </Link>
           <LogoutButton />
@@ -52,35 +52,43 @@ export default async function Admin() {
       </div>
 
       {meusEventos.length === 0 ? (
-        <p className="text-[#8b8b9a] py-10 text-center">
-          Você ainda não cadastrou nenhum evento. Clique em "Novo evento" para começar.
-        </p>
+        <div className="card-3d p-10 text-center">
+          <p className="text-slate-500">
+            Você ainda não cadastrou nenhum evento. Clique em "Novo evento" para começar.
+          </p>
+        </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {meusEventos.map((e) => {
             const cat = CATEGORIA_MAP[e.categoria as keyof typeof CATEGORIA_MAP] || CATEGORIA_MAP.OUTRO;
             return (
               <Link
                 key={e.id}
                 href={`/admin/${e.id}`}
-                className="flex items-center justify-between border border-[#262636] bg-[#141420] rounded-lg p-4 hover:border-[#ec4899]"
+                className="card-3d flex items-center justify-between p-4"
               >
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span
-                      className="text-xs px-2 py-0.5 rounded-full"
-                      style={{ background: cat.cor + "33", color: cat.cor }}
+                      className="text-xs px-2 py-0.5 rounded-full font-bold border"
+                      style={{
+                        background: cat.cor + "15",
+                        color: cat.cor,
+                        borderColor: cat.cor + "40",
+                      }}
                     >
                       {cat.emoji} {cat.label}
                     </span>
-                    {e.destaque && <span className="text-xs text-yellow-400">⭐ destaque</span>}
+                    {e.destaque && (
+                      <span className="text-xs text-yellow-600 font-bold">⭐ destaque</span>
+                    )}
                   </div>
-                  <p className="font-medium">{e.titulo}</p>
-                  <p className="text-xs text-[#8b8b9a]">
+                  <p className="font-medium text-slate-900">{e.titulo}</p>
+                  <p className="text-xs text-slate-500">
                     {formatarData(e.dataInicio)} · {e.cidade}
                   </p>
                 </div>
-                <span className="text-[#8b8b9a]">→</span>
+                <span className="text-slate-400">→</span>
               </Link>
             );
           })}

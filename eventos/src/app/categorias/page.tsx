@@ -14,19 +14,15 @@ export default async function Categorias() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Eventos por categoria</h1>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <h1 className="text-3xl font-bold mb-6 text-slate-900">Eventos por categoria</h1>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {CATEGORIAS.map((c) => (
-          <Link
-            key={c.key}
-            href={`/?cat=${c.key}`}
-            className="rounded-xl border border-[#262636] bg-[#141420] p-6 hover:border-[#ec4899] transition"
-          >
+          <Link key={c.key} href={`/?cat=${c.key}`} className="card-3d block p-6">
             <div className="text-4xl mb-3">{c.emoji}</div>
             <h3 className="font-bold text-lg mb-1" style={{ color: c.cor }}>
               {c.label}
             </h3>
-            <p className="text-sm text-[#8b8b9a]">
+            <p className="text-sm text-slate-600">
               {countMap[c.key] ?? 0} evento{(countMap[c.key] ?? 0) === 1 ? "" : "s"} próximo
               {(countMap[c.key] ?? 0) === 1 ? "" : "s"}
             </p>

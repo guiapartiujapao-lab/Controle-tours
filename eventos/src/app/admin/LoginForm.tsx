@@ -27,34 +27,33 @@ export default function LoginForm() {
     setLoading(false);
   }
 
+  const inputCls =
+    "w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-slate-900 focus:border-pink-500 focus:ring-2 focus:ring-pink-100 outline-none shadow-sm";
+
   return (
     <form onSubmit={submit} className="space-y-4">
       <div>
-        <label className="block text-sm mb-1">E-mail</label>
+        <label className="block text-sm font-medium mb-1 text-slate-700">E-mail</label>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full bg-[#141420] border border-[#262636] rounded-lg px-3 py-2 focus:border-[#ec4899] outline-none"
+          className={inputCls}
         />
       </div>
       <div>
-        <label className="block text-sm mb-1">Senha</label>
+        <label className="block text-sm font-medium mb-1 text-slate-700">Senha</label>
         <input
           type="password"
           value={senha}
           onChange={(e) => setSenha(e.target.value)}
           required
-          className="w-full bg-[#141420] border border-[#262636] rounded-lg px-3 py-2 focus:border-[#ec4899] outline-none"
+          className={inputCls}
         />
       </div>
-      {erro && <p className="text-sm text-red-400">{erro}</p>}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-[#ec4899] hover:bg-[#db2777] disabled:opacity-50 text-white font-bold py-2 rounded-lg"
-      >
+      {erro && <p className="text-sm text-red-600">{erro}</p>}
+      <button type="submit" disabled={loading} className="btn-3d w-full font-bold py-2.5 disabled:opacity-50">
         {loading ? "Entrando..." : "Entrar"}
       </button>
     </form>

@@ -38,43 +38,43 @@ export default async function EventoDetalhe({
 
   return (
     <article className="max-w-3xl mx-auto">
-      <Link href="/" className="text-sm text-[#8b8b9a] hover:text-[#ec4899]">
+      <Link href="/" className="text-sm text-slate-500 hover:text-pink-600 font-medium">
         ← Voltar
       </Link>
 
       <div className="mt-4 mb-6">
         <span
-          className="inline-block text-xs px-2 py-1 rounded-full font-medium mb-3"
-          style={{ background: cat.cor + "33", color: cat.cor }}
+          className="inline-block text-xs px-2.5 py-1 rounded-full font-bold border mb-3"
+          style={{
+            background: cat.cor + "15",
+            color: cat.cor,
+            borderColor: cat.cor + "40",
+          }}
         >
           {cat.emoji} {cat.label}
         </span>
-        <h1 className="text-3xl sm:text-4xl font-bold mb-3">{evento.titulo}</h1>
-        <div className="flex flex-wrap gap-4 text-sm text-[#8b8b9a]">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-3 text-slate-900">{evento.titulo}</h1>
+        <div className="flex flex-wrap gap-4 text-sm text-slate-600">
           <span>📅 {formatarData(evento.dataInicio, true)}</span>
           {evento.dataFim && <span>até {formatarData(evento.dataFim, true)}</span>}
-          <span>📍 {evento.cidade} · {evento.local}</span>
+          <span>
+            📍 {evento.cidade} · {evento.local}
+          </span>
         </div>
       </div>
 
       {evento.fotoCapa && (
         /* eslint-disable-next-line @next/next/no-img-element */
-        <img
-          src={evento.fotoCapa}
-          alt={evento.titulo}
-          className="w-full rounded-xl mb-6"
-        />
+        <img src={evento.fotoCapa} alt={evento.titulo} className="w-full rounded-xl mb-6 shadow" />
       )}
 
-      <div className="prose prose-invert max-w-none mb-8">
-        <p className="whitespace-pre-wrap text-[#e5e5ea] leading-relaxed">
-          {evento.descricao}
-        </p>
+      <div className="card-3d p-6 mb-6">
+        <p className="whitespace-pre-wrap text-slate-700 leading-relaxed">{evento.descricao}</p>
       </div>
 
       {evento.enderecoCompleto && (
-        <p className="text-sm text-[#8b8b9a] mb-6">
-          <strong className="text-[#e5e5ea]">Endereço:</strong> {evento.enderecoCompleto}
+        <p className="text-sm text-slate-600 mb-4">
+          <strong className="text-slate-900">Endereço:</strong> {evento.enderecoCompleto}
         </p>
       )}
 
@@ -84,30 +84,36 @@ export default async function EventoDetalhe({
             href={evento.linkOficial}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#06b6d4] hover:underline"
+            className="text-cyan-600 hover:text-cyan-700 font-medium"
           >
             Site oficial →
           </a>
         </p>
       )}
 
-      <div className="bg-[#141420] border border-[#262636] rounded-xl p-6 text-center">
-        <h3 className="text-xl font-bold mb-2">Quer ir com guia brasileiro?</h3>
-        <p className="text-[#8b8b9a] mb-4">
-          Fale com a gente no WhatsApp e monte seu roteiro.
-        </p>
+      <div className="card-3d p-7 text-center">
+        <h3 className="text-xl font-bold mb-2 text-slate-900">Quer ir com guia brasileiro?</h3>
+        <p className="text-slate-600 mb-5">Fale com a gente no WhatsApp e monte seu roteiro.</p>
         <a
           href={`https://wa.me/5511999999999?text=${whatsappMsg}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block bg-[#25d366] hover:bg-[#1fb855] text-white font-bold py-3 px-8 rounded-lg transition"
+          className="inline-block font-bold py-3 px-8 rounded-lg text-white"
+          style={{
+            background: "#25d366",
+            boxShadow:
+              "0 1px 0 rgba(255,255,255,0.3) inset, 0 -2px 0 rgba(0,0,0,0.12) inset, 0 2px 0 #1fb855, 0 6px 16px -4px rgba(37, 211, 102, 0.4)",
+          }}
         >
           Falar no WhatsApp
         </a>
       </div>
 
-      <p className="text-xs text-[#8b8b9a] mt-6 flex items-center gap-2">
-        <span className="inline-block w-2 h-2 rounded-full" style={{ background: evento.guia.cor }} />
+      <p className="text-xs text-slate-500 mt-6 flex items-center gap-2">
+        <span
+          className="inline-block w-2.5 h-2.5 rounded-full ring-2 ring-white shadow"
+          style={{ background: evento.guia.cor }}
+        />
         Cadastrado por {evento.guia.nome}
       </p>
     </article>
